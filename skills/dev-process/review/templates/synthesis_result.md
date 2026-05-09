@@ -22,11 +22,16 @@ Pick one primary:
 
 [Sentence]
 
-## Blocking items (must resolve)
+## Rework owner (blocking findings)
 
-| ID source | Summary | Owner suggestion |
-|-----------|---------|------------------|
-| | | |
+For **each blocking** finding, assign **one** owner and the **next operational step**. Do not leave “needs fix” without an owner stage.
+
+| ID source | Summary | Owner | Required next step |
+|-----------|---------|-------|---------------------|
+| e.g. F1 architecture | … | spec / plan / test / implementation / human | e.g. Return to PlanAgent → plan review |
+| | | | |
+
+**Owner values:** `spec` | `plan` | `test` | `implementation` | `human`
 
 ## Non-blocking / follow-ups
 

@@ -66,6 +66,19 @@ Use [review/SKILL.md](../review/SKILL.md).
 
 Blocking findings → **do not** start ImplementationAgent until resolved via test revisions or explicit spec/plan amendment loop.
 
+## Test failure triage (after implementation has started)
+
+When tests fail **during or after** product implementation, **every** failure is triaged before anyone edits code:
+
+| Cause | Who acts |
+|-------|----------|
+| Product defect | ImplementationAgent fixes **product** code only. |
+| Test wrong / brittle / misaligned | TestAuthorAgent / TestReviewerAgent (not ImplementationAgent). |
+| Plan wrong | PlanAgent → plan review → downstream updates. |
+| Spec wrong or ambiguous | SpecAgent → spec review → human spec gate if material → re-run downstream. |
+
+Full detail: [implementation/SKILL.md](../implementation/SKILL.md) (Test failure triage, Rework after review). Synthesis **rework owner** rules: [review/SKILL.md](../review/SKILL.md#rework-routing).
+
 ## Permissions
 
 TestAuthorAgent: **tests only**, no production/product source changes.

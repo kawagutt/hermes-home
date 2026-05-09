@@ -14,6 +14,7 @@ Produce **one decisive summary** (`synthesis.md`) for the review stage without i
 
 - De-duplicate findings; preserve unique evidence.  
 - Prefer explicit **blocking** vs **non-blocking** tallies.  
+- For **every blocking** finding, assign a **rework owner** (`spec` | `plan` | `test` | `implementation` | `human`) and **required next step** in `synthesis.md` (see [review/SKILL.md § Rework routing](../SKILL.md#rework-routing)).  
 - State recommended action: proceed, rework plan, rework tests, stop for human—aligned with classifications.  
 - Do not invent new technical findings; surface contradictions as **questions** for upstream stages or humans.
 

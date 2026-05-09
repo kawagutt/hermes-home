@@ -41,6 +41,30 @@ Synthesis **per implementation phase** may be skipped for cost; final synthesis 
 
 ---
 
+## Rework routing
+
+After review, **`synthesis.md`** must drive **finding triage** for every **blocking** item. Do **not** default to “send everything to ImplementationAgent.”
+
+Base loop:
+
+```text
+review NG → synthesis classifies blocking findings → fix in owning stage → run tests → rerun required review(s)
+```
+
+**Synthesis must assign each blocking finding to exactly one rework owner:**
+
+- `implementation` — product code fix (bugs, checklist gaps inside plan, edge cases, diff-detail issues).  
+- `test` — test code/spec alignment, brittleness, wrong assertions/fixtures; **not** patched by ImplementationAgent.  
+- `plan` — plan wrong or superseded → PlanAgent → plan review → possibly test updates → implementation resumes.  
+- `spec` — spec wrong or ambiguous → SpecAgent → spec review → **human spec gate** if materially changed → re-execute plan and later stages as needed.  
+- `human` — decision or policy required before any agent edits.
+
+Output must be **actionable**: not only “fix needed,” but **which stage owns the fix** and **what reruns next** (see [`templates/synthesis_result.md`](templates/synthesis_result.md)).
+
+Cross-reference: [implementation/SKILL.md](../implementation/SKILL.md) (rework after review, test failure triage).
+
+---
+
 ## Standard recipes (combinations only)
 
 Recipes name **targets** and **review agents** only. **Synthesis** is a separate line (merge step). **Detailed bullets stay in agent files.**

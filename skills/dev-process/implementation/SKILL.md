@@ -35,6 +35,51 @@ Route via [review/SKILL.md](../review/SKILL.md).
 
 Write under `.hermes/tasks/<task-id>/reviews/implementation_phase_NN/`.
 
+## Rework after review
+
+When review produces **blocking** findings, **do not** continue blindly. First **triage** (classification) happens in **`synthesis.md`** ([rework routing](../review/SKILL.md#rework-routing)); align with it here.
+
+Typical sequence:
+
+```text
+review → finding triage (synthesis)
+  → fix in the owning stage → run tests → rerun the needed review(s)
+```
+
+### By root cause — where work returns
+
+| Cause | Owner stage | Flow (high level) |
+|-------|-------------|-------------------|
+| **A. Product code** | ImplementationAgent | Fix product code → targeted tests → rerun checkpoint or final review. |
+| **B. Test** | TestAuthorAgent / TestReviewerAgent | Fix tests → test review if needed → run tests → continue implementation or return to final review. **Not** ImplementationAgent editing tests. |
+| **C. Plan** | PlanAgent | Revise plan → **plan review** → adjust tests if plan changed validation → return to implementation. |
+| **D. Spec** | SpecAgent | Revise spec → spec review → **human spec gate** if material → **re-run plan onward** (plan, plan review, test stage as needed, then implementation). |
+
+### ImplementationAgent may fix product code when findings are
+
+Examples: product bugs, checklist gaps, missed work **inside the approved plan**, missing edge-case handling, **diff_detail**-style issues. Then: fix → targeted tests → rerun the relevant review.
+
+**ImplementationAgent must not edit tests** to clear review or test failures except a **narrow, human-documented exception**.
+
+### When tests are wrong (not product)
+
+Examples: test does not match spec; brittle or overfit to implementation detail; wrong fixture/assertion; mismatch with planned validation commands. Route to **TestAuthorAgent → TestReviewerAgent → test checks** → only then ImplementationAgent / final review again.
+
+See also [review/SKILL.md](../review/SKILL.md) (rework routing) and [test/SKILL.md](test/SKILL.md) (test-failure triage).
+
+## Test failure triage (during implementation)
+
+Every **test failure** must be classified before fixing:
+
+| Cause | Action |
+|-------|--------|
+| Product code defect | ImplementationAgent fixes product code (not tests). |
+| Test defect / mismatch | Return to TestAuthorAgent / TestReviewerAgent. |
+| Plan wrong or obsolete | Return to PlanAgent; rerun plan review; adjust downstream as needed. |
+| Spec ambiguity or error | Return to SpecAgent; spec review; human spec gate if spec changes materially; re-run downstream stages. |
+
+Never “make green” by **silently editing tests** as ImplementationAgent.
+
 ## Tests — default prohibition
 
 ```text
