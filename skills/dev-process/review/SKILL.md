@@ -84,7 +84,7 @@ When **blocking** findings cause rework:
 5. Run the required **tests**.  
 6. **Re‑run** the relevant review(s) into the **next** `round_NN` directory; **synthesis** (or Orchestrator if synthesis skipped) updates `review_rounds` / `latest_reviews` ([Who updates `state.yaml`](#who-updates-stateyaml)).  
 
-Same pattern applies whether the finding came from checkpoint review or final review: preserve prior rounds so “review → fix → re‑review” stays auditable.
+Same pattern applies whether the finding came from checkpoint review or final review: preserve prior rounds so the task-local **“review → fix → re‑review”** chain stays traceable (**not** project Git history—the task tree is normally uncommitted working log—see orchestrator Artifact persistence policy).
 
 ### Who updates `state.yaml`
 

@@ -16,4 +16,4 @@ Current stage should mirror `state.yaml` → `current_stage`.
 
 At task root, maintain append-only **[`timeline.md`](timeline.md)** and **[`rework_log.md`](rework_log.md)** (start from the templates of the same names in this folder).
 
-See orchestrator [SKILL.md](../SKILL.md) for pipeline order.
+Pipeline order: dev-process orchestrator skill at `skills/dev-process/SKILL.md` (this template is copied under `.hermes/tasks/<task-id>/`, so do not use `../` links to the skill tree—they break after copy).

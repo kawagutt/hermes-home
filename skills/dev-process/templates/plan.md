@@ -34,4 +34,4 @@ Which review targets/agents run after major milestones (see `review/SKILL.md`).
 
 ## Escalation triggers (human)
 
-Cross-check with [plan/SKILL.md](../plan/SKILL.md): API changes, architecture, scope creep, blocking reviews, etc.
+Cross-check escalation triggers with `skills/dev-process/plan/SKILL.md` (API changes, architecture, scope creep, blocking reviews, etc.).

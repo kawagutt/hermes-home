@@ -208,7 +208,7 @@ reviews/
       synthesis.md
 ```
 
-**Latest synthesis pointers (`state.yaml`):** incremented and repointed automatically by agents—**humans should not routinely edit these** when using the normal workflow.
+**Latest synthesis pointers (`state.yaml`):** maintained by the **synthesis-role** agent (Orchestrator fallback when synthesis is skipped)—**humans should not routinely edit these** when using the normal workflow. v1 has no daemon; updates happen in the same session as synthesis.
 
 - After each completed review round, the **synthesis-role** agent (`review/agents/synthesis.md`) **must** update `review_rounds` for that stage and set `latest_reviews.<stage>` to that round’s `synthesis.md` path in the **same session** as writing `reviews/<stage>/round_NN/synthesis.md`.  
 - If a team **skips synthesis** for a stage (allowed only where the router says optional), the **Orchestrator** (the agent/session coordinating handoff) performs the equivalent `review_rounds` / `latest_reviews` update and records why in `timeline.md`.  
@@ -229,7 +229,6 @@ The only standing human gate is **after spec review**, recorded as `human_spec_g
 
 - Do not **commit** or **push** **product / project** changes unless explicitly requested.  
 - **Do not commit** `.hermes/tasks/` dev-process task artifacts to the project repository by default (see [Artifact persistence policy](#artifact-persistence-policy)); they are working logs, not shared project deliverables.
-- Do not push.
 - Do not modify files outside the current repository.
 - Do not run destructive git commands.
 - In **spec**, **plan**, and **review** roles, do not edit product code.

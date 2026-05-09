@@ -5,14 +5,12 @@ task_id: ""
 current_stage: ""      # e.g. spec | plan | test | implementation | final
 current_phase: ""      # e.g. 01 or null when N/A
 
+# Human / process gates: spec text ready and human read-back done. No default human plan gate.
 approved:
   spec: false
   human_spec_gate: false
-  plan: false
-  # tests: optional extra human sign-off; many teams use reviewed.tests instead
-  tests: false
 
-# Review-stage completion (e.g. test review synthesis clear) — finer than blanket approved.tests
+# Review completion (e.g. plan review synthesis cleared, test review cleared). Tracks agent review, not “approved.plan”.
 reviewed:
   spec: false
   plan: false
@@ -31,6 +29,7 @@ review_rounds:
   plan: 0
   test: 0
   final: 0
+  # Add keys per implementation phase as needed, e.g. implementation_phase_02: 0
   implementation_phase_01: 0
 
 # Pointers to the latest synthesis for quick access — update same time as review_rounds.
@@ -39,8 +38,8 @@ latest_reviews:
   spec: ""    # e.g. reviews/spec/round_01/synthesis.md
   plan: ""
   test: ""
-  final: ""
-  implementation_phase_01: ""
+  final: ""    # canonical pointer for final synthesis; do not duplicate elsewhere
+  implementation_phase_01: ""   # add matching implementation_phase_* keys as phases exist
 
 artifacts:
   spec: spec.md
@@ -51,4 +50,3 @@ artifacts:
   red_test_result: red_test_result.md
   final_test_result: final_test_result.md
   implementation_log: implementation_log.md
-  final_review: reviews/final/round_01/synthesis.md   # update path when round increments

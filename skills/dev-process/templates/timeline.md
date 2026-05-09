@@ -13,4 +13,4 @@ Add a new row **after each meaningful step** (draft, review round, gate, rework,
 
 Use ISO-like timestamps in local or UTC consistently (e.g. `2026-05-09 21:30`).
 
-See [review/SKILL.md](../review/SKILL.md) (Review rounds and rework history) when appending rework and reruns.
+When recording rework and reruns, follow **Review rounds and rework history** in `skills/dev-process/review/SKILL.md`.
