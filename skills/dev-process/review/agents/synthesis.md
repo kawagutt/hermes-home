@@ -24,4 +24,15 @@ Typically all reviewer `*.md` files for the same stage (`requirements.md`, `arch
 
 ## Output
 
-Always write **`synthesis.md`** under **`reviews/<stage>/round_NN/`** for the **current** run using the synthesis template. **Never overwrite** prior `round_*` directories. Increment `review_rounds` and `latest_reviews` in `state.yaml` after the round is complete.
+Always write **`synthesis.md`** under **`reviews/<stage>/round_NN/`** for the **current** run using the synthesis template. **Never overwrite** prior `round_*` directories.
+
+### You own `state.yaml` for this round (unless humans run everything by hand)
+
+In the **same turn / session** as finishing `synthesis.md`, update the task’s **`state.yaml`**:
+
+1. Set **`review_rounds.<stage>`** to **`NN`** (the integer encoded in `round_NN`, e.g. `round_02` → `2`).  
+2. Set **`latest_reviews.<stage>`** to the path **`reviews/<stage>/round_NN/synthesis.md`** (relative to `.hermes/tasks/<task-id>/`).  
+
+Humans normally **do nothing** here. If synthesis was intentionally skipped this round per policy, **`state.yaml` is updated by the Orchestrator**, not skipped silently—see [review/SKILL.md § Who updates state.yaml](../SKILL.md#who-updates-stateyaml).
+
+Optionally append a **`timeline.md`** row for “review synthesized / round NN” once state is consistent (or leave that to Orchestrator—avoid duplicate rows).

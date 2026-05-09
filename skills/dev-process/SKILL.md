@@ -161,7 +161,12 @@ reviews/
       synthesis.md
 ```
 
-**Latest synthesis** pointers: maintain [templates/state.yaml](templates/state.yaml) fields `review_rounds` and `latest_reviews` after each round.
+**Latest synthesis pointers (`state.yaml`):** incremented and repointed automatically by agents—**humans should not routinely edit these** when using the normal workflow.
+
+- After each completed review round, the **synthesis-role** agent (`review/agents/synthesis.md`) **must** update `review_rounds` for that stage and set `latest_reviews.<stage>` to that round’s `synthesis.md` path in the **same session** as writing `reviews/<stage>/round_NN/synthesis.md`.  
+- If a team **skips synthesis** for a stage (allowed only where the router says optional), the **Orchestrator** (the agent/session coordinating handoff) performs the equivalent `review_rounds` / `latest_reviews` update and records why in `timeline.md`.  
+
+Detail: [review/SKILL.md — Who updates state.yaml](review/SKILL.md#who-updates-stateyaml).
 
 **Optional shortcut:** under e.g. `reviews/final/`, `latest.md` may summarize “latest round directory + status” for humans (manual or agent-updated **v1**: no symlink automation required).
 

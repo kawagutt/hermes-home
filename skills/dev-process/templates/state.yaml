@@ -23,8 +23,9 @@ escalation:
   required: false
   reason: ""
 
-# Count of completed review rounds per stage (increment when a full round is written).
+# Count of completed review rounds per stage (increment when that round finishes).
 # Next run uses subdirectory round_NN (zero-padded, e.g. round_02). Add phase keys as needed.
+# Maintainer: synthesis-role agent normally; see review/SKILL.md § Who updates state.yaml.
 review_rounds:
   spec: 0
   plan: 0
@@ -32,7 +33,8 @@ review_rounds:
   final: 0
   implementation_phase_01: 0
 
-# Pointers to the latest synthesis for quick access (update after each round).
+# Pointers to the latest synthesis for quick access — update same time as review_rounds.
+# Humans are not expected to edit these in routine agent-driven runs.
 latest_reviews:
   spec: ""    # e.g. reviews/spec/round_01/synthesis.md
   plan: ""

@@ -82,9 +82,24 @@ When **blocking** findings cause rework:
 3. Fix work in the **owning** stage (`spec`, `plan`, `test`, or implementation).  
 4. **Append** a row to **`timeline.md`** ([template](../templates/timeline.md)).  
 5. Run the required **tests**.  
-6. **Re‑run** the relevant review(s) into the **next** `round_NN` directory (increment `review_rounds` and `latest_reviews` in `state.yaml`).  
+6. **Re‑run** the relevant review(s) into the **next** `round_NN` directory; **synthesis** (or Orchestrator if synthesis skipped) updates `review_rounds` / `latest_reviews` ([Who updates `state.yaml`](#who-updates-stateyaml)).  
 
 Same pattern applies whether the finding came from checkpoint review or final review: preserve prior rounds so “review → fix → re‑review” stays auditable.
+
+### Who updates `state.yaml`
+
+**Routine (default):**
+
+- **`review_rounds.<stage>`** and **`latest_reviews.<stage>`** are maintained by whichever agent/session performs the **synthesis** step for that review round—that is the **synthesis role** described in [`agents/synthesis.md`](agents/synthesis.md).
+- Timing: **immediately after** successfully writing **`reviews/<stage>/round_NN/synthesis.md`**, bump the counter for `<stage>` to `NN` (integer matching the round suffix) and set `latest_reviews.<stage>` to that file’s repo-relative task path.
+
+**Humans:** not required for these fields in normal agent workflows. Humans may patch `state.yaml` only when recovering from tooling failure or operating **without** a synthesis agent—in that case, treat it as orchestration hygiene with a **`timeline.md`** note.
+
+**If synthesis was skipped** for that round (allowed only where the router marks synthesis **optional**):
+
+- The **Orchestrator** (coordinating agent/session) MUST still update `review_rounds` / `latest_reviews` consistently with where reviewer outputs landed, OR delegate an explicit follower step to combine reviewers first.
+
+**Independent reviewers must not each bump `review_rounds`**—only synthesis (or orchestrator fallback) avoids races and partial rounds.
 
 ---
 
