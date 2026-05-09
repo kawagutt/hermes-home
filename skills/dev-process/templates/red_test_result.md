@@ -1,6 +1,6 @@
 # Red test result — [task title]
 
-Recorded **during the test stage**, **before** product implementation begins (`templates/red_test_result.md`).
+Recorded **during the test stage**, **before** product implementation begins. This file is copied from `templates/red_test_result.md`.
 
 **Task ID:** `[task-id]`  
 **Date:** `[ISO date]`

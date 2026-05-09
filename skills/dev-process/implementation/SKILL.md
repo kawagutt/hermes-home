@@ -65,7 +65,7 @@ Examples: product bugs, checklist gaps, missed work **inside the approved plan**
 
 Examples: test does not match spec; brittle or overfit to implementation detail; wrong fixture/assertion; mismatch with planned validation commands. Route to **TestAuthorAgent → TestReviewerAgent → test checks** → only then ImplementationAgent / final review again.
 
-See also [review/SKILL.md](../review/SKILL.md) (rework routing) and [test/SKILL.md](test/SKILL.md) (test-failure triage).
+See also [review/SKILL.md](../review/SKILL.md) (rework routing) and [test/SKILL.md](../test/SKILL.md) (test-failure triage).
 
 ## Test failure triage (during implementation)
 
