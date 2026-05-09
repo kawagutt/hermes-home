@@ -98,7 +98,7 @@ Store task state and documents under:
 .hermes/tasks/<task-id>/
 ```
 
-Use templates from [templates/](templates/) Copy [templates/state.yaml](templates/state.yaml) and update fields as stages complete.
+Use templates from [templates/](templates/). Copy [templates/state.yaml](templates/state.yaml) and update fields as stages complete.
 
 ### Review outputs (by stage)
 
@@ -138,7 +138,7 @@ reviews/
     synthesis.md
 ```
 
-Use filenames from `review/templates/review_result.md` and `review/templates/synthesis_result.md`.
+Use **output formats** from `review/templates/review_result.md` (per reviewer file) and `review/templates/synthesis_result.md` (for `synthesis.md`).
 
 ### Human gate (spec only)
 

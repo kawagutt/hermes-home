@@ -31,7 +31,7 @@ Log ongoing narrative in [templates/implementation_log.md](../templates/implemen
 
 Route via [review/SKILL.md](../review/SKILL.md).
 
-**Standard recipe:** target `implementation_phase` → agents `checklist_compliance`, `diff_detail`, `architecture` → optional `synthesis` per phase.
+**Standard recipe:** target `implementation_phase` → review agents `checklist_compliance`, `diff_detail`, `architecture` → **synthesis:** optional per phase (see [review/SKILL.md](../review/SKILL.md)).
 
 Write under `.hermes/tasks/<task-id>/reviews/implementation_phase_NN/`.
 

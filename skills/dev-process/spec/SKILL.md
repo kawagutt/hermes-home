@@ -43,7 +43,7 @@ Include at minimum:
 
 After `spec.md` is drafted, route reviews via [review/SKILL.md](../review/SKILL.md).
 
-**Standard recipe:** target `spec` → agents `requirements`, `architecture` → `synthesis`.
+**Standard recipe:** target `spec` → review agents `requirements`, `architecture` → **synthesis:** yes (see [review/SKILL.md](../review/SKILL.md)).
 
 Detailed checklists live in `review/targets/spec.md` and `review/agents/*.md`; do not duplicate them here.
 

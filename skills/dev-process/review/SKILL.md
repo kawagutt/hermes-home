@@ -9,11 +9,13 @@ description: >-
 
 # Review process (router)
 
-Reviews are assembled from three pieces:
+Reviews combine:
 
 1. A **target** from [`targets/`](targets/) — defines *what* is in scope.  
-2. One or more **agents** from [`agents/`](agents/) — defines *how* to look at it.  
-3. Output shape from [`templates/review_result.md`](templates/review_result.md) and [`templates/synthesis_result.md`](templates/synthesis_result.md).
+2. One or more **independent review agents** (prompts under [`agents/`](agents/) *except* [`synthesis.md`](agents/synthesis.md)) — *how* to look at the target from each perspective.  
+3. Shared **output format** per reviewer via [`templates/review_result.md`](templates/review_result.md).  
+
+After reviewers finish, optionally run a **synthesis role** ([`agents/synthesis.md`](agents/synthesis.md)) that merges their outputs using [`templates/synthesis_result.md`](templates/synthesis_result.md) → `synthesis.md`. **Synthesis is not another independent reviewer agent**—it aggregates reviewer outputs without inventing new primary findings.
 
 `review/targets/*.md` and `review/agents/*.md` are **reference prompt fragments**, not standalone skills. This file is the **router** only: **recipes + contract**, not detailed checklists.
 
@@ -41,32 +43,37 @@ Synthesis **per implementation phase** may be skipped for cost; final synthesis 
 
 ## Standard recipes (combinations only)
 
-These lines name targets and agents. **Detailed bullets stay in agent files.**
+Recipes name **targets** and **review agents** only. **Synthesis** is a separate line (merge step). **Detailed bullets stay in agent files.**
 
 ### Spec review
 
 - **target:** `spec` (`targets/spec.md`)  
-- **agents:** `requirements`, `architecture`, `synthesis`
+- **review agents:** `requirements`, `architecture`  
+- **synthesis:** yes  
 
 ### Plan review
 
 - **target:** `plan` (`targets/plan.md`)  
-- **agents:** `architecture`, `checklist_compliance`, `impact`, `synthesis`
+- **review agents:** `architecture`, `checklist_compliance`, `impact`  
+- **synthesis:** yes  
 
 ### Test review
 
 - **target:** `test` (`targets/test.md`)  
-- **agents:** `requirements`, `test_quality`, `checklist_compliance`, `synthesis`
+- **review agents:** `requirements`, `test_quality`, `checklist_compliance`  
+- **synthesis:** yes  
 
 ### Implementation phase checkpoint
 
 - **target:** `implementation_phase` (`targets/implementation_phase.md`)  
-- **agents:** `checklist_compliance`, `diff_detail`, `architecture`, optional `synthesis`
+- **review agents:** `checklist_compliance`, `diff_detail`, `architecture`  
+- **synthesis:** optional (skip for cheap phases if team policy allows)  
 
 ### Final review
 
 - **target:** `final_diff` (`targets/final_diff.md`)  
-- **agents:** `architecture`, `diff_detail`, `impact`, `naming_doc`, `test_quality`, `synthesis`
+- **review agents:** `architecture`, `diff_detail`, `impact`, `naming_doc`, `test_quality`  
+- **synthesis:** required  
 
 ---
 

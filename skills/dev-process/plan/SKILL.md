@@ -39,7 +39,7 @@ Include at minimum:
 
 Run via [review/SKILL.md](../review/SKILL.md).
 
-**Standard recipe:** target `plan` → agents `architecture`, `checklist_compliance`, `impact` → `synthesis`.
+**Standard recipe:** target `plan` → review agents `architecture`, `checklist_compliance`, `impact` → **synthesis:** yes (see [review/SKILL.md](../review/SKILL.md)).
 
 ## Hard rule before tests
 

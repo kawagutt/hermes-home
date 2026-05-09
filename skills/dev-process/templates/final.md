@@ -13,7 +13,7 @@
 
 ## Test evidence
 
-Attach or link CI / `final_test_result` if tracked:
+Use [final_test_result.md](final_test_result.md) at task root, or paste the same sections here. Link CI if applicable.
 
 ```bash
 

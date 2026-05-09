@@ -9,7 +9,15 @@ approved:
   spec: false
   human_spec_gate: false
   plan: false
+  # tests: optional extra human sign-off; many teams use reviewed.tests instead
   tests: false
+
+# Review-stage completion (e.g. test review synthesis clear) — finer than blanket approved.tests
+reviewed:
+  spec: false
+  plan: false
+  tests: false
+  final: false
 
 escalation:
   required: false
@@ -19,5 +27,7 @@ artifacts:
   spec: spec.md
   plan: plan.md
   test_plan: test_plan.md
+  red_test_result: red_test_result.md
+  final_test_result: final_test_result.md
   implementation_log: implementation_log.md
   final_review: reviews/final/synthesis.md

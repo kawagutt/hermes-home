@@ -8,7 +8,7 @@ Holistic assessment at **merge time**: full intended change set vs spec/plan/tes
 
 - `spec.md`, `plan.md`, `test_plan.md`  
 - Final comprehensive diff (or PR diff)  
-- `final_test_result.md` / CI output if captured  
+- `final_test_result.md` (see [templates/final_test_result.md](../../templates/final_test_result.md)) / CI output if captured  
 - Prior per-stage reviews (optional summaries)  
 
 ## Out of scope

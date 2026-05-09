@@ -1,5 +1,6 @@
 # Task: [short title]
 
+- **Dev process skill version:** v1
 - **Task ID:** `[YYYY-MM-DD-or-slug]`
 - **Owner / channel:** [optional]
 - **Repo:** [path or name]

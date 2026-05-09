@@ -49,7 +49,7 @@ Suggested task files (adapt names to repo conventions):
 | `test_plan.md` | [templates/test_plan.md](../templates/test_plan.md) |
 | Test code | repo test layout |
 | `test_implementation.md` | [templates/test_implementation.md](../templates/test_implementation.md) |
-| `red_test_result.md` or inline in implementation notes | capture expected fail/pass |
+| `red_test_result.md` | [templates/red_test_result.md](../templates/red_test_result.md) (or a clearly marked **Red test results** section inside `test_implementation.md` during the test stage only) |
 | Review outputs | `.hermes/tasks/<task-id>/reviews/test/` |
 
 ## Red / validation policy
@@ -62,7 +62,7 @@ If red tests are inappropriate (documentation-only cleanup, refactor with no beh
 
 Use [review/SKILL.md](../review/SKILL.md).
 
-**Standard recipe:** target `test` → agents `requirements`, `test_quality`, `checklist_compliance` → `synthesis`.
+**Standard recipe:** target `test` → review agents `requirements`, `test_quality`, `checklist_compliance` → **synthesis:** yes (see [review/SKILL.md](../review/SKILL.md)).
 
 Blocking findings → **do not** start ImplementationAgent until resolved via test revisions or explicit spec/plan amendment loop.
 
