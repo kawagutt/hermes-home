@@ -6,7 +6,7 @@ Review `plan.md`, `phase_checklists.md`, and validation strategy **after spec ga
 
 ## Inputs (typical)
 
-- Approved `spec.md`, `reviews/spec/synthesis.md`, `human_spec_gate.md`  
+- Approved `spec.md`, latest `reviews/spec/round_NN/synthesis.md` (or `state.yaml` → `latest_reviews.spec`), `human_spec_gate.md`  
 - `plan.md`, `phase_checklists.md`  
 
 ## Out of scope

@@ -6,6 +6,7 @@ Replace `TITLE` / bracketed fields. File name matches agent role (e.g. `architec
 
 - Task ID: `[task-id]`  
 - Target: `[spec | plan | test | implementation_phase | final_diff]`  
+- Review round: `[round_01]` — directory under `reviews/<stage>/`; never overwrite prior rounds.  
 - Agent: `[requirements | architecture | diff_detail | impact | naming_doc | test_quality | checklist_compliance]` — **not** synthesis; synthesis uses [`synthesis_result.md`](synthesis_result.md).  
 - Date: `[ISO date]`  
 

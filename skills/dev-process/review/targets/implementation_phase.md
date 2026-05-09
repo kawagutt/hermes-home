@@ -19,4 +19,4 @@ Checkpoint after **one planned phase** of product implementation (not the whole 
 
 ## Output directory
 
-`.hermes/tasks/<task-id>/reviews/implementation_phase_NN/` (NN matches plan numbering)
+`.hermes/tasks/<task-id>/reviews/implementation_phase_NN/round_MM/` (phase `NN` matches plan; `round_MM` increments per checkpoint review)

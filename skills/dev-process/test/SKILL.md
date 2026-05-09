@@ -50,7 +50,7 @@ Suggested task files (adapt names to repo conventions):
 | Test code | repo test layout |
 | `test_implementation.md` | [templates/test_implementation.md](../templates/test_implementation.md) |
 | `red_test_result.md` | [templates/red_test_result.md](../templates/red_test_result.md) (or a clearly marked **Red test results** section inside `test_implementation.md` during the test stage only) |
-| Review outputs | `.hermes/tasks/<task-id>/reviews/test/` |
+| Review outputs | `.hermes/tasks/<task-id>/reviews/test/round_NN/` |
 
 ## Red / validation policy
 

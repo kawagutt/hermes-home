@@ -9,7 +9,7 @@
 
 ## Final review
 
-- Path: `.hermes/tasks/<task-id>/reviews/final/synthesis.md`
+- Latest synthesis path: `.hermes/tasks/<task-id>/reviews/final/round_NN/synthesis.md` (see `state.yaml` → `latest_reviews.final`, `review_rounds.final`)
 
 ## Test evidence
 

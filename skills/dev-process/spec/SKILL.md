@@ -15,7 +15,7 @@ Produce and stabilize **what** to build before any implementation or test code w
 Primary artifact: `.hermes/tasks/<task-id>/spec.md`  
 Start from [templates/spec.md](../templates/spec.md).
 
-After spec reviewer agents finish, write synthesis under `.hermes/tasks/<task-id>/reviews/spec/synthesis.md` (plus per-agent outputs as in the orchestrator).
+After spec reviewer agents finish for this run, write outputs under `.hermes/tasks/<task-id>/reviews/spec/round_NN/` (see orchestrator round rules): per-agent files plus `synthesis.md`.
 
 ## Required content in `spec.md`
 

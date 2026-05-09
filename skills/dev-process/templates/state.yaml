@@ -23,11 +23,30 @@ escalation:
   required: false
   reason: ""
 
+# Count of completed review rounds per stage (increment when a full round is written).
+# Next run uses subdirectory round_NN (zero-padded, e.g. round_02). Add phase keys as needed.
+review_rounds:
+  spec: 0
+  plan: 0
+  test: 0
+  final: 0
+  implementation_phase_01: 0
+
+# Pointers to the latest synthesis for quick access (update after each round).
+latest_reviews:
+  spec: ""    # e.g. reviews/spec/round_01/synthesis.md
+  plan: ""
+  test: ""
+  final: ""
+  implementation_phase_01: ""
+
 artifacts:
   spec: spec.md
   plan: plan.md
+  timeline: timeline.md
+  rework_log: rework_log.md
   test_plan: test_plan.md
   red_test_result: red_test_result.md
   final_test_result: final_test_result.md
   implementation_log: implementation_log.md
-  final_review: reviews/final/synthesis.md
+  final_review: reviews/final/round_01/synthesis.md   # update path when round increments

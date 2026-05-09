@@ -1,6 +1,6 @@
 # Test review notes — optional scratch
 
-Formal outputs belong in `.hermes/tasks/<task-id>/reviews/test/` per agent filenames.
+Formal outputs belong in `.hermes/tasks/<task-id>/reviews/test/round_NN/` per agent filenames.
 
 Use this file only for ephemeral coordination if needed.
 
@@ -14,4 +14,4 @@ Use this file only for ephemeral coordination if needed.
 
 ## Links to synthesized review
 
-- Path: `.hermes/tasks/<task-id>/reviews/test/synthesis.md`
+- Latest synthesis path: `.hermes/tasks/<task-id>/reviews/test/round_NN/synthesis.md`

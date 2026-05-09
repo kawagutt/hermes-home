@@ -26,7 +26,7 @@ Append after **each** implementation phase completes.
 
 ### Checkpoint review linkage
 
-Directory: `.hermes/tasks/<task-id>/reviews/implementation_phase_NN/`
+Directory: `.hermes/tasks/<task-id>/reviews/implementation_phase_NN/round_MM/` (per checkpoint review run)
 
 ### Open questions before next phase
 

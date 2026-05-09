@@ -65,6 +65,29 @@ Cross-reference: [implementation/SKILL.md](../implementation/SKILL.md) (rework a
 
 ---
 
+## Review rounds and rework history
+
+Do **not** overwrite a previous review result. Each full review cycle for a stage gets its own subdirectory:
+
+```text
+.hermes/tasks/<task-id>/reviews/<stage>/round_NN/
+```
+
+Stages use the orchestrator naming: `spec`, `plan`, `test`, `implementation_phase_<NN>`, `final`.
+
+When **blocking** findings cause rework:
+
+1. Record the finding chain in **`rework_log.md`** ([template](../templates/rework_log.md)).  
+2. Assign each blocking item’s **owner** in `synthesis.md` (rework routing above).  
+3. Fix work in the **owning** stage (`spec`, `plan`, `test`, or implementation).  
+4. **Append** a row to **`timeline.md`** ([template](../templates/timeline.md)).  
+5. Run the required **tests**.  
+6. **Re‑run** the relevant review(s) into the **next** `round_NN` directory (increment `review_rounds` and `latest_reviews` in `state.yaml`).  
+
+Same pattern applies whether the finding came from checkpoint review or final review: preserve prior rounds so “review → fix → re‑review” stays auditable.
+
+---
+
 ## Standard recipes (combinations only)
 
 Recipes name **targets** and **review agents** only. **Synthesis** is a separate line (merge step). **Detailed bullets stay in agent files.**
@@ -103,4 +126,4 @@ Recipes name **targets** and **review agents** only. **Synthesis** is a separate
 
 ## Task output locations
 
-Mirror recipes under `.hermes/tasks/<task-id>/reviews/` as documented in the orchestrator [`SKILL.md`](../SKILL.md).
+Write reviewer and synthesis artifacts under `.hermes/tasks/<task-id>/reviews/<stage>/round_NN/` per orchestrator [`SKILL.md`](../SKILL.md). Each new review run increments the round folder; keep `timeline.md` / `rework_log.md` in sync.

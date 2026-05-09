@@ -13,7 +13,7 @@ Implement **approved** artifacts only:
 - `spec.md`  
 - `plan.md`  
 - `phase_checklists.md`  
-- Test outputs: `test_plan.md`, authored tests, `reviews/test/` synthesis (and any mandated files your team tracks)  
+- Test outputs: `test_plan.md`, authored tests, latest test synthesis path in `state.yaml` → `latest_reviews.test` (and any mandated files your team tracks)  
 
 ## Phase execution
 
@@ -33,7 +33,7 @@ Route via [review/SKILL.md](../review/SKILL.md).
 
 **Standard recipe:** target `implementation_phase` → review agents `checklist_compliance`, `diff_detail`, `architecture` → **synthesis:** optional per phase (see [review/SKILL.md](../review/SKILL.md)).
 
-Write under `.hermes/tasks/<task-id>/reviews/implementation_phase_NN/`.
+Write under `.hermes/tasks/<task-id>/reviews/implementation_phase_NN/round_MM/` (new `round_MM` per checkpoint review run).
 
 ## Rework after review
 
@@ -45,6 +45,8 @@ Typical sequence:
 review → finding triage (synthesis)
   → fix in the owning stage → run tests → rerun the needed review(s)
 ```
+
+After each blocking-driven cycle, append **`rework_log.md`** and **`timeline.md`**, and write the **next** review under a **new** `reviews/<stage>/round_NN/` directory (see [review rounds](../review/SKILL.md#review-rounds-and-rework-history)).
 
 ### By root cause — where work returns
 

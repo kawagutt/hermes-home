@@ -104,43 +104,68 @@ Store task state and documents under:
 
 Use templates from [templates/](templates/). Copy [templates/state.yaml](templates/state.yaml) and update fields as stages complete.
 
-### Review outputs (by stage)
+Append-only history (task root):
 
-Writes under `.hermes/tasks/<task-id>/reviews/`:
+- [templates/timeline.md](templates/timeline.md) → `timeline.md` — chronological log of stages and artifacts.  
+- [templates/rework_log.md](templates/rework_log.md) → `rework_log.md` — each blocking rework: source synthesis, owner, artifacts changed, rerun rounds.
+
+### Review outputs (by stage, **round‑numbered**)
+
+**Never overwrite** prior review outputs. Each review run writes under a **new** directory:
+
+```text
+reviews/<stage>/round_NN/
+```
+
+Use **two‑digit** `NN` (`round_01`, `round_02`, …); extend width if rounds exceed 99.
+
+Example layout:
 
 ```text
 reviews/
   spec/
-    requirements.md
-    architecture.md
-    synthesis.md
+    round_01/
+      requirements.md
+      architecture.md
+      synthesis.md
 
   plan/
-    architecture.md
-    checklist_compliance.md
-    impact.md
-    synthesis.md
+    round_01/
+      architecture.md
+      checklist_compliance.md
+      impact.md
+      synthesis.md
+    round_02/
+      ...
 
   test/
-    requirements.md
-    test_quality.md
-    checklist_compliance.md
-    synthesis.md
+    round_01/
+      ...
 
   implementation_phase_01/
-    checklist_compliance.md
-    diff_detail.md
-    architecture.md
-    synthesis.md   # optional per phase
+    round_01/
+      checklist_compliance.md
+      diff_detail.md
+      architecture.md
+      synthesis.md
+    round_02/
+      ...
 
   final/
-    architecture.md
-    diff_detail.md
-    impact.md
-    naming_doc.md
-    test_quality.md
-    synthesis.md
+    round_01/
+      architecture.md
+      diff_detail.md
+      impact.md
+      naming_doc.md
+      test_quality.md
+      synthesis.md
 ```
+
+**Latest synthesis** pointers: maintain [templates/state.yaml](templates/state.yaml) fields `review_rounds` and `latest_reviews` after each round.
+
+**Optional shortcut:** under e.g. `reviews/final/`, `latest.md` may summarize “latest round directory + status” for humans (manual or agent-updated **v1**: no symlink automation required).
+
+Details: [review/SKILL.md — Review rounds and rework history](review/SKILL.md#review-rounds-and-rework-history).
 
 Use **output formats** from `review/templates/review_result.md` (per reviewer file) and `review/templates/synthesis_result.md` (for `synthesis.md`).
 

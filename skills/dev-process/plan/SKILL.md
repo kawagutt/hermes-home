@@ -13,7 +13,7 @@ Turn an approved spec into an executable, reviewable plan. **There is no default
 ## Inputs
 
 - `.hermes/tasks/<task-id>/spec.md` (approved)  
-- `.hermes/tasks/<task-id>/reviews/spec/synthesis.md` (or equivalent approval record)  
+- Latest approved spec synthesis, e.g. `.hermes/tasks/<task-id>/reviews/spec/round_NN/synthesis.md` (`state.yaml` → `latest_reviews.spec`)  
 - `.hermes/tasks/<task-id>/human_spec_gate.md`  
 
 ## Outputs
@@ -21,7 +21,7 @@ Turn an approved spec into an executable, reviewable plan. **There is no default
 - `.hermes/tasks/<task-id>/plan.md` — use [templates/plan.md](../templates/plan.md)  
 - `.hermes/tasks/<task-id>/phase_checklists.md` — use [templates/phase_checklists.md](../templates/phase_checklists.md)  
 
-After plan review, write outputs under `.hermes/tasks/<task-id>/reviews/plan/` per orchestrator layout.
+After each plan review run, write outputs under `.hermes/tasks/<task-id>/reviews/plan/round_NN/` per orchestrator layout.
 
 ## Required content in `plan.md`
 

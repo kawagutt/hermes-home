@@ -24,4 +24,4 @@ Typically all reviewer `*.md` files for the same stage (`requirements.md`, `arch
 
 ## Output
 
-Always write **`synthesis.md`** for that stage using the synthesis template.
+Always write **`synthesis.md`** under **`reviews/<stage>/round_NN/`** for the **current** run using the synthesis template. **Never overwrite** prior `round_*` directories. Increment `review_rounds` and `latest_reviews` in `state.yaml` after the round is complete.
