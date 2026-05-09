@@ -12,7 +12,7 @@ Produce and stabilize **what** to build before any implementation or test code w
 
 ## Outputs
 
-Primary artifact: `.hermes/tasks/<task-id>/spec.md`  
+Primary artifact: `.hermes/tasks/<task-id>/spec.md` (**working spec** for this task; not canonical project documentation unless deliberately promoted—see orchestrator [SKILL.md](../SKILL.md#artifact-persistence-policy)).
 Start from [templates/spec.md](../templates/spec.md).
 
 After spec reviewer agents finish for this run, write outputs under `.hermes/tasks/<task-id>/reviews/spec/round_NN/` (see orchestrator round rules): per-agent files plus `synthesis.md`.

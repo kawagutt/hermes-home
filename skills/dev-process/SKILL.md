@@ -4,8 +4,8 @@ description: >-
   Orchestrates a staged development workflow for Hermes agents: spec, human spec gate, plan, plan
   review, independent test authoring after plan, product implementation with phase checkpoints, and
   final review. Enforces role separation (TestAuthor vs ImplementationAgent), target×agent reviews,
-  and artifact layout under .hermes/tasks/. Use when running structured multi-agent dev with
-  spec-first gates and plan-before-tests ordering.
+  working logs under .hermes/tasks/ (not project canonical docs), and artifact layout. Use when
+  running structured multi-agent dev with spec-first gates and plan-before-tests ordering.
 ---
 
 # Dev Process (Orchestrator)
@@ -96,13 +96,60 @@ If ImplementationAgent discovers tests are invalid or obsolete, **stop** and ret
 
 ## Artifact root
 
-Store task state and documents under:
+Store **per-task working state** (not the project’s long-lived source of truth) under:
 
 ```text
 .hermes/tasks/<task-id>/
 ```
 
 Use templates from [templates/](templates/). Copy [templates/state.yaml](templates/state.yaml) and update fields as stages complete.
+
+See **Artifact persistence policy** below for Git and “promotion” to project docs.
+
+## Artifact persistence policy
+
+`.hermes/tasks/<task-id>/` holds **temporary dev-process task artifacts**—a **working log** for that development task only. These files support agents and humans *during* the task; they are **not** the project’s authoritative specification, design, or product record.
+
+By default:
+
+- **Do not commit** `.hermes/tasks/` artifacts to the **project** repository.  
+- If a specification or design **must** become project documentation, create a **separate** project-level artifact (for example under `docs/`) intentionally curated for readers—**do not** promote `.hermes/tasks/…` paths **as-is** into canonical project docs without review and rewriting as needed.
+
+**Do not add `.hermes/`** to the project’s tracked **`.gitignore`**: that is shared project policy and would affect collaborators who never use Hermes.
+
+To exclude `.hermes/` locally without touching the repo’s `.gitignore`, use either:
+
+**Global exclude (recommended on personal workstations):**
+
+```bash
+mkdir -p ~/.config/git
+touch ~/.config/git/ignore
+grep -qxF '.hermes/' ~/.config/git/ignore || echo '.hermes/' >> ~/.config/git/ignore
+
+git config --global core.excludesfile ~/.config/git/ignore
+```
+
+Verify:
+
+```bash
+git config --global core.excludesfile
+cat ~/.config/git/ignore
+```
+
+**This repository only (not committed)—`info/exclude`:**
+
+```bash
+EXCLUDE_FILE="$(git rev-parse --git-path info/exclude)"
+grep -qxF '.hermes/' "$EXCLUDE_FILE" || echo '.hermes/' >> "$EXCLUDE_FILE"
+```
+
+**Contrast:**
+
+| Location | Role | Typical Git handling |
+|---------|------|------------------------|
+| `skills/dev-process/` (this skill) | Process rules & templates | Version in the Hermes-home / skill repository |
+| `<project>/.hermes/tasks/<task-id>/` | Task working log | **Do not commit** to project repo by default (see excludes above) |
+| `<project>/docs/…` (or similar) | Optional **formal** project specs | Version in project repo when the team wants durable docs |
 
 Append-only history (task root):
 
@@ -180,7 +227,8 @@ The only standing human gate is **after spec review**, recorded as `human_spec_g
 
 ## Safety rules
 
-- Do not commit unless explicitly requested.
+- Do not **commit** or **push** **product / project** changes unless explicitly requested.  
+- **Do not commit** `.hermes/tasks/` dev-process task artifacts to the project repository by default (see [Artifact persistence policy](#artifact-persistence-policy)); they are working logs, not shared project deliverables.
 - Do not push.
 - Do not modify files outside the current repository.
 - Do not run destructive git commands.
