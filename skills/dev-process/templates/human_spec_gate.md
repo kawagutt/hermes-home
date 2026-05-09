@@ -30,6 +30,10 @@ What is the **highest-risk** failure mode, and where is it captured in `spec.md`
 
 > 
 
+## Short CUI approval
+
+Before asking for approval, provide a concise Japanese summary (`spec_summary_ja.md`). A short response such as `OK` is acceptable after that summary. Record the exact response and any comments here. If comments require material `spec.md` changes, update the spec, rerun required spec review if material, provide an updated Japanese summary, and ask for confirmation again before plan.
+
 ## 5. Approval
 
 - [ ] I approve proceeding to **plan** with the current `spec.md`.  

@@ -64,7 +64,7 @@ Use [review/SKILL.md](../review/SKILL.md).
 
 **Standard recipe:** target `test` → review agents `requirements`, `test_quality`, `checklist_compliance` → **synthesis:** yes (see [review/SKILL.md](../review/SKILL.md)).
 
-Blocking findings → **do not** start ImplementationAgent until resolved via test revisions or explicit spec/plan amendment loop.
+Blocking findings → **do not** start ImplementationAgent until resolved via test revisions or explicit spec/plan amendment loop. If test review clears and `state.yaml`/latest synthesis permit it, dev-process may legally continue to the implementation branch precondition; do not stop only because the test stage boundary was reached.
 
 ## Test failure triage (after implementation has started)
 

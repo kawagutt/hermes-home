@@ -47,15 +47,17 @@ After `spec.md` is drafted, route reviews via [review/SKILL.md](../review/SKILL.
 
 Detailed checklists live in `review/targets/spec.md` and `review/agents/*.md`; do not duplicate them here.
 
-## Human spec gate (only standing human gate)
+## Human spec gate
 
 Before **plan**, the human completes understanding confirmation—not a trivia quiz—and records it:
 
+- Write or update a concise Japanese decision summary (`spec_summary_ja.md`) covering goal, non-goals, success criteria, risks, and required human decisions.
 - Copy [templates/human_spec_gate.md](../templates/human_spec_gate.md) to `.hermes/tasks/<task-id>/human_spec_gate.md` and fill it.
+- A short CUI approval such as `OK` is acceptable after the summary is provided; record the response and comments in `human_spec_gate.md`.
 
-Full gate text and rationale: [human_gate.md](human_gate.md).
+Full gate text and rationale: [human_gate.md](human_gate.md). Shared gate/summary rules: [../SKILL.md](../SKILL.md#hard-human-gates).
 
-Do not enter **plan** until the human gate artifact exists and questions are resolved or explicitly accepted.
+Do not enter **plan** until the human gate artifact exists and questions are resolved or explicitly accepted. If human-gate feedback causes material `spec.md` changes, update the spec, rerun required spec review if material, provide an updated Japanese summary, and ask for confirmation again before planning.
 
 ## Permissions
 

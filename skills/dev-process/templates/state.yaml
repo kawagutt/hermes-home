@@ -2,13 +2,14 @@
 # Copy to .hermes/tasks/<task-id>/state.yaml and fill. Boolean flags are examples.
 
 task_id: ""
-current_stage: ""      # e.g. spec | plan | test | implementation | final
+current_stage: ""      # e.g. spec | plan | test | implementation | final | final_human_gate
 current_phase: ""      # e.g. 01 or null when N/A
 
 # Human / process gates: spec text ready and human read-back done. No default human plan gate.
 approved:
   spec: false
   human_spec_gate: false
+  final_human_gate: false
 
 # Review completion (e.g. plan review synthesis cleared, test review cleared). Tracks agent review, not “approved.plan”.
 reviewed:
@@ -41,11 +42,23 @@ latest_reviews:
   final: ""    # canonical pointer for final synthesis; do not duplicate elsewhere
   implementation_phase_01: ""   # add matching implementation_phase_* keys as phases exist
 
+branch:
+  name: ""
+  feasibility_checked_before_human_spec_gate: false
+  feasibility_notes: ""
+  created_before_implementation: false
+  product_commits_allowed_on_branch: false
+  task_artifacts_commit_by_default: false
+
 artifacts:
   spec: spec.md
+  spec_summary_ja: spec_summary_ja.md
   plan: plan.md
   timeline: timeline.md
   rework_log: rework_log.md
+  human_spec_gate: human_spec_gate.md
+  final_human_gate: final_human_gate.md
+  final_summary_ja: final_summary_ja.md
   test_plan: test_plan.md
   red_test_result: red_test_result.md
   final_test_result: final_test_result.md

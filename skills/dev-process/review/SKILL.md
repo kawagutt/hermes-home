@@ -19,6 +19,10 @@ After reviewers finish, optionally run a **synthesis role** ([`agents/synthesis.
 
 `review/targets/*.md` and `review/agents/*.md` are **reference prompt fragments**, not standalone skills. This file is the **router** only: **recipes + contract**, not detailed checklists.
 
+## Cheap-checker escalation
+
+Cheap/medium reviewers may flag possible blockers during mechanical or routine checks, but final blocker decisions belong to synthesis or a higher-reasoning reviewer. Do not let a cheap checker alone make irreversible advancement or merge decisions.
+
 ## Findings classification
 
 Each reviewer labels items as one of:
@@ -37,7 +41,7 @@ Each reviewer labels items as one of:
 
 A **synthesis** step merges independent reviewer files into one recommendation (`synthesis.md`) using [`templates/synthesis_result.md`](templates/synthesis_result.md). It should resolve duplicated findings and state **merge/readiness**.
 
-Synthesis **per implementation phase** may be skipped for cost; final synthesis should not be skipped arbitrarily when merge decisions matter.
+Synthesis **per implementation phase** may be skipped for cost; final synthesis should not be skipped arbitrarily when merge decisions matter. Final review synthesis precedes `final_human_gate`; after final synthesis and validation evidence, provide a concise Japanese final summary and record the human decision in `final_human_gate.md`.
 
 ---
 
@@ -136,6 +140,7 @@ Recipes name **targets** and **review agents** only. **Synthesis** is a separate
 - **target:** `final_diff` (`targets/final_diff.md`)  
 - **review agents:** `architecture`, `diff_detail`, `impact`, `naming_doc`, `test_quality`  
 - **synthesis:** required  
+- **after synthesis:** write/refresh `final_summary_ja.md`, then stop at `final_human_gate` for human merge/completion decision  
 
 ---
 

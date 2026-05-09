@@ -13,6 +13,67 @@ description: >-
 This skill defines **how work is sequenced**, **who may change what**, and **where artifacts live**.
 Read submodule `SKILL.md` files when operating a single stage.
 
+## Bounded `/goal` operating contract
+
+A short request such as `Start a new task. Goal: ...` is enough to begin a dev-process task. If the user does not provide a task id, propose or create a stable task-related id, create `.hermes/tasks/<task-id>/`, initialize `state.yaml`, and start at `spec`. Before asking for the spec human gate, check whether a task branch can be created for this task under repository policy and record that branch feasibility in the spec summary or gate artifact.
+
+When continuing an existing task, read `.hermes/tasks/<task-id>/state.yaml` first. Resume from `current_stage`, `current_phase`, `review_rounds`, and `latest_reviews`; do not rely on chat history alone.
+
+### legal continuation vs required stops
+
+`/goal` may continue across ordinary stage or phase boundaries when the next action is legally allowed by `state.yaml`, gate approvals, required artifacts, latest review synthesis, role permissions, and the approved plan. Do **not** stop merely because a phase completed if the next stage is legal and the same agent/session may perform it.
+
+A bounded advancement may be one stage, one implementation phase, one review target plus selected agents, one synthesis/status step, or a legal chain of those steps until a required stop condition is reached.
+
+### Hard human gates
+
+There are two standing hard human gates:
+
+1. `human_spec_gate` — after spec review, before plan. If human comments cause material `spec.md` changes, update the spec, rerun required spec review if material, provide an updated concise Japanese summary, and ask for human confirmation again before planning.
+2. `final_human_gate` — after final review synthesis and final validation evidence, before merge/completion decision.
+
+Before human-facing approval requests, provide a concise Japanese summary:
+
+- `spec_summary_ja.md` before `human_spec_gate`: goal, non-goals, success criteria, risks, and required human decisions.
+- `final_summary_ja.md` before final review / `final_human_gate`: final diff, validation results, review findings, unresolved risks, and merge/commit recommendation.
+
+A short CUI approval such as `OK` is valid after the summary is provided. Record the approval and any comments in the relevant gate artifact (`human_spec_gate.md` or `final_human_gate.md`). Summary and gate artifacts remain task-local working logs and are not committed by default.
+
+### Operational stops
+
+Outside hard human gates, stop only when continuing would be unsafe or illegal, including:
+
+- blocking review synthesis or unresolved escalation;
+- next required action belongs to a different role and handoff is needed;
+- required artifacts are missing or inconsistent;
+- continuing would change scope, public behavior, role permissions, artifact policy, branch/commit policy, or validation policy;
+- the agent is uncertain which stage is legally next.
+
+When stopping, write a short stop report:
+
+```text
+Stopped because:
+What I need from the human:
+Next allowed action after resolution:
+Relevant artifacts:
+```
+
+Do not stop with only “phase complete” or “waiting for next instruction” unless a human gate or blocker actually requires it.
+
+### Implementation branch and commits
+
+Before asking for `human_spec_gate` approval, check whether a dedicated task branch can be created for this task and report the result to the human. Before product implementation starts, create or switch to that dedicated task branch after spec, plan, test authoring, and test review are complete. Follow repository branch policy first; otherwise use a stable task-related name such as `dev-process/<task-id>` or `feature/<short-task-slug>`.
+
+Do not start product implementation on `main`/`master` unless repository policy explicitly requires it. Product/project changes may be committed on a branch the agent created for the task. Commits to other branches, merges into other branches, and pushes are forbidden unless the human explicitly instructs otherwise. `.hermes/tasks/<task-id>/` artifacts remain uncommitted working logs by default. Never mix “product commits are allowed” with “task artifacts may be committed.”
+
+### cost-aware validation and model use
+
+Prefer deterministic commands over LLM reasoning for mechanical checks: tests, linting, content searches, file existence, artifact paths, YAML/Markdown syntax, and simple validation that required files exist. Cheap/medium checker agents are appropriate for routine artifact completeness, checklist compliance, naming/doc consistency, and simple log summaries. Reserve higher-cost models for spec/plan reasoning, architecture/impact review, ambiguous failure diagnosis, final synthesis, and blocker triage. Cheap checkers may flag possible blockers, but final blocker decisions must escalate to synthesis or a higher-reasoning reviewer. This is process guidance, not runtime model-routing automation.
+
+For Python validation on Python changes, precedence is: user-explicit command > project docs/config (`AGENTS.md`, README, Makefile, `pyproject.toml`, etc.) > dev-process default. If no project rule exists, plan Ruff checks per Python-changing phase, preferably `uv run ruff check <touched-python-paths>` or `.venv/bin/python -m ruff check <touched-python-paths>` when appropriate. Do not silently use unrelated system Python when the project appears to use `uv` / `.venv`; stop and report environment ambiguity.
+
+This section documents process behavior for Hermes `/goal`; it does not implement or require Hermes CLI, gateway, slash-command, agent-loop, or executable model-routing changes.
+
 ## Canonical pipeline (source of truth)
 
 ```text
@@ -22,9 +83,11 @@ spec
   → plan
   → plan review
   → test implementation + test review
+  → implementation branch precondition
   → product implementation
   → phase checkpoint reviews
   → final review
+  → final human gate
 ```
 
 **Hard gate — plan before tests**
@@ -88,9 +151,9 @@ Task artifact templates live under [templates/](templates/).
 | PlanAgent | no | no | yes | no commit/push |
 | TestAuthorAgent | no | yes | yes | no commit/push |
 | TestReviewerAgent | read-only | read-only | yes | no commit/push |
-| ImplementationAgent | yes | **default no** (see implementation skill) | yes | no commit/push |
+| ImplementationAgent | yes | **default no** (see implementation skill) | yes | may commit only on agent-created task branch; no merge/push |
 | Reviewer agents | read-only | read-only | yes | no commit/push |
-| Orchestrator | artifacts only | no | yes | no commit/push |
+| Orchestrator | artifacts only | no | yes | no merge/push; no commits except explicit task-branch handoff policy |
 
 If ImplementationAgent discovers tests are invalid or obsolete, **stop** and return work to TestAuthor/TestReviewer. **Do not silently rewrite tests** to make implementation pass.
 
@@ -221,13 +284,21 @@ Details: [review/SKILL.md — Review rounds and rework history](review/SKILL.md#
 
 Use **output formats** from `review/templates/review_result.md` (per reviewer file) and `review/templates/synthesis_result.md` (for `synthesis.md`).
 
-### Human gate (spec only)
+### Human gates
 
-The only standing human gate is **after spec review**, recorded as `human_spec_gate.md`. Plan uses **agent review + conditional human escalation** (see [plan/SKILL.md](plan/SKILL.md)).
+Standing human gates are:
+
+1. **Spec human gate** after spec review, recorded as `human_spec_gate.md`. Plan uses **agent review + conditional human escalation** (see [plan/SKILL.md](plan/SKILL.md)).
+2. **Final human gate** after final review synthesis and final validation evidence, recorded as `final_human_gate.md`.
+
+Both gates require a concise Japanese decision summary before asking for approval. A short response such as `OK` is acceptable after the summary is provided; record it and any comments in the gate artifact.
 
 ## Safety rules
 
-- Do not **commit** or **push** **product / project** changes unless explicitly requested.  
+- Do not **push**, **merge**, or commit to branches other than the agent-created task branch unless explicitly requested.
+- Before `human_spec_gate`, check and report whether a dedicated task branch can be created for the task. Before product implementation, create or switch to that dedicated task branch unless repository policy explicitly says otherwise; do not start implementation on `main`/`master` by default.
+- Product/project commits are allowed on a branch the agent created for the task. Commits to other branches, merges, and pushes remain forbidden unless explicitly requested.
+- Do not modify git-untracked product/project files without explicit human permission. If the user has not instructed you to modify an untracked file, leave it alone.
 - **Do not commit** `.hermes/tasks/` dev-process task artifacts to the project repository by default (see [Artifact persistence policy](#artifact-persistence-policy)); they are working logs, not shared project deliverables.
 - Do not modify files outside the current repository.
 - Do not run destructive git commands.
@@ -250,8 +321,10 @@ flowchart TD
   planStage[plan]
   planRev[plan_review]
   testsStage[test_impl_plus_test_review]
+  implBranch[implementation_branch_precondition]
   implStage[implementation_phase_checkpoints]
   finalStage[final_review]
+  finalGate[final_human_gate]
 
-  specStage --> specRev --> humanGate --> planStage --> planRev --> testsStage --> implStage --> finalStage
+  specStage --> specRev --> humanGate --> planStage --> planRev --> testsStage --> implBranch --> implStage --> finalStage --> finalGate
 ```

@@ -27,13 +27,25 @@ After each plan review run, write outputs under `.hermes/tasks/<task-id>/reviews
 
 Include at minimum:
 
+- Branch feasibility status checked before `human_spec_gate` and the later implementation branch precondition  
 - Implementation phases (small, ordered)  
 - Expected changed files per phase  
-- Forbidden changes (what must not be touched)  
-- Validation per phase (commands)  
+- Forbidden changes (what must not be touched), including git-untracked product/project files unless explicitly permitted  
+- Validation per phase (commands), including selected Python/Ruff commands for phases that touch Python code unless project policy overrides them  
 - Rollback / stop conditions  
 - Reviewer assignment notes (which review targets/agents later)  
 - Test strategy (including when “red test before implementation” does not apply, e.g. docs-only)  
+
+
+## Validation environment policy
+
+PlanAgent owns validation selection. Use this precedence:
+
+1. User-explicit validation commands.
+2. Project docs/config such as `AGENTS.md`, README, Makefile, `pyproject.toml`, or equivalent.
+3. Dev-process defaults from [../SKILL.md](../SKILL.md#cost-aware-validation-and-model-use).
+
+For Python code changes, include a Ruff validation command in `phase_checklists.md` unless the project explicitly uses another linting policy. Prefer touched Python paths first. If no project rule exists, prefer `uv run ruff check <touched-python-paths>` or `.venv/bin/python -m ruff check <touched-python-paths>` when appropriate. Do not leave Python lint policy for ImplementationAgent to invent ad hoc.
 
 ## Plan review
 

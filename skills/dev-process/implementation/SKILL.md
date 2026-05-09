@@ -15,12 +15,16 @@ Implement **approved** artifacts only:
 - `phase_checklists.md`  
 - Test outputs: `test_plan.md`, authored tests, latest test synthesis path in `state.yaml` → `latest_reviews.test` (and any mandated files your team tracks)  
 
+## Branch precondition
+
+Before `human_spec_gate`, the task should already have recorded whether a dedicated branch can be created for the task. Before product implementation starts, create or switch to that dedicated task branch after spec, plan, test authoring, and test review are complete. Follow repository branch policy first; otherwise use a stable task-related name such as `dev-process/<task-id>` or `feature/<short-task-slug>`. Do not start product implementation on `main`/`master` unless repository policy explicitly requires it. Product/project commits may happen only on a branch the agent created for the task; commits to other branches, merges, and pushes are forbidden unless explicitly requested. `.hermes/tasks/<task-id>/` remains uncommitted by default. Do not modify git-untracked product/project files without explicit human permission; if there is no instruction to modify an untracked file, leave it alone. Record branch status in `implementation_log.md` or `phase_results.md`.
+
 ## Phase execution
 
 For each phase in `plan.md`:
 
 1. Perform only scoped changes permitted by `phase_checklists.md`.  
-2. Run phase validation commands (tests, linters).  
+2. Run phase validation commands (tests, linters), including the planned Python/Ruff command when the phase changes Python code.  
 3. Append results to `.hermes/tasks/<task-id>/phase_results.md` using [templates/phase_results.md](../templates/phase_results.md).  
 4. Run checkpoint review (see below).  
 5. Proceed only if checkpoint is clear of blockers for the next phase.
@@ -105,6 +109,10 @@ Minor mechanical fixes **still** flow through test agents unless humans explicit
 ## Permissions
 
 ImplementationAgent: **product code yes**; tests **no** by default.
+
+## Validation gaps
+
+If a Python-changing phase lacks a planned lint command and no project policy explains why, stop and return to PlanAgent rather than choosing an unreviewed Python environment or silently using unrelated system Python.
 
 ## If plan or tests appear wrong
 
