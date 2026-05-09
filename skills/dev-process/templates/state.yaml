@@ -1,0 +1,23 @@
+# Task state (template)
+# Copy to .hermes/tasks/<task-id>/state.yaml and fill. Boolean flags are examples.
+
+task_id: ""
+current_stage: ""      # e.g. spec | plan | test | implementation | final
+current_phase: ""      # e.g. 01 or null when N/A
+
+approved:
+  spec: false
+  human_spec_gate: false
+  plan: false
+  tests: false
+
+escalation:
+  required: false
+  reason: ""
+
+artifacts:
+  spec: spec.md
+  plan: plan.md
+  test_plan: test_plan.md
+  implementation_log: implementation_log.md
+  final_review: reviews/final/synthesis.md
