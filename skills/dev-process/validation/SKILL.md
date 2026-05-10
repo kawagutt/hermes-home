@@ -2,7 +2,7 @@
 name: dev-process-validation
 description: >-
   Cost-aware validation, model/reasoning strength policy, Python/Ruff precedence,
-  safe deterministic helper execution, script helper listing, and model/reasoning evidence audit hints.
+  safe deterministic helper execution, script helper listing, and model usage evidence hints.
   Use when choosing checks for a phase or running helpers.
 ---
 
@@ -14,13 +14,13 @@ Prefer deterministic commands over LLM reasoning for mechanical checks: tests, l
 
 ### Model strength policy
 
-dev-process **does not** bind concrete provider or model IDs. Typical Hermes-aligned shape (adjust to team defaults):
+dev-process **does not** bind concrete provider or model IDs. Typical Hermes layout (adjust to team defaults):
 
-| Role | Tier | Reasoning |
-|------|------|-----------|
-| Substantive dev-process loop (spec / plan / tests / implementation / reviews) | Strongest configured **main** model (e.g. team default for coding agents) | Tied to **review-depth preset** — see § **Reasoning effort by review-depth preset** |
+| Role | Tier | Reasoning effort |
+|------|------|------------------|
+| Primary dev-process loop (spec / plan / tests / implementation / reviews) | Strongest configured **main model** (e.g. team default for coding agents) | Tied to **review-depth preset** — see § **Reasoning effort by review-depth preset** |
 | Deterministic helpers | No LLM | — |
-| Side tasks (Hermes auxiliary: approval, title, compression, session search, web extract, vision) | Cheapest **Codex-compatible** auxiliary tier acceptable for shallow work | none / lowest available |
+| Side tasks (auxiliary tier: approval, title, compression, session search, web extract, vision) | Cheapest **Codex-compatible** auxiliary tier acceptable for shallow work | none / lowest available |
 
 Higher reasoning effort is not automatically better—it is slower, costlier, and can overthink ([OpenAI reasoning guidance](https://developers.openai.com/api/docs/guides/reasoning)). **Preset** selects depth; reasoning effort follows the table below—not every stage at maximum.
 
@@ -28,17 +28,17 @@ Preset selection rules: [review/presets.md](../review/presets.md).
 
 ### Reasoning effort by review-depth preset
 
-When the runtime supports reasoning-effort selection (e.g. Hermes `/reasoning`), tie effort to the **currently selected review-depth preset** for the task. Do **not** use **high** on `light` by default—**escalate the preset** to `deep` instead of secretly cranking reasoning.
+When the **runtime** supports reasoning-effort selection (e.g. Hermes `/reasoning`), tie effort to the **selected review-depth preset** for the task. Do **not** use **high** on `light` by default—**escalate the preset** to `deep` instead of secretly cranking reasoning. Preset aliases (`fast`, `high-risk`) are defined only in [review/presets.md](../review/presets.md).
 
 | Preset | Typical main model policy | Reasoning effort policy |
 |--------|---------------------------|-------------------------|
-| `light` / `fast` | main (strong tier) | **Do not** use **high**. Use deterministic helpers first; **default / medium** (or runtime default) only. If risk rises, escalate **preset** to `standard` or `deep`. |
-| `standard` | main (strong tier) | **default / medium** for spec, plan, implementation, and routine reviews. **Escalate to `deep` before adopting high reasoning**, except when a human explicitly requests high for a **narrow** decision. |
-| `deep` / `high-risk` | main (strong tier) | **high** for synthesis, blocker/rework-owner triage when ambiguous, architecture/impact judgment where consequences are unclear, human-gate prep with **required human decisions**, and **final completion / merge recommendation** when unresolved risk remains. |
+| `light` | **main model** | **Do not** use **high**. Use deterministic helpers first; **default/medium** reasoning effort (or runtime default) only. If risk rises, escalate **preset** to `standard` or `deep`. |
+| `standard` | **main model** | **default/medium** reasoning effort for spec, plan, implementation, and routine reviews. **Escalate to `deep` before adopting high reasoning**, except when a human explicitly requests high for a **narrow** decision. |
+| `deep` | **main model** | **high** reasoning effort for synthesis, blocker/rework-owner triage when ambiguous, architecture/impact judgment where consequences are unclear, human-gate prep with **required human decisions**, and **final completion / merge recommendation** when unresolved risk remains. |
 
 **Use high reasoning when** (aligned with **`deep`** triggers in [review/presets.md](../review/presets.md)):
 
-- active preset is `deep` / high-risk equivalent, or preset was just escalated to `deep`; or  
+- active preset is `deep`, or preset was just escalated to `deep`; or  
 - public **API** / **CLI** / **user-visible behavior** changes; **architecture / boundary** changes; **migration / schema / persistence**; **security / permission / privacy**;  
 - blocker triage or rework-owner assignment is **ambiguous**; **reviewer disagreement** remains; final completion decision has **unresolved risk**.
 
@@ -53,24 +53,24 @@ When the runtime supports reasoning-effort selection (e.g. Hermes `/reasoning`),
 
 Spend **high** reasoning on **remaining uncertainty and high impact**, not on mechanical validation.
 
-### Model usage audit
+### Model usage
 
-Hermes can show **per-model tokens and estimated cost** (Dashboard Analytics, Models page); CLI: `hermes insights`. That does **not** attribute usage to dev-process **stages** or **preset**—record that on the task.
+Hermes can show **per-model tokens and estimated cost** (Hermes Dashboard Analytics, Models page); CLI: `hermes insights`. That does **not** attribute usage to dev-process **stages** or **preset**—record that on the task.
 
-**When to create `artifacts.model_usage`:** normally when preset is **`deep`** or substantive **high** reasoning is used; cost/usage accountability; human-requested audit; **final summary** needs **detailed per-session model evidence**; or **Audit required? yes** in the plan. **Exception:** if **`artifacts.plan`** explicitly records that **only final-summary-level model/reasoning evidence** (no per-stage `model_usage` rows) is enough for this task, you may set **Audit required? no** and leave **`artifacts.model_usage`** empty even when the preset is `deep`—document that choice in the plan **Reason** field. Skip typical **light** tasks with **Audit required? no** (leave **`artifacts.model_usage`** empty).
+**When to create `artifacts.model_usage`:** normally when preset is **`deep`** or **high** reasoning effort is used for primary-loop work, not only shallow side tasks; cost/usage accountability; human-requested **detailed model usage records**; **final summary** needs **detailed per-session model evidence**; or **`Model usage record required?` yes** in the plan. **Exception:** if **`artifacts.plan`** explicitly records that **only final-summary-level model/reasoning evidence** (no per-stage `model_usage` rows) is enough for this task, you may set **`Model usage record required?` no** and leave **`artifacts.model_usage`** empty even when the preset is `deep`—document that choice in the plan **Reason** field. Skip typical **light** tasks with **`Model usage record required?` no** (leave **`artifacts.model_usage`** empty).
 
 **Evidence preference order** (cheap and low-risk first):
 
-1. **`hermes insights`** / Dashboard **per-model** summary  
+1. **`hermes insights`** / Hermes Dashboard **per-model** summary  
 2. **`hermes sessions list`** / **`hermes sessions stats`**  
 3. **`hermes sessions export`** … with redaction as needed  
 4. **Redacted grep** of `~/.hermes/logs` **only** when the above is insufficient  
 
-**If `Audit required? = yes`** but model or reasoning **cannot** be observed: record **`unknown`** and a **short reason** (gateway did not expose setting, session lost, etc.) in **`artifacts.model_usage`** and/or **`artifacts.final_summary_ja`**—do **not** leave the field silently blank.
+**If `Model usage record required?` is yes** but model or reasoning **cannot** be observed: record **`unknown`** and a **short reason** (gateway did not expose setting, session lost, etc.) in **`artifacts.model_usage`** and/or **`artifacts.final_summary_ja`**—do **not** leave the field silently blank.
 
-**Materialize once:** copy [templates/model_usage.md](../templates/model_usage.md) to the task root with correct `NNNN_` numbering; set `state.yaml` → **`artifacts.model_usage`** in the **same session**. **Append rows** at major boundaries; see template for multi-session rules ([artifacts/SKILL.md](../artifacts/SKILL.md) append-only log policy).
+**Materialize once:** copy [templates/model_usage.md](../templates/model_usage.md) to the task root with correct `NNNN_` numbering; set `state.yaml` → **`artifacts.model_usage`** in the **same session**. **Append rows** at major boundaries; see template for multi-session rules ([artifacts/SKILL.md](../artifacts/SKILL.md) — append-only `model_usage` under **append-only task artifacts**).
 
-The plan always includes the **compact** audit block (`Audit required?`, `Reason`, `Artifact`); expand the **optional per-stage** table in the plan only when audit is **yes**.
+The plan always includes the **compact** model usage block (`Model usage record required?`, `Reason`, `Artifact`); expand the **optional per-stage** table in the plan only when **`Model usage record required?`** is **yes**.
 
 **Useful Hermes-facing commands** (availability depends on install; see [CLI reference](https://hermes-agent.nousresearch.com/docs/reference/cli-commands)):
 
@@ -101,7 +101,7 @@ Do **not** paste raw log output into task-root artifacts when it may include **s
 - stage (spec, plan review, …)
 - preset effective for that slice
 - reasoning expected by plan vs **observed** session setting if available
-- session id(s) for substantive Hermes turns
+- session id(s) for Hermes sessions in the primary dev-process loop
 - pointer to insights/Dashboard/export or redacted log line
 
 For Python validation on Python changes, precedence is: user-explicit command > project docs/config (`AGENTS.md`, README, Makefile, `pyproject.toml`, etc.) > dev-process default. If no project rule exists, plan Ruff checks per Python-changing phase, preferably `uv run ruff check <touched-python-paths>` or `.venv/bin/python -m ruff check <touched-python-paths>` when appropriate. Do not silently use unrelated system Python when the project appears to use `uv` / `.venv`; stop and report environment ambiguity.

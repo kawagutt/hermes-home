@@ -166,10 +166,10 @@ def test_japanese_summary_templates_require_individual_decisions_before_ok() -> 
         assert "最終承認" in text
 
 
-def test_model_usage_audit_can_be_skipped_for_light_tasks() -> None:
+def test_model_usage_review_can_be_skipped_for_light_tasks() -> None:
     plan = read_rel("templates/plan.md")
     validation = read_rel("validation/SKILL.md")
-    assert "Audit required?" in plan
+    assert "Model usage record required?" in plan
     assert "yes / no" in plan
     assert "leave **`artifacts.model_usage`** empty" in validation
 

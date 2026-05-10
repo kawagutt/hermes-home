@@ -16,7 +16,7 @@ A short request such as `Start a new task. Goal: ...` is enough to begin a dev-p
 
 When continuing an existing task, read `.hermes/tasks/<task-id>/state.yaml` first. Resume from `current_stage`, `current_phase`, `review_rounds`, and `latest_reviews`; do not rely on chat history alone.
 
-**Hermes-compatible hint:** Prefer **one main strong model** for the substantive loop and **auxiliary tiers** only for Hermes shallow side tasks—not substantive reviewer passes. **Reasoning effort follows the chosen review-depth preset** (`light` → no high by default; `standard` → medium until escalated; `deep` → high for syntheses, ambiguous triage, impact/architecture, final recommendation). See [validation/SKILL.md — Reasoning effort by review-depth preset](../validation/SKILL.md#reasoning-effort-by-review-depth-preset) and **`artifacts.plan`** preset lines.
+**Hermes-compatible hint:** Prefer **one main model** for the primary dev-process loop, and use **auxiliary tiers** only for shallow side tasks—not full-depth reviewer passes. **Reasoning effort follows the chosen review-depth preset** (`light` → no high by default; `standard` → medium until escalated; `deep` → high reasoning effort for syntheses, ambiguous triage, impact/architecture, final recommendation). See [validation/SKILL.md — Reasoning effort by review-depth preset](../validation/SKILL.md#reasoning-effort-by-review-depth-preset) and **`artifacts.plan`** preset lines.
 
 ## Legal continuation vs required stops
 
