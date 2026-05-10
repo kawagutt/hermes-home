@@ -32,7 +32,8 @@ def all_markdown() -> str:
 def test_review_depth_has_single_canonical_preset_table() -> None:
     text = all_markdown()
     presets = read_rel("review/presets.md")
-    assert text.count("| Preset |") == 1
+    # Canonical reviewer-requirements table lives only in presets.md; other SKILLs may mention "| Preset |" columns.
+    assert presets.count("| Preset |") == 1
     assert "single source of truth" in text
     assert "externally observable product behavior" in text
     assert "public/user-visible behavior" not in text
@@ -163,6 +164,25 @@ def test_japanese_summary_templates_require_individual_decisions_before_ok() -> 
         assert "Required human decisions" in text
         assert "個別" in text
         assert "最終承認" in text
+
+
+def test_model_usage_audit_can_be_skipped_for_light_tasks() -> None:
+    plan = read_rel("templates/plan.md")
+    validation = read_rel("validation/SKILL.md")
+    assert "Audit required?" in plan
+    assert "yes / no" in plan
+    assert "leave **`artifacts.model_usage`** empty" in validation
+
+
+def test_model_usage_warns_not_to_paste_raw_logs_and_is_stage_attribution_aid() -> None:
+    model_usage = read_rel("templates/model_usage.md")
+    validation = read_rel("validation/SKILL.md")
+    text = model_usage + validation
+    assert "Do not paste raw log" in text
+    assert "secrets" in text
+    assert "redacted" in text.casefold()
+    assert "does not replace" in model_usage.casefold()
+    assert "insights" in model_usage.casefold() or "Hermes" in model_usage
 
 
 def test_markdown_relative_links_resolve_under_dev_process_skill() -> None:

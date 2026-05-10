@@ -27,6 +27,10 @@ After each plan review run, write outputs under `.hermes/tasks/<task-id>/reviews
 
 Include at minimum:
 
+- **`Selected review-depth preset`** for this task: `light`, `standard`, or `deep` — per [review/presets.md](../review/presets.md); restate escalation rule if preset may change mid-task (`standard → deep` when high-risk triggers appear).  
+- **`Reasoning effort plan`** aligned with preset (Hermes-compatible: e.g. `/reasoning`): **`light`** — default/medium, high not used unless preset escalates; **`standard`** — default/medium unless escalated to `deep`; **`deep`** — high for syntheses, ambiguous blocker triage, architecture/impact, final recommendation ([validation/SKILL.md](../validation/SKILL.md#reasoning-effort-by-review-depth-preset)).  
+- **`Model / reasoning audit`** — always the **compact** block in [templates/plan.md](../templates/plan.md): **Audit required?** (yes/no), **Reason**, **Artifact** expectations. **Light / docs-only tasks** may set **no** with reason `no need` and leave **`artifacts.model_usage`** empty.  
+- **When Audit required? yes** (see template triggers in [templates/plan.md](../templates/plan.md)—e.g. `deep`, substantive **high** reasoning, cost accountability, human request, or final summary needs **detailed per-session model evidence**): materialize task-root log from [templates/model_usage.md](../templates/model_usage.md), set `state.yaml` → **`artifacts.model_usage`**, **append** rows at major stage/session boundaries; optionally fill the template’s **optional per-stage** table in the plan body. See [validation/SKILL.md — Model usage audit](../validation/SKILL.md#model-usage-audit).  
 - Branch feasibility status checked before `human_spec_gate` and the task branch precondition (after plan review, before test implementation)  
 - Implementation phases (small, ordered)  
 - Expected changed files per phase  

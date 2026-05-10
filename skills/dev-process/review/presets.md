@@ -25,6 +25,22 @@ Documentation text-only changes do not count as externally observable product be
 
 Human preference for a lighter preset does not override high-risk triggers. If a high-risk trigger is present, escalate to `deep` or stop for an explicit scope/risk decision.
 
+## Reasoning effort (Hermes-compatible runtimes)
+
+**Bind reasoning effort to the selected preset.** Authoritative table and guardrails: [validation/SKILL.md — Reasoning effort by review-depth preset](../validation/SKILL.md#reasoning-effort-by-review-depth-preset).
+
+Summary:
+
+```text
+light   → default/medium reasoning; never high by default; escalate preset if risk grows
+standard → default/medium; move to deep (then high) when triggers appear
+deep    → high for synthesis, ambiguous blocker triage, architecture/impact, final recommendation
+```
+
+`deep` / high aligns with **this file’s selection rule**: externally observable behavior/API/CLI/contracts, architecture, migration/schema, security/privacy, unresolved human decisions, hard rollback, low test confidence. See the `deep` row below.
+
+Ordinary **`standard`** work stays medium until escalation; **preset upgrade precedes flipping reasoning to high**.
+
 ## Canonical preset definitions
 
 This file is the **single source of truth** for preset reviewer requirements and preset synthesis rules. Other docs may summarize or link to it, but must not define competing reviewer lists or synthesis rules.

@@ -19,6 +19,19 @@
 |------|------|----------|
 | `[command or review]` | `[pass/fail/exception]` | `[path/link]` |
 
+## 実際に使った model / reasoning（確認）
+
+Hermes は session / model 別の analytics を出せますが、**dev-process の stage 粒度** は task 側の記録があると追いやすいです。 **`artifacts.plan` の Audit required?** が **no** のときは、詳細な per-session の証跡は不要であり、下表でも簡潔でよい。
+
+| 項目 | 内容 |
+|------|------|
+| **preset（最終）** | `[light \| standard \| deep]` （途中昇格があれば `artifacts.timeline` または **`artifacts.model_usage`** を参照） |
+| **reasoning** | `[medium / high / unknown + 理由]` 実運用での切り替え要約。**Audit required? = yes** のときは可能な範囲で session / reasoning evidence を残す。観測できない場合は `unknown` とし、**理由**を同じセルまたは直下に書く（無言の空欄は避ける）。**no** のときは簡潔でよい。 |
+| **main model の根拠** | **`Audit required? = no`** の例: 「`artifacts.plan` により詳細監査なし」と一言。 **`yes`** の例: `[session id / hermes insights / Dashboard / 要約・編集済みの証跡のみ]` |
+| **補助（auxiliary）** | `[必要なら: approval 等が別 tier だった場合のみ]` |
+
+生ログやプロンプト全文を task artifact に貼らない（機微・クレデンシャル・他ユーザデータの可能性）。詳細な行は **`Audit required? = yes`** のときのみ **`artifacts.model_usage`** を正としてよい。**no** のときは空の **`artifacts.model_usage`** で矛盾しない。
+
 ## Review findings
 
 | 種別 | 状態 | 内容 |

@@ -62,6 +62,7 @@ artifacts:
   phase_checklists: ""
   timeline: ""
   rework_log: ""
+  model_usage: ""
   test_plan: ""
   test_implementation: ""
   red_test_result: ""

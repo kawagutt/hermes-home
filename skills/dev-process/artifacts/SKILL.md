@@ -37,7 +37,7 @@ NNNN_<stem>.md
 - The **next** numeric prefix for any **new** numbered task-root file is **`max` of all existing four-digit prefixes** on files matching `NNNN_*.md` **in the task root** (not under `reviews/`), **plus 1**. If no such files exist yet, treat the max as **−1** so the first file uses **`0000_…`**.
 - **If the artifact you are updating is already the highest-numbered** task-root file (its `NNNN` equals that max), you may **edit that file in place** and keep the same `artifacts.<key>` path.
 - **If any other task-root file has a higher `NNNN`** than the file pointed to by `artifacts.<key>` for this logical artifact, **do not** overwrite that older file for a **material revision**: create a **new** file with the **next** id (`max + 1`) and **update `artifacts.<key>`** to the new filename. **Material revision** means a change that affects **decisions, approvals, plans, review outcomes, or handoff context**. **Minor typo or formatting-only** fixes may **update the bound file in place** even when a higher-numbered task-root file exists, unless project policy says otherwise.
-- **Append-only logs** (`artifacts.timeline`, `artifacts.rework_log`): normally **append in place** to the file already recorded in `artifacts.*`, even when that file is **not** the highest-numbered task-root artifact. Create a **new** numbered log file only when **intentionally versioning** or replacing the log (human-agreed or documented policy).
+- **Append-only logs** (`artifacts.timeline`, `artifacts.rework_log`, **`artifacts.model_usage`**): normally **append in place** to the file already recorded in `artifacts.*`, even when that file is **not** the highest-numbered task-root artifact. Create a **new** numbered log file only when **intentionally versioning** or replacing the log (human-agreed or documented policy).
 - **Do not renumber** or rename existing numbered task-root files to “fill gaps” or reorder history.
 
 **Review artifacts** are separate: they live under **`reviews/<stage>/round_NN/`** and **do not** use `NNNN_` prefixes—use conventional names such as `requirements.md`, `architecture.md`, `synthesis.md` (see [review/SKILL.md](../review/SKILL.md)).
@@ -95,6 +95,7 @@ Append-only history (task root):
 
 - [templates/timeline.md](../templates/timeline.md) → `artifacts.timeline` (filename follows § **Numbered task-root artifacts** on first materialization) — chronological log of stages and artifacts.  
 - [templates/rework_log.md](../templates/rework_log.md) → `artifacts.rework_log` (same) — each blocking rework: source synthesis, owner, artifacts changed, rerun rounds.
+- [templates/model_usage.md](../templates/model_usage.md) → `artifacts.model_usage` — stage / preset / reasoning / session evidence for auditing model cost vs dev-process lifecycle ([validation/SKILL.md — Model usage audit](../validation/SKILL.md#model-usage-audit)).
 
 ## Review outputs by stage
 
