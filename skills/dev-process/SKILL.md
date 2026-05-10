@@ -2,8 +2,9 @@
 name: dev-process
 description: >-
   Orchestrates a staged development workflow for Hermes agents: spec, human spec gate, plan, plan
-  review, independent test authoring after plan, product implementation with phase checkpoints, and
-  final review. Enforces role separation (TestAuthor vs ImplementationAgent), target×agent reviews,
+  review, task branch precondition, independent test authoring, product implementation with phase
+  checkpoints, and final review. Enforces role separation (TestAuthor vs ImplementationAgent),
+  target×agent reviews,
   working logs under .hermes/tasks/ (not project canonical docs), and artifact layout. Use when
   running structured multi-agent dev with spec-first gates and plan-before-tests ordering.
 ---
@@ -15,7 +16,7 @@ Read submodule `SKILL.md` files when operating a single stage.
 
 ## Bounded `/goal` operating contract
 
-A short request such as `Start a new task. Goal: ...` is enough to begin a dev-process task. If the user does not provide a task id, propose or create a stable task-related id, create `.hermes/tasks/<task-id>/`, initialize `state.yaml`, and start at `spec`. Before asking for the spec human gate, check whether a task branch can be created for this task under repository policy and record that branch feasibility in the spec summary or gate artifact.
+A short request such as `Start a new task. Goal: ...` is enough to begin a dev-process task. If the user does not provide a task id, **generate** one in the form **`YYYYMMDD_<short-slug>`** (8-digit date, underscore, slug—for example `20260509_bounded-goal-dev-process`). **Do not** generate the legacy `<slug>-YYYYMMDD` / `<slug>_YYYYMMDD` trailing-date shape **by default**. If the human **explicitly** provides a different task id, **use it as given** unless it conflicts with safety, repository policy, or filesystem constraints. Create `.hermes/tasks/<task-id>/`, initialize `state.yaml` from [templates/state.yaml](templates/state.yaml), and start at `spec`. When materializing or versioning task-root Markdown, follow § **Numbered task-root artifacts**; append **`artifacts.timeline`** in the same session when recording branch or other process events. Before asking for the spec human gate, check whether dev-process **can create** a dedicated branch for this task (or the human must explicitly direct branch choice) and record branch feasibility in the spec summary or gate artifact.
 
 When continuing an existing task, read `.hermes/tasks/<task-id>/state.yaml` first. Resume from `current_stage`, `current_phase`, `review_rounds`, and `latest_reviews`; do not rely on chat history alone.
 
@@ -23,21 +24,23 @@ When continuing an existing task, read `.hermes/tasks/<task-id>/state.yaml` firs
 
 `/goal` may continue across ordinary stage or phase boundaries when the next action is legally allowed by `state.yaml`, gate approvals, required artifacts, latest review synthesis, role permissions, and the approved plan. Do **not** stop merely because a phase completed if the next stage is legal and the same agent/session may perform it.
 
-A bounded advancement may be one stage, one implementation phase, one review target plus selected agents, one synthesis/status step, or a legal chain of those steps until a required stop condition is reached.
+A bounded advancement may be one stage, one implementation phase, one review target plus selected agents, one synthesis/status step, or a **short** legal chain of those steps until a required stop condition **or a role boundary** is reached.
+
+When the next legal action requires a different role (for example PlanAgent → TestAuthorAgent → ImplementationAgent → ReviewerAgent), either **stop** with a handoff report (see Operational stops) or **explicitly start a new bounded role run**. Do not silently change role inside the same `/goal` loop.
 
 ### Hard human gates
 
 There are two standing hard human gates:
 
-1. `human_spec_gate` — after spec review, before plan. If human comments cause material `spec.md` changes, update the spec, rerun required spec review if material, provide an updated concise Japanese summary, and ask for human confirmation again before planning.
+1. `human_spec_gate` — after spec review, before plan. If human comments cause material changes to the **spec** artifact (`state.yaml` → `artifacts.spec`), update that file, rerun required spec review if material, provide an updated concise Japanese summary, and ask for human confirmation again before planning.
 2. `final_human_gate` — after final review synthesis and final validation evidence, before merge/completion decision.
 
 Before human-facing approval requests, provide a concise Japanese summary:
 
-- `spec_summary_ja.md` before `human_spec_gate`: goal, non-goals, success criteria, risks, and required human decisions.
-- `final_summary_ja.md` before final review / `final_human_gate`: final diff, validation results, review findings, unresolved risks, and merge/commit recommendation.
+- `artifacts.spec_summary_ja` (path from `state.yaml`) before `human_spec_gate`: goal, non-goals, success criteria, risks, and required human decisions.
+- `artifacts.final_summary_ja`: follow [templates/final_summary_ja.md](templates/final_summary_ja.md) — draft before final review (diff, validation, review focus); after final review synthesis, update with findings and recommendation before `final_human_gate`.
 
-A short CUI approval such as `OK` is valid after the summary is provided. Record the approval and any comments in the relevant gate artifact (`human_spec_gate.md` or `final_human_gate.md`). Summary and gate artifacts remain task-local working logs and are not committed by default.
+A short CUI approval such as `OK` is valid after the summary is provided. Record the approval and any comments in the relevant gate artifacts (`artifacts.human_spec_gate` / `artifacts.final_human_gate`; paths from `state.yaml`). Summary and gate artifacts remain task-local working logs and are not committed by default.
 
 ### Operational stops
 
@@ -60,11 +63,23 @@ Relevant artifacts:
 
 Do not stop with only “phase complete” or “waiting for next instruction” unless a human gate or blocker actually requires it.
 
-### Implementation branch and commits
+### Task branch and commits
 
-Before asking for `human_spec_gate` approval, check whether a dedicated task branch can be created for this task and report the result to the human. Before product implementation starts, create or switch to that dedicated task branch after spec, plan, test authoring, and test review are complete. Follow repository branch policy first; otherwise use a stable task-related name such as `dev-process/<task-id>` or `feature/<short-task-slug>`.
+Before asking for `human_spec_gate` approval, check whether a **new branch can be created** for this task (or whether the human will explicitly direct use of a specific branch) and record the result in `state.yaml` → `branch` and gate artifacts.
 
-Do not start product implementation on `main`/`master` unless repository policy explicitly requires it. Product/project changes may be committed on a branch the agent created for the task. Commits to other branches, merges into other branches, and pushes are forbidden unless the human explicitly instructs otherwise. `.hermes/tasks/<task-id>/` artifacts remain uncommitted working logs by default. Never mix “product commits are allowed” with “task artifacts may be committed.”
+After **plan review** completes, satisfy the **task branch precondition** **before test implementation**: create the dedicated task branch for this task, or switch to the branch dev-process **already created** for this task.
+
+**Branch rule (canonical):** all test and product work for the task must happen **only** on the dedicated branch **created by dev-process for this task**. Do not use any pre-existing branch for task work unless the human **explicitly** instructs it.
+
+After creating or switching to the task branch, the **Orchestrator** must update, in the **same session**:
+
+- `state.yaml` → `branch.name`
+- `state.yaml` → `branch.task_branch_precondition_met`
+- `state.yaml` → `branch.commits_allowed_on_task_branch` (set consistent with the agreed task/plan policy for test and product commits on the task branch)
+
+and append a row to **`artifacts.timeline`**: if **`artifacts.timeline`** is empty, **first materialize** the timeline file per § **Numbered task-root artifacts** (set `artifacts.timeline`, then append); if already bound, **append in place** to that file (do not create a new numbered timeline file for routine branch events—see **Append-only logs** under that section) with the branch name and the create/switch command used (or equivalent evidence).
+
+TestAuthorAgent and ImplementationAgent may **commit** only on that task branch. **Merges** and **pushes** (and commits to any other branch) are forbidden unless the human explicitly requests them. `.hermes/tasks/<task-id>/` artifacts remain uncommitted working logs by default. Never mix “product/test commits on the task branch are allowed” with “task artifacts may be committed.”
 
 ### cost-aware validation and model use
 
@@ -82,8 +97,8 @@ spec
   → human spec gate
   → plan
   → plan review
+  → task branch precondition
   → test implementation + test review
-  → implementation branch precondition
   → product implementation
   → phase checkpoint reviews
   → final review
@@ -95,6 +110,14 @@ spec
 ```text
 Do not start test implementation until plan review is complete.
 If plan review has blocking findings or escalation triggers, stop.
+```
+
+**Hard gate — task branch before tests**
+
+```text
+After plan review, satisfy the task branch precondition before starting test implementation:
+create the dedicated branch dev-process uses for this task, or switch to that branch if it already exists.
+Do not use any pre-existing branch for task work unless the human explicitly instructs it.
 ```
 
 Parallel work is allowed only for **drafts outside the current stage** or **independent reviewer jobs**. Do not skip plan review to start tests.
@@ -149,11 +172,11 @@ Task artifact templates live under [templates/](templates/).
 |------|--------------|-----------|----------------|-----|
 | SpecAgent | no | no | yes | no commit/push |
 | PlanAgent | no | no | yes | no commit/push |
-| TestAuthorAgent | no | yes | yes | no commit/push |
+| TestAuthorAgent | no | yes | yes | may commit test changes only on the dev-process-created task branch; no merge/push |
 | TestReviewerAgent | read-only | read-only | yes | no commit/push |
-| ImplementationAgent | yes | **default no** (see implementation skill) | yes | may commit only on agent-created task branch; no merge/push |
+| ImplementationAgent | yes | **default no** (see implementation skill) | yes | may commit product changes only on the dev-process-created task branch; no merge/push |
 | Reviewer agents | read-only | read-only | yes | no commit/push |
-| Orchestrator | artifacts only | no | yes | no merge/push; no commits except explicit task-branch handoff policy |
+| Orchestrator | artifacts only | no | yes | may create/switch **to** the dev-process task branch for this task; no product/test commits; no merge/push |
 
 If ImplementationAgent discovers tests are invalid or obsolete, **stop** and return work to TestAuthor/TestReviewer. **Do not silently rewrite tests** to make implementation pass.
 
@@ -166,6 +189,33 @@ Store **per-task working state** (not the project’s long-lived source of truth
 ```
 
 Use templates from [templates/](templates/). Copy [templates/state.yaml](templates/state.yaml) and update fields as stages complete.
+
+### Task id
+
+- **Task directory name** = **`task_id`**. When **agent-generated**, prefer **`YYYYMMDD_<short-slug>`** (date first); use the same value in branch names such as `dev-process/<task_id>` unless the human directs otherwise. When the human **explicitly** supplies `task_id`, use it as given (see bounded `/goal` contract above), subject to safety and filesystem constraints.
+
+### Numbered task-root artifacts
+
+Task-root Markdown artifacts (files directly under `.hermes/tasks/<task-id>/`, **not** under `reviews/`) use:
+
+```text
+NNNN_<stem>.md
+```
+
+**`state.yaml` → `artifacts.<key>`** holds the **current** filename for that logical artifact. **`state.yaml` itself is not numbered**—only the Markdown files use prefixes.
+
+**Rules**
+
+- If **`artifacts.<key>` is empty** (`""`), this is the **first materialization** of that logical artifact: compute the next prefix as **`max` of existing four-digit prefixes on task-root `NNNN_*.md` + 1** (see below; if none exist, max = −1 → **`0000_…`**), create **`NNNN_<stem>.md`**, and set **`artifacts.<key>`** to that filename in the **same session** as the file write.
+- The **next** numeric prefix for any **new** numbered task-root file is **`max` of all existing four-digit prefixes** on files matching `NNNN_*.md` **in the task root** (not under `reviews/`), **plus 1**. If no such files exist yet, treat the max as **−1** so the first file uses **`0000_…`**.
+- **If the artifact you are updating is already the highest-numbered** task-root file (its `NNNN` equals that max), you may **edit that file in place** and keep the same `artifacts.<key>` path.
+- **If any other task-root file has a higher `NNNN`** than the file pointed to by `artifacts.<key>` for this logical artifact, **do not** overwrite that older file for a **material revision**: create a **new** file with the **next** id (`max + 1`) and **update `artifacts.<key>`** to the new filename. **Material revision** means a change that affects **decisions, approvals, plans, review outcomes, or handoff context**. **Minor typo or formatting-only** fixes may **update the bound file in place** even when a higher-numbered task-root file exists, unless project policy says otherwise.
+- **Append-only logs** (`artifacts.timeline`, `artifacts.rework_log`): normally **append in place** to the file already recorded in `artifacts.*`, even when that file is **not** the highest-numbered task-root artifact. Create a **new** numbered log file only when **intentionally versioning** or replacing the log (human-agreed or documented policy).
+- **Do not renumber** or rename existing numbered task-root files to “fill gaps” or reorder history.
+
+**Review artifacts** are separate: they live under **`reviews/<stage>/round_NN/`** and **do not** use `NNNN_` prefixes—use conventional names such as `requirements.md`, `architecture.md`, `synthesis.md` (see [review/SKILL.md](review/SKILL.md)).
+
+Legacy tasks may still use older flat names (`spec.md`, etc.); migrate with human agreement and consistent `artifacts` pointers.
 
 See **Artifact persistence policy** below for Git and “promotion” to project docs.
 
@@ -216,8 +266,8 @@ grep -qxF '.hermes/' "$EXCLUDE_FILE" || echo '.hermes/' >> "$EXCLUDE_FILE"
 
 Append-only history (task root):
 
-- [templates/timeline.md](templates/timeline.md) → `timeline.md` — chronological log of stages and artifacts.  
-- [templates/rework_log.md](templates/rework_log.md) → `rework_log.md` — each blocking rework: source synthesis, owner, artifacts changed, rerun rounds.
+- [templates/timeline.md](templates/timeline.md) → `artifacts.timeline` (filename follows § **Numbered task-root artifacts** on first materialization) — chronological log of stages and artifacts.  
+- [templates/rework_log.md](templates/rework_log.md) → `artifacts.rework_log` (same) — each blocking rework: source synthesis, owner, artifacts changed, rerun rounds.
 
 ### Review outputs (by stage, **round‑numbered**)
 
@@ -228,6 +278,8 @@ reviews/<stage>/round_NN/
 ```
 
 Use **two‑digit** `NN` (`round_01`, `round_02`, …); extend width if rounds exceed 99.
+
+Within each `round_NN/`, use **unprefixed** conventional filenames (e.g. `requirements.md`, `architecture.md`, `synthesis.md`) per [review/SKILL.md](review/SKILL.md) and the standard recipes—**not** `NNNN_` prefixes (those apply only to **task-root** artifacts).
 
 Example layout:
 
@@ -250,7 +302,10 @@ reviews/
 
   test/
     round_01/
-      ...
+      requirements.md
+      test_quality.md
+      checklist_compliance.md
+      synthesis.md
 
   implementation_phase_01/
     round_01/
@@ -273,8 +328,8 @@ reviews/
 
 **Latest synthesis pointers (`state.yaml`):** maintained by the **synthesis-role** agent (Orchestrator fallback when synthesis is skipped)—**humans should not routinely edit these** when using the normal workflow. v1 has no daemon; updates happen in the same session as synthesis.
 
-- After each completed review round, the **synthesis-role** agent (`review/agents/synthesis.md`) **must** update `review_rounds` for that stage and set `latest_reviews.<stage>` to that round’s `synthesis.md` path in the **same session** as writing `reviews/<stage>/round_NN/synthesis.md`.  
-- If a team **skips synthesis** for a stage (allowed only where the router says optional), the **Orchestrator** (the agent/session coordinating handoff) performs the equivalent `review_rounds` / `latest_reviews` update and records why in `timeline.md`.  
+- After each completed review round, the **synthesis-role** agent (`review/agents/synthesis.md`) **must** update `review_rounds` for that stage and set `latest_reviews.<stage>` to that round’s **`synthesis.md`** path (e.g. `reviews/spec/round_01/synthesis.md`) in the **same session** as writing that file.  
+- If a team **skips synthesis** for a stage (allowed only where the router says optional), the **Orchestrator** (the agent/session coordinating handoff) performs the equivalent `review_rounds` / `latest_reviews` update and records why in **`artifacts.timeline`**.  
 
 Detail: [review/SKILL.md — Who updates state.yaml](review/SKILL.md#who-updates-stateyaml).
 
@@ -288,17 +343,17 @@ Use **output formats** from `review/templates/review_result.md` (per reviewer fi
 
 Standing human gates are:
 
-1. **Spec human gate** after spec review, recorded as `human_spec_gate.md`. Plan uses **agent review + conditional human escalation** (see [plan/SKILL.md](plan/SKILL.md)).
-2. **Final human gate** after final review synthesis and final validation evidence, recorded as `final_human_gate.md`.
+1. **Spec human gate** after spec review, recorded at `state.yaml` → `artifacts.human_spec_gate`. Plan uses **agent review + conditional human escalation** (see [plan/SKILL.md](plan/SKILL.md)).
+2. **Final human gate** after final review synthesis and final validation evidence, recorded at `state.yaml` → `artifacts.final_human_gate`.
 
 Both gates require a concise Japanese decision summary before asking for approval. A short response such as `OK` is acceptable after the summary is provided; record it and any comments in the gate artifact.
 
 ## Safety rules
 
-- Do not **push**, **merge**, or commit to branches other than the agent-created task branch unless explicitly requested.
-- Before `human_spec_gate`, check and report whether a dedicated task branch can be created for the task. Before product implementation, create or switch to that dedicated task branch unless repository policy explicitly says otherwise; do not start implementation on `main`/`master` by default.
-- Product/project commits are allowed on a branch the agent created for the task. Commits to other branches, merges, and pushes remain forbidden unless explicitly requested.
-- Do not modify git-untracked product/project files without explicit human permission. If the user has not instructed you to modify an untracked file, leave it alone.
+- Do not **push**, **merge**, or **commit** outside the dev-process-created task branch for this task unless explicitly requested.
+- Before `human_spec_gate`, check and record whether a new branch can be created (or the human will explicitly direct branch choice). After plan review, satisfy the task branch precondition before test implementation: create the dedicated task branch for this task, or switch to the branch dev-process already created for this task. Do not use any pre-existing branch for task work unless explicitly instructed.
+- Product and test commits are allowed **only** on the dev-process-created task branch. Commits to other branches, merges, and pushes remain forbidden unless explicitly requested.
+- Do not modify **existing** git-untracked product/project files unless explicitly instructed. Creating **new** product or test files is allowed only when the approved plan lists them or clearly permits them. Task artifacts under `.hermes/tasks/<task-id>/` are exempt from the untracked-product rule but remain uncommitted by default.
 - **Do not commit** `.hermes/tasks/` dev-process task artifacts to the project repository by default (see [Artifact persistence policy](#artifact-persistence-policy)); they are working logs, not shared project deliverables.
 - Do not modify files outside the current repository.
 - Do not run destructive git commands.
@@ -320,11 +375,11 @@ flowchart TD
   humanGate[human_spec_gate]
   planStage[plan]
   planRev[plan_review]
+  taskBranch[task_branch_precondition]
   testsStage[test_impl_plus_test_review]
-  implBranch[implementation_branch_precondition]
   implStage[implementation_phase_checkpoints]
   finalStage[final_review]
   finalGate[final_human_gate]
 
-  specStage --> specRev --> humanGate --> planStage --> planRev --> testsStage --> implBranch --> implStage --> finalStage --> finalGate
+  specStage --> specRev --> humanGate --> planStage --> planRev --> taskBranch --> testsStage --> implStage --> finalStage --> finalGate
 ```

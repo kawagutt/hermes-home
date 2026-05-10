@@ -15,7 +15,7 @@ Reviews combine:
 2. One or more **independent review agents** (prompts under [`agents/`](agents/) *except* [`synthesis.md`](agents/synthesis.md)) — *how* to look at the target from each perspective.  
 3. Shared **output format** per reviewer via [`templates/review_result.md`](templates/review_result.md).  
 
-After reviewers finish, optionally run a **synthesis role** ([`agents/synthesis.md`](agents/synthesis.md)) that merges their outputs using [`templates/synthesis_result.md`](templates/synthesis_result.md) → `synthesis.md`. **Synthesis is not another independent reviewer agent**—it aggregates reviewer outputs without inventing new primary findings.
+After reviewers finish, optionally run a **synthesis role** ([`agents/synthesis.md`](agents/synthesis.md)) that merges their outputs using [`templates/synthesis_result.md`](templates/synthesis_result.md) → **`synthesis.md`**. **Synthesis is not another independent reviewer agent**—it aggregates reviewer outputs without inventing new primary findings.
 
 `review/targets/*.md` and `review/agents/*.md` are **reference prompt fragments**, not standalone skills. This file is the **router** only: **recipes + contract**, not detailed checklists.
 
@@ -41,13 +41,13 @@ Each reviewer labels items as one of:
 
 A **synthesis** step merges independent reviewer files into one recommendation (`synthesis.md`) using [`templates/synthesis_result.md`](templates/synthesis_result.md). It should resolve duplicated findings and state **merge/readiness**.
 
-Synthesis **per implementation phase** may be skipped for cost; final synthesis should not be skipped arbitrarily when merge decisions matter. Final review synthesis precedes `final_human_gate`; after final synthesis and validation evidence, provide a concise Japanese final summary and record the human decision in `final_human_gate.md`.
+Synthesis **per implementation phase** may be skipped for cost; final synthesis should not be skipped arbitrarily when merge decisions matter. Final review synthesis precedes `final_human_gate`; after final synthesis and validation evidence, provide a concise Japanese final summary and record the human decision in **`artifacts.final_human_gate`** (path from `state.yaml`).
 
 ---
 
 ## Rework routing
 
-After review, **`synthesis.md`** must drive **finding triage** for every **blocking** item. Do **not** default to “send everything to ImplementationAgent.”
+After review, the round’s **`synthesis.md`** must drive **finding triage** for every **blocking** item. Do **not** default to “send everything to ImplementationAgent.”
 
 Base loop:
 
@@ -81,10 +81,10 @@ Stages use the orchestrator naming: `spec`, `plan`, `test`, `implementation_phas
 
 When **blocking** findings cause rework:
 
-1. Record the finding chain in **`rework_log.md`** ([template](../templates/rework_log.md)).  
-2. Assign each blocking item’s **owner** in `synthesis.md` (rework routing above).  
+1. Record the finding chain in **`artifacts.rework_log`** ([template](../templates/rework_log.md); path from `state.yaml`).  
+2. Assign each blocking item’s **owner** in **`synthesis.md`** (rework routing above).  
 3. Fix work in the **owning** stage (`spec`, `plan`, `test`, or implementation).  
-4. **Append** a row to **`timeline.md`** ([template](../templates/timeline.md)).  
+4. **Append** a row to **`artifacts.timeline`** ([template](../templates/timeline.md); path from `state.yaml`).  
 5. Run the required **tests**.  
 6. **Re‑run** the relevant review(s) into the **next** `round_NN` directory; **synthesis** (or Orchestrator if synthesis skipped) updates `review_rounds` / `latest_reviews` ([Who updates `state.yaml`](#who-updates-stateyaml)).  
 
@@ -97,7 +97,7 @@ Same pattern applies whether the finding came from checkpoint review or final re
 - **`review_rounds.<stage>`** and **`latest_reviews.<stage>`** are maintained by whichever agent/session performs the **synthesis** step for that review round—that is the **synthesis role** described in [`agents/synthesis.md`](agents/synthesis.md).
 - Timing: **immediately after** successfully writing **`reviews/<stage>/round_NN/synthesis.md`**, bump the counter for `<stage>` to `NN` (integer matching the round suffix) and set `latest_reviews.<stage>` to that file’s repo-relative task path.
 
-**Humans:** not required for these fields in normal agent workflows. Humans may patch `state.yaml` only when recovering from tooling failure or operating **without** a synthesis agent—in that case, treat it as orchestration hygiene with a **`timeline.md`** note.
+**Humans:** not required for these fields in normal agent workflows. Humans may patch `state.yaml` only when recovering from tooling failure or operating **without** a synthesis agent—in that case, treat it as orchestration hygiene with a note in **`artifacts.timeline`**.
 
 **If synthesis was skipped** for that round (allowed only where the router marks synthesis **optional**):
 
@@ -140,10 +140,14 @@ Recipes name **targets** and **review agents** only. **Synthesis** is a separate
 - **target:** `final_diff` (`targets/final_diff.md`)  
 - **review agents:** `architecture`, `diff_detail`, `impact`, `naming_doc`, `test_quality`  
 - **synthesis:** required  
-- **after synthesis:** write/refresh `final_summary_ja.md`, then stop at `final_human_gate` for human merge/completion decision  
+- **after synthesis:** write/refresh **`artifacts.final_summary_ja`**, then stop at `final_human_gate` for human merge/completion decision  
 
 ---
 
 ## Task output locations
 
-Write reviewer and synthesis artifacts under `.hermes/tasks/<task-id>/reviews/<stage>/round_NN/` per orchestrator [`SKILL.md`](../SKILL.md). Each new review run increments the round folder; keep `timeline.md` / `rework_log.md` in sync.
+Write reviewer and synthesis artifacts under `.hermes/tasks/<task-id>/reviews/<stage>/round_NN/` per orchestrator [`SKILL.md`](../SKILL.md). Each new review run increments the round folder; keep **`artifacts.timeline`** / **`artifacts.rework_log`** in sync.
+
+### Filenames inside each `round_NN`
+
+Use **conventional unprefixed names** (e.g. `requirements.md`, `architecture.md`, `synthesis.md`) per agent role and [`templates/review_result.md`](templates/review_result.md) / [`templates/synthesis_result.md`](templates/synthesis_result.md). **Do not** use `NNNN_` prefixes under `reviews/`—those apply only to **task-root** artifacts (orchestrator [`SKILL.md`](../SKILL.md) § Numbered task-root artifacts).

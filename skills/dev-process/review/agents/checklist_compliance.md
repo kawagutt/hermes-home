@@ -2,7 +2,7 @@
 
 ## Objective
 
-Verify adherence to **`phase_checklists.md` / plan constraints** — primary gatekeeper for **“may we proceed to next phase?”**
+Verify adherence to **`artifacts.phase_checklists` / plan constraints** — primary gatekeeper for **“may we proceed to next phase?”**
 
 ## Checklist
 

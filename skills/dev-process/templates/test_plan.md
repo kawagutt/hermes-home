@@ -19,9 +19,9 @@ Explain **why** each test exists (traceability).
 ## Expected outcome before implementation
 
 - [ ] Tests fail (red) for expected reasons, **or**  
-- [ ] Documented exception per `plan.md` (e.g. docs-only) with alternate verification
+- [ ] Documented exception per **`artifacts.plan`** (e.g. docs-only) with alternate verification
 
-Record outcomes in [`red_test_result.md`](red_test_result.md) (or **## Red test results** inside [`test_implementation.md`](test_implementation.md)).
+Record outcomes in **`artifacts.red_test_result`** (template [`red_test_result.md`](red_test_result.md)) or **## Red test results** inside **`artifacts.test_implementation`**.
 
 ## Validation command
 

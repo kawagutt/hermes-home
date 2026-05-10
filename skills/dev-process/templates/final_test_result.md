@@ -1,8 +1,8 @@
 # Final test result — [task title]
 
-Captured **near merge / final review** (CI rerun, full suite, or agreed subset per `plan.md`).
+Captured **near merge / final review** (CI rerun, full suite, or agreed subset per **`artifacts.plan`**).
 
-**Task ID:** `[task-id]`  
+**Task ID:** `[YYYYMMDD_short-slug]`  
 **Date:** `[ISO date]`
 
 ## Command(s) / CI
@@ -18,7 +18,7 @@ Captured **near merge / final review** (CI rerun, full suite, or agreed subset p
 
 ## Scope
 
-What this run covers relative to `plan.md` / `phase_checklists.md`:
+What this run covers relative to **`artifacts.plan`** / **`artifacts.phase_checklists`**:
 
 > 
 

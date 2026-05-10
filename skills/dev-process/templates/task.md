@@ -1,7 +1,7 @@
 # Task: [short title]
 
-- **Dev process skill version:** v1
-- **Task ID:** `[YYYY-MM-DD-or-slug]`
+- **Dev process skill version:** v2
+- **Task ID:** `[YYYYMMDD_short-slug]` (date first, e.g. `20260509_bounded-goal-dev-process`)
 - **Owner / channel:** [optional]
 - **Repo:** [path or name]
 - **Links:** [issues, PRs]
@@ -14,6 +14,6 @@
 
 Current stage should mirror `state.yaml` → `current_stage`.
 
-At task root, maintain append-only **[`timeline.md`](timeline.md)** and **[`rework_log.md`](rework_log.md)** (start from the templates of the same names in this folder).
+At task root, maintain append-only **`artifacts.timeline`** / **`artifacts.rework_log`** (task-root filenames per orchestrator § **Numbered task-root artifacts**; start from [timeline.md](timeline.md) and [rework_log.md](rework_log.md) in this folder).
 
 Pipeline order: dev-process orchestrator skill at `skills/dev-process/SKILL.md` (this template is copied under `.hermes/tasks/<task-id>/`, so do not use `../` links to the skill tree—they break after copy).

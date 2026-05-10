@@ -15,6 +15,7 @@ Tests are **not** a sub-step of implementation. They are a **separate phase** af
 - Plan review is **complete**.  
 - No **blocking** plan review findings remain unaddressed.  
 - Any **escalation** required by plan review is **resolved** (see [plan/SKILL.md](../plan/SKILL.md)).  
+- **Task branch precondition** is satisfied: the dedicated task branch dev-process uses for this task exists, the working tree is on it, `branch.task_branch_precondition_met` is true, and `state.yaml` → `branch` matches the canonical branch rule in [../SKILL.md](../SKILL.md) (so test files and later product files are authored on the same task branch; a pre-existing branch **only** if the human explicitly instructed it and it is recorded in `feasibility_notes`).
 
 If any precondition fails, **stop**—do not author tests yet.
 
@@ -29,8 +30,8 @@ If any precondition fails, **stop**—do not author tests yet.
 
 Use:
 
-- Approved `spec.md` and `plan.md`  
-- `phase_checklists.md` validation expectations  
+- Approved **`artifacts.spec`** and **`artifacts.plan`** (paths from `state.yaml`)  
+- **`artifacts.phase_checklists`** validation expectations (path from `state.yaml`)  
 - Relevant **existing tests** (style, helpers)  
 - Relevant **public APIs** / interfaces under test  
 
@@ -46,17 +47,17 @@ Suggested task files (adapt names to repo conventions):
 
 | Artifact | Template |
 |---------|----------|
-| `test_plan.md` | [templates/test_plan.md](../templates/test_plan.md) |
+| `artifacts.test_plan` | [templates/test_plan.md](../templates/test_plan.md) |
 | Test code | repo test layout |
-| `test_implementation.md` | [templates/test_implementation.md](../templates/test_implementation.md) |
-| `red_test_result.md` | [templates/red_test_result.md](../templates/red_test_result.md) (or a clearly marked **Red test results** section inside `test_implementation.md` during the test stage only) |
+| `artifacts.test_implementation` | [templates/test_implementation.md](../templates/test_implementation.md) |
+| `artifacts.red_test_result` | [templates/red_test_result.md](../templates/red_test_result.md) (or a clearly marked **Red test results** section inside **`artifacts.test_implementation`** during the test stage only) |
 | Review outputs | `.hermes/tasks/<task-id>/reviews/test/round_NN/` |
 
 ## Red / validation policy
 
 When feasible, run tests **before** product implementation so they fail (“red”) for the right reasons, then ImplementationAgent makes them pass.
 
-If red tests are inappropriate (documentation-only cleanup, refactor with no behavior change planned, etc.), the exception **must already be justified in `plan.md`**. Substitute verification (review, links, commands) per plan.
+If red tests are inappropriate (documentation-only cleanup, refactor with no behavior change planned, etc.), the exception **must already be justified in `artifacts.plan`**. Substitute verification (review, links, commands) per plan.
 
 ## Test review
 
@@ -64,7 +65,7 @@ Use [review/SKILL.md](../review/SKILL.md).
 
 **Standard recipe:** target `test` → review agents `requirements`, `test_quality`, `checklist_compliance` → **synthesis:** yes (see [review/SKILL.md](../review/SKILL.md)).
 
-Blocking findings → **do not** start ImplementationAgent until resolved via test revisions or explicit spec/plan amendment loop. If test review clears and `state.yaml`/latest synthesis permit it, dev-process may legally continue to the implementation branch precondition; do not stop only because the test stage boundary was reached.
+Blocking findings → **do not** start ImplementationAgent until resolved via test revisions or explicit spec/plan amendment loop. If test review clears and `state.yaml`/latest synthesis permit it, the next legal stage is **product implementation**. Do not stop merely because the test stage boundary was reached; however, because this crosses into the ImplementationAgent role, either stop with a handoff report or explicitly start a new bounded ImplementationAgent run. Do not silently switch roles inside the same `/goal` loop.
 
 ## Test failure triage (after implementation has started)
 
@@ -81,4 +82,4 @@ Full detail: [implementation/SKILL.md](../implementation/SKILL.md) (Test failure
 
 ## Permissions
 
-TestAuthorAgent: **tests only**, no production/product source changes.
+TestAuthorAgent: **tests only**, no production/product source changes; may **commit** test changes only on the dev-process-created task branch (see [SKILL.md](../SKILL.md) role table); no merge/push.

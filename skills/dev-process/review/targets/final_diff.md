@@ -6,9 +6,9 @@ Holistic assessment at **merge time**: full intended change set vs spec/plan/tes
 
 ## Inputs (typical)
 
-- `spec.md`, `plan.md`, `test_plan.md`  
+- **`artifacts.spec`**, **`artifacts.plan`**, **`artifacts.test_plan`**  
 - Final comprehensive diff (or PR diff)  
-- `final_test_result.md` (see [templates/final_test_result.md](../../templates/final_test_result.md)) / CI output if captured  
+- **`artifacts.final_test_result`** (see [templates/final_test_result.md](../../templates/final_test_result.md); path from `state.yaml`) / CI output if captured  
 - Prior per-stage reviews (optional summaries)  
 
 ## Out of scope

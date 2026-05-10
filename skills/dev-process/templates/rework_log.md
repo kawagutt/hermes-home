@@ -11,8 +11,8 @@ One entry per **blocking** rework cycle (link to synthesis and round). Expand wi
 - **Required action:**
 - **Fixed by:** agent or human role
 - **Changed artifacts:**
-  - `plan.md`
-  - `phase_checklists.md`
+  - `artifacts.plan` (as recorded in `state.yaml`)
+  - `artifacts.phase_checklists`
 - **Rerun:** paths to **new round** reviewer outputs e.g.
   - `reviews/plan/round_02/architecture.md`
   - `reviews/plan/round_02/checklist_compliance.md`

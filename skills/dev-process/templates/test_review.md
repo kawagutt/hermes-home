@@ -14,4 +14,4 @@ Use this file only for ephemeral coordination if needed.
 
 ## Links to synthesized review
 
-- Latest synthesis path: `.hermes/tasks/<task-id>/reviews/test/round_NN/synthesis.md`
+- Latest synthesis path: `.hermes/tasks/<task-id>/reviews/test/round_NN/synthesis.md` (see `state.yaml` → `latest_reviews.test`)

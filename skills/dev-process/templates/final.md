@@ -13,7 +13,7 @@
 
 ## Test evidence
 
-Use [final_test_result.md](final_test_result.md) at task root, or paste the same sections here. Link CI if applicable.
+Use **`artifacts.final_test_result`** (template [final_test_result.md](final_test_result.md); path from `state.yaml`) at task root, or paste the same sections here. Link CI if applicable.
 
 ```bash
 

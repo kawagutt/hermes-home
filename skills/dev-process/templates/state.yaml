@@ -1,5 +1,7 @@
 # Task state (template)
 # Copy to .hermes/tasks/<task-id>/state.yaml and fill. Boolean flags are examples.
+#
+# task_id: use YYYYMMDD_<short-slug> (date first), e.g. 20260509_bounded-goal-dev-process
 
 task_id: ""
 current_stage: ""      # e.g. spec | plan | test | implementation | final | final_human_gate
@@ -46,20 +48,25 @@ branch:
   name: ""
   feasibility_checked_before_human_spec_gate: false
   feasibility_notes: ""
-  created_before_implementation: false
-  product_commits_allowed_on_branch: false
+  task_branch_precondition_met: false   # create/switch after plan review, before test implementation
+  commits_allowed_on_task_branch: false # test and product commits on the task branch (when in scope for this task)
   task_artifacts_commit_by_default: false
 
+# Task-root Markdown: logical key → current filename (NNNN_<stem>.md). See orchestrator SKILL.md § Numbered task-root artifacts.
+# If a key is "", first materialization: next NNNN = max(four-digit prefixes on task-root NNNN_*.md) + 1, create NNNN_<stem>.md, set this key in the same session.
 artifacts:
-  spec: spec.md
-  spec_summary_ja: spec_summary_ja.md
-  plan: plan.md
-  timeline: timeline.md
-  rework_log: rework_log.md
-  human_spec_gate: human_spec_gate.md
-  final_human_gate: final_human_gate.md
-  final_summary_ja: final_summary_ja.md
-  test_plan: test_plan.md
-  red_test_result: red_test_result.md
-  final_test_result: final_test_result.md
-  implementation_log: implementation_log.md
+  spec: ""
+  spec_summary_ja: ""
+  human_spec_gate: ""
+  plan: ""
+  phase_checklists: ""
+  timeline: ""
+  rework_log: ""
+  test_plan: ""
+  test_implementation: ""
+  red_test_result: ""
+  implementation_log: ""
+  phase_results: ""
+  final_test_result: ""
+  final_summary_ja: ""
+  final_human_gate: ""

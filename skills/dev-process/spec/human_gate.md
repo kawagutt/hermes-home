@@ -8,7 +8,7 @@ This is **not** a quiz to “test the human.” It is a **read-back** to catch m
 
 ## When
 
-After **spec review** outputs exist and before creating or locking `plan.md`.
+After **spec review** outputs exist and before creating or locking **`artifacts.plan`**.
 
 ## Before moving to plan, the human must confirm
 
@@ -20,6 +20,6 @@ After **spec review** outputs exist and before creating or locking `plan.md`.
 
 ## Artifact
 
-Record answers in `.hermes/tasks/<task-id>/human_spec_gate.md` using [templates/human_spec_gate.md](../templates/human_spec_gate.md).
+Record answers in `.hermes/tasks/<task-id>/` + **`artifacts.human_spec_gate`** (path from `state.yaml`; allocated on first materialization) using [templates/human_spec_gate.md](../templates/human_spec_gate.md).
 
-If any item is “no” or uncertain, resolve by updating `spec.md` or documenting an explicit decision before planning.
+If any item is “no” or uncertain, resolve by updating **`artifacts.spec`** or documenting an explicit decision before planning.

@@ -2,7 +2,7 @@
 
 ## 判断ポイント
 
-この `spec.md` の内容で plan stage に進めてよいかを確認してください。短い `OK` でも承認として記録できます。
+この **`artifacts.spec`**（`state.yaml` に記録されたファイル名）の内容で plan stage に進めてよいかを確認してください。短い `OK` でも承認として記録できます。
 
 ## ゴール
 
@@ -31,4 +31,4 @@
 
 ## 次のアクション
 
-承認後、agent は `human_spec_gate.md` に approval/comments を記録し、plan stage に進みます。Material spec change が必要なコメントがある場合、spec 更新と必要な spec review の後、再度 confirmation を求めます。
+承認後、agent は **`artifacts.human_spec_gate`**（`state.yaml` のパス）に approval/comments を記録し、plan stage に進みます。Material spec change が必要なコメントがある場合、spec 更新と必要な spec review の後、再度 confirmation を求めます。

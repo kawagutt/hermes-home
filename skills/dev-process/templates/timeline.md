@@ -6,10 +6,10 @@ Add a new row **after each meaningful step** (draft, review round, gate, rework,
 
 | Time | Stage | Action | Output |
 |------|-------|--------|--------|
-| | spec | Drafted spec | `spec.md` |
+| | spec | Drafted spec | e.g. `0000_spec.md` if spec was the first task-root file created (`artifacts.spec`) |
 | | spec review | Ran requirements + architecture review | `reviews/spec/round_01/synthesis.md` |
-| | human gate | Approved spec | `human_spec_gate.md` |
-| | plan | Drafted plan | `plan.md`, `phase_checklists.md` |
+| | human gate | Approved spec | whatever `artifacts.human_spec_gate` holds in `state.yaml` |
+| | plan | Drafted plan | `artifacts.plan`, `artifacts.phase_checklists` (each gets its own allocation order) |
 
 Use ISO-like timestamps in local or UTC consistently (e.g. `2026-05-09 21:30`).
 

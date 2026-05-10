@@ -10,22 +10,26 @@ description: >-
 
 Implement **approved** artifacts only:
 
-- `spec.md`  
-- `plan.md`  
-- `phase_checklists.md`  
-- Test outputs: `test_plan.md`, authored tests, latest test synthesis path in `state.yaml` → `latest_reviews.test` (and any mandated files your team tracks)  
+- `artifacts.spec` (path from `state.yaml`)  
+- `artifacts.plan`  
+- `artifacts.phase_checklists`  
+- Test outputs: **`artifacts.test_plan`**, authored tests, latest test synthesis path in `state.yaml` → `latest_reviews.test` (and any mandated files your team tracks)  
 
-## Branch precondition
+## Task branch precondition
 
-Before `human_spec_gate`, the task should already have recorded whether a dedicated branch can be created for the task. Before product implementation starts, create or switch to that dedicated task branch after spec, plan, test authoring, and test review are complete. Follow repository branch policy first; otherwise use a stable task-related name such as `dev-process/<task-id>` or `feature/<short-task-slug>`. Do not start product implementation on `main`/`master` unless repository policy explicitly requires it. Product/project commits may happen only on a branch the agent created for the task; commits to other branches, merges, and pushes are forbidden unless explicitly requested. `.hermes/tasks/<task-id>/` remains uncommitted by default. Do not modify git-untracked product/project files without explicit human permission; if there is no instruction to modify an untracked file, leave it alone. Record branch status in `implementation_log.md` or `phase_results.md`.
+Before `human_spec_gate`, the task should already have recorded branch feasibility (whether dev-process can create a dedicated branch for this task, or the human must explicitly direct branch choice).
+
+Before **test implementation** starts, create or switch to the dedicated task branch **dev-process created for this task** (Orchestrator may create/switch; see [SKILL.md](../SKILL.md) role table). **Test authoring, test review, and product implementation** all happen on that task branch. Do not defer branch creation until after the test stage.
+
+Do not use any pre-existing branch for task work unless the human **explicitly** instructs it. Product and test commits may happen **only** on the dev-process-created task branch; commits to other branches, merges, and pushes are forbidden unless explicitly requested. `.hermes/tasks/<task-id>/` remains uncommitted by default. Do not modify **existing** git-untracked product/project files unless explicitly instructed. Creating **new** product files allowed by the approved plan is permitted. Task artifacts under `.hermes/tasks/<task-id>/` are exempt from the untracked-product rule but remain uncommitted by default. Record branch status in **`artifacts.implementation_log`** or **`artifacts.phase_results`** (paths from `state.yaml`).
 
 ## Phase execution
 
-For each phase in `plan.md`:
+For each phase in **`artifacts.plan`**:
 
-1. Perform only scoped changes permitted by `phase_checklists.md`.  
+1. Perform only scoped changes permitted by **`artifacts.phase_checklists`**.  
 2. Run phase validation commands (tests, linters), including the planned Python/Ruff command when the phase changes Python code.  
-3. Append results to `.hermes/tasks/<task-id>/phase_results.md` using [templates/phase_results.md](../templates/phase_results.md).  
+3. Append results to `.hermes/tasks/<task-id>/` + **`artifacts.phase_results`** using [templates/phase_results.md](../templates/phase_results.md).  
 4. Run checkpoint review (see below).  
 5. Proceed only if checkpoint is clear of blockers for the next phase.
 
@@ -41,7 +45,7 @@ Write under `.hermes/tasks/<task-id>/reviews/implementation_phase_NN/round_MM/` 
 
 ## Rework after review
 
-When review produces **blocking** findings, **do not** continue blindly. First **triage** (classification) happens in **`synthesis.md`** ([rework routing](../review/SKILL.md#rework-routing)); align with it here.
+When review produces **blocking** findings, **do not** continue blindly. First **triage** (classification) happens in the round’s **`synthesis.md`** ([rework routing](../review/SKILL.md#rework-routing)); align with it here.
 
 Typical sequence:
 
@@ -50,7 +54,7 @@ review → finding triage (synthesis)
   → fix in the owning stage → run tests → rerun the needed review(s)
 ```
 
-After each blocking-driven cycle, append **`rework_log.md`** and **`timeline.md`**, and write the **next** review under a **new** `reviews/<stage>/round_NN/` directory (see [review rounds](../review/SKILL.md#review-rounds-and-rework-history)).
+After each blocking-driven cycle, append **`artifacts.rework_log`** and **`artifacts.timeline`**, and write the **next** review under a **new** `reviews/<stage>/round_NN/` directory (see [review rounds](../review/SKILL.md#review-rounds-and-rework-history)).
 
 ### By root cause — where work returns
 
@@ -116,4 +120,4 @@ If a Python-changing phase lacks a planned lint command and no project policy ex
 
 ## If plan or tests appear wrong
 
-**Stop** and escalate: adjust `plan.md` / `spec.md` via the proper upstream stages rather than improvising scope in code.
+**Stop** and escalate: adjust **`artifacts.plan`** / **`artifacts.spec`** via the proper upstream stages rather than improvising scope in code.

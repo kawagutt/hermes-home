@@ -2,12 +2,12 @@
 
 ## Scope
 
-Review `plan.md`, `phase_checklists.md`, and validation strategy **after spec gate**, before tests.
+Review **`artifacts.plan`**, **`artifacts.phase_checklists`**, and validation strategy **after spec gate**, before tests.
 
 ## Inputs (typical)
 
-- Approved `spec.md`, latest `reviews/spec/round_NN/synthesis.md` (or `state.yaml` → `latest_reviews.spec`), `human_spec_gate.md`  
-- `plan.md`, `phase_checklists.md`  
+- Approved **`artifacts.spec`**, latest `reviews/spec/round_NN/synthesis.md` (or `state.yaml` → `latest_reviews.spec`), **`artifacts.human_spec_gate`**  
+- **`artifacts.plan`**, **`artifacts.phase_checklists`**  
 
 ## Out of scope
 

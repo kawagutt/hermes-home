@@ -1,6 +1,6 @@
 # Implementation log — [task title]
 
-Chronological notes while executing `plan.md`. Prefer short entries after each meaningful step.
+Chronological notes while executing **`artifacts.plan`**. Prefer short entries after each meaningful step.
 
 | Date | Phase | Note |
 |------|-------|------|

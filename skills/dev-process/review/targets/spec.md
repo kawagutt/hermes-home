@@ -2,11 +2,11 @@
 
 ## Scope
 
-Review the task specification (`spec.md`) **before** plan or code.
+Review the task specification (**`artifacts.spec`**; path from `state.yaml`) **before** plan or code.
 
 ## Inputs (typical)
 
-- `.hermes/tasks/<task-id>/spec.md`  
+- `.hermes/tasks/<task-id>/` + `artifacts.spec`  
 - Minimal repo context only if needed to interpret terms (bounded)  
 
 ## Out of scope

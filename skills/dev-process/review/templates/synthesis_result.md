@@ -1,10 +1,10 @@
 # Synthesis template
 
-Written as `synthesis.md` inside **`.hermes/tasks/<task-id>/reviews/<stage>/round_NN/`** — one round per review run (**never overwrite** previous `round_*` dirs).
+Written as **`synthesis.md`** inside **`.hermes/tasks/<task-id>/reviews/<stage>/round_NN/`** — one round per review run (**never overwrite** previous `round_*` dirs). **Do not** use `NNNN_` prefixes under `reviews/` (task-root only; see orchestrator `SKILL.md` § Numbered task-root artifacts).
 
 ## Meta
 
-- Task ID: `[task-id]`  
+- Task ID: `[YYYYMMDD_short-slug]`  
 - Stage: `[spec | plan | test | implementation_phase_NN | final]`  
 - Review round: `[round_01]` — must match subdirectory name.  
 - Date: `[ISO date]`  

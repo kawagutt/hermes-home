@@ -6,8 +6,8 @@ Review **tests and test-planning artifacts** after plan approval—not product c
 
 ## Inputs (typical)
 
-- `spec.md`, `plan.md`  
-- Authored/modified tests, `test_plan.md`, `test_implementation.md`, `red_test_result.md` if present  
+- **`artifacts.spec`**, **`artifacts.plan`**  
+- Authored/modified tests, **`artifacts.test_plan`**, **`artifacts.test_implementation`**, **`artifacts.red_test_result`** if present  
 
 ## Out of scope
 

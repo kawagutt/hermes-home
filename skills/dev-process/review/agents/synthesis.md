@@ -4,7 +4,7 @@ This file documents the **synthesis** step. It lives under `agents/` for discove
 
 Independent reviewers investigate the target fresh; synthesis **aggregates their written outputs**—de-duplicating, surfacing disagreement, and producing one recommendation—using [`../templates/synthesis_result.md`](../templates/synthesis_result.md).
 
-Reviewer outputs must use [`../templates/review_result.md`](../templates/review_result.md). Do **not** use that template for synthesis; synthesis always fills `synthesis.md` via the synthesis template.
+Reviewer outputs must use [`../templates/review_result.md`](../templates/review_result.md). Do **not** use that template for synthesis; synthesis always fills **`synthesis.md`** via the synthesis template.
 
 ## Objective
 
@@ -35,4 +35,4 @@ In the **same turn / session** as finishing `synthesis.md`, update the task’s 
 
 Humans normally **do nothing** here. If synthesis was intentionally skipped this round per policy, **`state.yaml` is updated by the Orchestrator**, not skipped silently—see [review/SKILL.md § Who updates state.yaml](../SKILL.md#who-updates-stateyaml).
 
-Optionally append a **`timeline.md`** row for “review synthesized / round NN” once state is consistent (or leave that to Orchestrator—avoid duplicate rows).
+Optionally append a row to **`artifacts.timeline`** for “review synthesized / round NN” once state is consistent (or leave that to Orchestrator—avoid duplicate rows).

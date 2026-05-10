@@ -1,6 +1,6 @@
 # Plan — [task title]
 
-References: `spec.md`, `human_spec_gate.md`
+References: **`artifacts.spec`**, **`artifacts.human_spec_gate`** — paths from `state.yaml` (prefixes reflect **creation order**, not semantic order).
 
 ## Implementation phases
 

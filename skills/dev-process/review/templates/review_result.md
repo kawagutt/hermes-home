@@ -1,10 +1,10 @@
 # Review result template
 
-Replace `TITLE` / bracketed fields. File name matches agent role (e.g. `architecture.md`).
+Replace `TITLE` / bracketed fields. File name matches agent role (e.g. `architecture.md`) inside `reviews/<stage>/round_NN/`. **Do not** use `NNNN_` prefixes under `reviews/`—those are for **task-root** artifacts only (orchestrator `SKILL.md` § Numbered task-root artifacts).
 
 ## Review stage
 
-- Task ID: `[task-id]`  
+- Task ID: `[YYYYMMDD_short-slug]`  
 - Target: `[spec | plan | test | implementation_phase | final_diff]`  
 - Review round: `[round_01]` — directory under `reviews/<stage>/`; never overwrite prior rounds.  
 - Agent: `[requirements | architecture | diff_detail | impact | naming_doc | test_quality | checklist_compliance]` — **not** synthesis; synthesis uses [`synthesis_result.md`](synthesis_result.md).  

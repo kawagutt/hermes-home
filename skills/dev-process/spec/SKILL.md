@@ -1,8 +1,8 @@
 ---
 name: dev-process-spec
 description: >-
-  Produces task spec.md from goals, non-goals, success criteria, risks, and constraints; runs spec
-  review via review router; captures human_spec_gate.md before plan. Use when authoring or
+  Produces the task spec artifact from goals, non-goals, success criteria, risks, and constraints; runs spec
+  review via review router; captures human_spec_gate before plan. Use when authoring or
   revising specification for a Hermes dev-process task after loading dev-process.
 ---
 
@@ -12,12 +12,12 @@ Produce and stabilize **what** to build before any implementation or test code w
 
 ## Outputs
 
-Primary artifact: `.hermes/tasks/<task-id>/spec.md` (**working spec** for this task; not canonical project documentation unless deliberately promoted—see orchestrator [SKILL.md](../SKILL.md#artifact-persistence-policy)).
+Primary artifact: `.hermes/tasks/<task-id>/` + **`artifacts.spec`** (**working spec** for this task; task-root filenames follow orchestrator § **Numbered task-root artifacts**; not canonical project documentation unless deliberately promoted—see orchestrator [SKILL.md](../SKILL.md#artifact-persistence-policy)).
 Start from [templates/spec.md](../templates/spec.md).
 
-After spec reviewer agents finish for this run, write outputs under `.hermes/tasks/<task-id>/reviews/spec/round_NN/` (see orchestrator round rules): per-agent files plus `synthesis.md`.
+After spec reviewer agents finish for this run, write outputs under `.hermes/tasks/<task-id>/reviews/spec/round_NN/` (see orchestrator round rules): per-agent files such as **`requirements.md`**, **`architecture.md`**, plus **`synthesis.md`** (unprefixed names under `reviews/`).
 
-## Required content in `spec.md`
+## Required content in the spec artifact (`artifacts.spec`; path from `state.yaml`)
 
 Include at minimum:
 
@@ -35,13 +35,13 @@ Include at minimum:
 
 ## Clarification rules (SpecAgent)
 
-- If intent is obvious, draft `spec.md` immediately.
+- If intent is obvious, draft **`artifacts.spec`** immediately.
 - If ambiguous, ask up to **5** focused questions—do not interrogate endlessly.
 - For high design risk, prefer structured Q&A but keep it bounded.
 
 ## Spec review
 
-After `spec.md` is drafted, route reviews via [review/SKILL.md](../review/SKILL.md).
+After **`artifacts.spec`** is drafted, route reviews via [review/SKILL.md](../review/SKILL.md).
 
 **Standard recipe:** target `spec` → review agents `requirements`, `architecture` → **synthesis:** yes (see [review/SKILL.md](../review/SKILL.md)).
 
@@ -51,13 +51,13 @@ Detailed checklists live in `review/targets/spec.md` and `review/agents/*.md`; d
 
 Before **plan**, the human completes understanding confirmation—not a trivia quiz—and records it:
 
-- Write or update a concise Japanese decision summary (`spec_summary_ja.md`) covering goal, non-goals, success criteria, risks, and required human decisions.
-- Copy [templates/human_spec_gate.md](../templates/human_spec_gate.md) to `.hermes/tasks/<task-id>/human_spec_gate.md` and fill it.
-- A short CUI approval such as `OK` is acceptable after the summary is provided; record the response and comments in `human_spec_gate.md`.
+- Write or update a concise Japanese decision summary at **`artifacts.spec_summary_ja`** (task-root filename per orchestrator § **Numbered task-root artifacts**) covering goal, non-goals, success criteria, risks, and required human decisions.
+- Copy [templates/human_spec_gate.md](../templates/human_spec_gate.md) to `.hermes/tasks/<task-id>/` + **`artifacts.human_spec_gate`** (task-root filename per orchestrator § **Numbered task-root artifacts**) and fill it.
+- A short CUI approval such as `OK` is acceptable after the summary is provided; record the response and comments in **`artifacts.human_spec_gate`**.
 
 Full gate text and rationale: [human_gate.md](human_gate.md). Shared gate/summary rules: [../SKILL.md](../SKILL.md#hard-human-gates).
 
-Do not enter **plan** until the human gate artifact exists and questions are resolved or explicitly accepted. If human-gate feedback causes material `spec.md` changes, update the spec, rerun required spec review if material, provide an updated Japanese summary, and ask for confirmation again before planning.
+Do not enter **plan** until the human gate artifact exists and questions are resolved or explicitly accepted. If human-gate feedback causes material changes to **`artifacts.spec`**, apply orchestrator § **Numbered task-root artifacts** (edit in place when this file is the highest-numbered task-root artifact; otherwise create a new `NNNN_spec.md` and repoint `artifacts.spec`), rerun required spec review if material, provide an updated Japanese summary, and ask for confirmation again before planning.
 
 ## Permissions
 
