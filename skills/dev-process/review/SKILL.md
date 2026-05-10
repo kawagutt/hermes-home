@@ -88,7 +88,7 @@ When **blocking** findings cause rework:
 5. Run the required **tests**.  
 6. **Re‑run** the relevant review(s) into the **next** `round_NN` directory; **synthesis** (or Orchestrator if synthesis skipped) updates `review_rounds` / `latest_reviews` ([Who updates `state.yaml`](#who-updates-stateyaml)).  
 
-Same pattern applies whether the finding came from checkpoint review or final review: preserve prior rounds so the task-local **“review → fix → re‑review”** chain stays traceable (**not** project Git history—the task tree is normally uncommitted working log—see orchestrator Artifact persistence policy).
+Same pattern applies whether the finding came from checkpoint review or final review: preserve prior rounds so the task-local **“review → fix → re‑review”** chain stays traceable (**not** project Git history—the task tree is normally uncommitted working log—see [artifacts/SKILL.md — Artifact persistence policy](../artifacts/SKILL.md#artifact-persistence-policy)).
 
 ### Who updates `state.yaml`
 
@@ -148,8 +148,8 @@ Recipes name **targets** and common standard **review agents** only. **Synthesis
 
 ## Task output locations
 
-Write reviewer and synthesis artifacts under `.hermes/tasks/<task-id>/reviews/<stage>/round_NN/` per orchestrator [`SKILL.md`](../SKILL.md). Each new review run increments the round folder; keep **`artifacts.timeline`** / **`artifacts.rework_log`** in sync.
+Write reviewer and synthesis artifacts under `.hermes/tasks/<task-id>/reviews/<stage>/round_NN/` per [`artifacts/SKILL.md`](../artifacts/SKILL.md). Each new review run increments the round folder; keep **`artifacts.timeline`** / **`artifacts.rework_log`** in sync.
 
 ### Filenames inside each `round_NN`
 
-Use **conventional unprefixed names** (e.g. `requirements.md`, `architecture.md`, `synthesis.md`) per agent role and [`templates/review_result.md`](templates/review_result.md) / [`templates/synthesis_result.md`](templates/synthesis_result.md). **Do not** use `NNNN_` prefixes under `reviews/`—those apply only to **task-root** artifacts (orchestrator [`SKILL.md`](../SKILL.md) § Numbered task-root artifacts).
+Use **conventional unprefixed names** (e.g. `requirements.md`, `architecture.md`, `synthesis.md`) per agent role and [`templates/review_result.md`](templates/review_result.md) / [`templates/synthesis_result.md`](templates/synthesis_result.md). **Do not** use `NNNN_` prefixes under `reviews/`—those apply only to **task-root** artifacts ([`artifacts/SKILL.md`](../artifacts/SKILL.md) § Numbered task-root artifacts).

@@ -19,7 +19,7 @@ Implement **approved** artifacts only:
 
 Before `human_spec_gate`, the task should already have recorded branch feasibility (whether dev-process can create a dedicated branch for this task, or the human must explicitly direct branch choice).
 
-Before **test implementation** starts, create or switch to the dedicated task branch **dev-process created for this task** (Orchestrator may create/switch; see [SKILL.md](../SKILL.md) role table). **Test authoring, test review, and product implementation** all happen on that task branch. Do not defer branch creation until after the test stage.
+Before **test implementation** starts, create or switch to the dedicated task branch **dev-process created for this task** (Orchestrator may create/switch; see [git/SKILL.md](../git/SKILL.md) and orchestrator [SKILL.md](../SKILL.md) role table). **Test authoring, test review, and product implementation** all happen on that task branch. Do not defer branch creation until after the test stage.
 
 Do not use any pre-existing branch for task work unless the human **explicitly** instructs it. Product and test commits may happen **only** on the dev-process-created task branch; commits to other branches, merges, and pushes are forbidden unless explicitly requested. `.hermes/tasks/<task-id>/` remains uncommitted by default. Do not modify **existing** git-untracked product/project files unless explicitly instructed. Creating **new** product files allowed by the approved plan is permitted. Task artifacts under `.hermes/tasks/<task-id>/` are exempt from the untracked-product rule but remain uncommitted by default. Record branch status in **`artifacts.implementation_log`** or **`artifacts.phase_results`** (paths from `state.yaml`).
 

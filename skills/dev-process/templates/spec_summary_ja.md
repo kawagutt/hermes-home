@@ -2,7 +2,9 @@
 
 ## 判断ポイント
 
-この **`artifacts.spec`**（`state.yaml` に記録されたファイル名）の内容で plan stage に進めてよいかを確認してください。短い `OK` でも承認として記録できます。
+この **`artifacts.spec`**（`state.yaml` に記録されたファイル名）の内容で plan stage に進めてよいかを確認してください。
+
+ただし、`Required human decisions` がある場合は、agent が各判断項目を chat で個別に提示します。短い `OK` は、それらの判断項目が個別に提示され、質問や修正依頼の機会があった後の最終承認としてのみ有効です。
 
 ## ゴール
 

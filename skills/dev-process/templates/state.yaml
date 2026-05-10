@@ -52,7 +52,7 @@ branch:
   commits_allowed_on_task_branch: false # test and product commits on the task branch (when in scope for this task)
   task_artifacts_commit_by_default: false
 
-# Task-root Markdown: logical key → current filename (NNNN_<stem>.md). See orchestrator SKILL.md § Numbered task-root artifacts.
+# Task-root Markdown: logical key → current filename (NNNN_<stem>.md). Canonical rules: skills/dev-process/artifacts/SKILL.md § Numbered task-root artifacts (#numbered-task-root-artifacts).
 # If a key is "", first materialization: next NNNN = max(four-digit prefixes on task-root NNNN_*.md) + 1, create NNNN_<stem>.md, set this key in the same session.
 artifacts:
   spec: ""

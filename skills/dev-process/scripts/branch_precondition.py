@@ -29,9 +29,26 @@ def current_git_branch(cwd: Path) -> str | None:
         stderr=subprocess.PIPE,
         check=False,
     )
-    if result.returncode != 0:
+    if result.returncode == 0:
+        branch = result.stdout.strip()
+        if branch:
+            return branch
+
+    # In an unborn repository (no commits yet), `rev-parse --abbrev-ref HEAD`
+    # can fail even though HEAD is already attached to the desired branch.
+    # `symbolic-ref --short HEAD` still reports that branch, so use it as a
+    # fallback before declaring the branch check failed.
+    fallback = subprocess.run(
+        ["git", "symbolic-ref", "--short", "HEAD"],
+        cwd=str(cwd),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if fallback.returncode != 0:
         return None
-    return result.stdout.strip()
+    return fallback.stdout.strip() or None
 
 
 def main() -> int:

@@ -1,10 +1,12 @@
 # 最終サマリー（日本語）
 
-**Lifecycle:** Materialize / version **`artifacts.final_summary_ja`** per orchestrator § **Numbered task-root artifacts**. **Before final review**, fill it with final diff, validation summary, known risks, and review focus. After final review synthesis, **update** it with review findings, unresolved risks, and merge/commit recommendation, then use it immediately **before** `final_human_gate`.
+**Lifecycle:** Materialize / version **`artifacts.final_summary_ja`** per `skills/dev-process/artifacts/SKILL.md` § Numbered task-root artifacts. **Before final review**, fill it with final diff, validation summary, known risks, and review focus. After final review synthesis, **update** it with review findings, unresolved risks, and merge/commit recommendation, then use it immediately **before** `final_human_gate`.
 
 ## 判断ポイント
 
-このタスクを human-controlled commit / merge / completion decision に進めてよいかを確認してください。短い `OK` でも承認として記録できます。
+このタスクを human-controlled commit / merge / completion decision に進めてよいかを確認してください。
+
+ただし、`Required human decisions` がある場合は、agent が各判断項目を chat で個別に提示します。短い `OK` は、それらの判断項目が個別に提示され、質問や修正依頼の機会があった後の最終承認としてのみ有効です。
 
 ## 最終 diff 概要
 

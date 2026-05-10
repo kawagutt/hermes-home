@@ -1,6 +1,6 @@
 # Review result template
 
-Replace `TITLE` / bracketed fields. File name matches agent role (e.g. `architecture.md`) inside `reviews/<stage>/round_NN/`. **Do not** use `NNNN_` prefixes under `reviews/`—those are for **task-root** artifacts only (orchestrator `SKILL.md` § Numbered task-root artifacts).
+Replace `TITLE` / bracketed fields. File name matches agent role (e.g. `architecture.md`) inside `reviews/<stage>/round_NN/`. **Do not** use `NNNN_` prefixes under `reviews/`—those are for **task-root** artifacts only ([`artifacts/SKILL.md`](../../artifacts/SKILL.md#numbered-task-root-artifacts) § Numbered task-root artifacts).
 
 ## Review stage
 

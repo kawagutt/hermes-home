@@ -32,6 +32,8 @@ What is the **highest-risk** failure mode, and where is it captured in **`artifa
 
 ## Required human decisions
 
+Use the chat structure in [human_decision_prompt.md](human_decision_prompt.md) when presenting items (adapt the final approval line to “proceed to **plan**” for this gate).
+
 If **`artifacts.spec`** contains `Required human decisions`, present those items **one by one in chat** before asking for final approval. For each item, record the decision question, recommendation, practical consequences, whether it blocks plan, and the artifact section to update. The gate artifact records the discussion; it is not a substitute for the discussion.
 
 ## Short CUI approval

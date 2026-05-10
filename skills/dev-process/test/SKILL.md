@@ -15,7 +15,7 @@ Tests are **not** a sub-step of implementation. They are a **separate phase** af
 - Plan review is **complete**.  
 - No **blocking** plan review findings remain unaddressed.  
 - Any **escalation** required by plan review is **resolved** (see [plan/SKILL.md](../plan/SKILL.md)).  
-- **Task branch precondition** is satisfied: the dedicated task branch dev-process uses for this task exists, the working tree is on it, `branch.task_branch_precondition_met` is true, and `state.yaml` → `branch` matches the canonical branch rule in [../SKILL.md](../SKILL.md) (so test files and later product files are authored on the same task branch; a pre-existing branch **only** if the human explicitly instructed it and it is recorded in `feasibility_notes`).
+- **Task branch precondition** is satisfied: the dedicated task branch dev-process uses for this task exists, the working tree is on it, `branch.task_branch_precondition_met` is true, and `state.yaml` → `branch` matches the canonical branch rule in [git/SKILL.md](../git/SKILL.md) / orchestrator [SKILL.md](../SKILL.md) (so test files and later product files are authored on the same task branch; a pre-existing branch **only** if the human explicitly instructed it and it is recorded in `feasibility_notes`).
 
 If any precondition fails, **stop**—do not author tests yet.
 
@@ -65,7 +65,20 @@ Use [review/SKILL.md](../review/SKILL.md).
 
 **Standard recipe:** target `test` → review agents `requirements`, `test_quality`, `checklist_compliance` → **synthesis:** yes (see [review/SKILL.md](../review/SKILL.md)).
 
-Blocking findings → **do not** start ImplementationAgent until resolved via test revisions or explicit spec/plan amendment loop. If test review clears and `state.yaml`/latest synthesis permit it, the next legal stage is **product implementation**. Do not stop merely because the test stage boundary was reached; however, because this crosses into the ImplementationAgent role, either stop with a handoff report or explicitly start a new bounded ImplementationAgent run. Do not silently switch roles inside the same `/goal` loop.
+Blocking findings → **do not** start ImplementationAgent until resolved via test revisions or explicit spec/plan amendment loop.
+
+If test review clears and `state.yaml` / latest synthesis permit it, the next legal stage is **product implementation**.
+
+Because this crosses into the ImplementationAgent role, continue only by an **explicit role transition** that states:
+
+- new role: `ImplementationAgent`;
+- allowed scope from `plan.md` / `phase_checklists`;
+- approved inputs and latest review pointers;
+- test files are not to be modified by ImplementationAgent by default.
+
+Do not silently change role inside the same `/goal` loop.
+
+Do not stop merely because the test stage boundary or role boundary was reached. Stop only if continuing would be unsafe, illegal, missing required context/tools, or blocked by gate/escalation/review findings.
 
 ## Test failure triage (after implementation has started)
 

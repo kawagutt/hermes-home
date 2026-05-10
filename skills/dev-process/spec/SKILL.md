@@ -12,10 +12,10 @@ Produce and stabilize **what** to build before any implementation or test code w
 
 ## Outputs
 
-Primary artifact: `.hermes/tasks/<task-id>/` + **`artifacts.spec`** (**working spec** for this task; task-root filenames follow orchestrator § **Numbered task-root artifacts**; not canonical project documentation unless deliberately promoted—see orchestrator [SKILL.md](../SKILL.md#artifact-persistence-policy)).
+Primary artifact: `.hermes/tasks/<task-id>/` + **`artifacts.spec`** (**working spec** for this task; task-root filenames follow [artifacts/SKILL.md — Numbered task-root artifacts](../artifacts/SKILL.md#numbered-task-root-artifacts); persistence and promotion: [artifacts/SKILL.md — Artifact persistence policy](../artifacts/SKILL.md#artifact-persistence-policy)).
 Start from [templates/spec.md](../templates/spec.md).
 
-After spec reviewer agents finish for this run, write outputs under `.hermes/tasks/<task-id>/reviews/spec/round_NN/` (see orchestrator round rules): per-agent files such as **`requirements.md`**, **`architecture.md`**, plus **`synthesis.md`** (unprefixed names under `reviews/`).
+After spec reviewer agents finish for this run, write outputs under `.hermes/tasks/<task-id>/reviews/spec/round_NN/` (see [artifacts/SKILL.md — Review outputs by stage](../artifacts/SKILL.md#review-outputs-by-stage)): per-agent files such as **`requirements.md`**, **`architecture.md`**, plus **`synthesis.md`** (unprefixed names under `reviews/`).
 
 ## Required content in the spec artifact (`artifacts.spec`; path from `state.yaml`)
 
@@ -51,13 +51,13 @@ Detailed checklists live in `review/targets/spec.md` and `review/agents/*.md`; d
 
 Before **plan**, the human completes understanding confirmation—not a trivia quiz—and records it:
 
-- Write or update a concise Japanese decision summary at **`artifacts.spec_summary_ja`** (task-root filename per orchestrator § **Numbered task-root artifacts**) covering goal, non-goals, success criteria, risks, and required human decisions.
-- Copy [templates/human_spec_gate.md](../templates/human_spec_gate.md) to `.hermes/tasks/<task-id>/` + **`artifacts.human_spec_gate`** (task-root filename per orchestrator § **Numbered task-root artifacts**) and fill it.
-- A short CUI approval such as `OK` is acceptable after the summary is provided; record the response and comments in **`artifacts.human_spec_gate`**.
+- Write or update a concise Japanese decision summary at **`artifacts.spec_summary_ja`** (task-root filename per [artifacts/SKILL.md — Numbered task-root artifacts](../artifacts/SKILL.md#numbered-task-root-artifacts)) covering goal, non-goals, success criteria, risks, and required human decisions.
+- Copy [templates/human_spec_gate.md](../templates/human_spec_gate.md) to `.hermes/tasks/<task-id>/` + **`artifacts.human_spec_gate`** (task-root filename per [artifacts/SKILL.md — Numbered task-root artifacts](../artifacts/SKILL.md#numbered-task-root-artifacts)) and fill it.
+- A short CUI approval such as `OK` is valid only after the Japanese summary at **`artifacts.spec_summary_ja`** and after any `Required human decisions` have been presented **one by one in chat** (see [../SKILL.md](../SKILL.md#human-gates)); record the response and comments in **`artifacts.human_spec_gate`**.
 
-Full gate text and rationale: [human_gate.md](human_gate.md). Shared gate/summary rules: [../SKILL.md](../SKILL.md#hard-human-gates).
+Full gate text and rationale: [human_gate.md](human_gate.md). Shared gate/summary rules: [../SKILL.md](../SKILL.md#human-gates).
 
-Do not enter **plan** until the human gate artifact exists and questions are resolved or explicitly accepted. If human-gate feedback causes material changes to **`artifacts.spec`**, apply orchestrator § **Numbered task-root artifacts** (edit in place when this file is the highest-numbered task-root artifact; otherwise create a new `NNNN_spec.md` and repoint `artifacts.spec`), rerun required spec review if material, provide an updated Japanese summary, and ask for confirmation again before planning.
+Do not enter **plan** until the human gate artifact exists and questions are resolved or explicitly accepted. If human-gate feedback causes material changes to **`artifacts.spec`**, apply [artifacts/SKILL.md — Numbered task-root artifacts](../artifacts/SKILL.md#numbered-task-root-artifacts) (edit in place when this file is the highest-numbered task-root artifact; otherwise create a new `NNNN_spec.md` and repoint `artifacts.spec`), rerun required spec review if material, provide an updated Japanese summary, and ask for confirmation again before planning.
 
 ## Permissions
 

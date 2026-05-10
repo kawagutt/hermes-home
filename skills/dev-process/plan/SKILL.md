@@ -21,7 +21,7 @@ Turn an approved spec into an executable, reviewable plan. **There is no default
 - `.hermes/tasks/<task-id>/` + `artifacts.plan` — use [templates/plan.md](../templates/plan.md)  
 - `.hermes/tasks/<task-id>/` + `artifacts.phase_checklists` — use [templates/phase_checklists.md](../templates/phase_checklists.md)  
 
-After each plan review run, write outputs under `.hermes/tasks/<task-id>/reviews/plan/round_NN/` per orchestrator layout.
+After each plan review run, write outputs under `.hermes/tasks/<task-id>/reviews/plan/round_NN/` per [artifacts/SKILL.md — Review outputs by stage](../artifacts/SKILL.md#review-outputs-by-stage).
 
 ## Required content in the plan artifact (`artifacts.plan`; path from `state.yaml`)
 
@@ -43,7 +43,7 @@ PlanAgent owns validation selection. Use this precedence:
 
 1. User-explicit validation commands.
 2. Project docs/config such as `AGENTS.md`, README, Makefile, `pyproject.toml`, or equivalent.
-3. Dev-process defaults from [../SKILL.md](../SKILL.md#cost-aware-validation-and-model-use).
+3. Dev-process defaults from [../validation/SKILL.md](../validation/SKILL.md#cost-aware-validation-and-model-use).
 
 For Python code changes, include a Ruff validation command in **`artifacts.phase_checklists`** unless the project explicitly uses another linting policy. Prefer touched Python paths first. If no project rule exists, prefer `uv run ruff check <touched-python-paths>` or `.venv/bin/python -m ruff check <touched-python-paths>` when appropriate. Do not leave Python lint policy for ImplementationAgent to invent ad hoc.
 

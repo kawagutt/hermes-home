@@ -1,6 +1,6 @@
 # Synthesis template
 
-Written as **`synthesis.md`** inside **`.hermes/tasks/<task-id>/reviews/<stage>/round_NN/`** — one round per review run (**never overwrite** previous `round_*` dirs). **Do not** use `NNNN_` prefixes under `reviews/` (task-root only; see orchestrator `SKILL.md` § Numbered task-root artifacts).
+Written as **`synthesis.md`** inside **`.hermes/tasks/<task-id>/reviews/<stage>/round_NN/`** — one round per review run (**never overwrite** previous `round_*` dirs). **Do not** use `NNNN_` prefixes under `reviews/` (task-root only; see [`artifacts/SKILL.md`](../../artifacts/SKILL.md#numbered-task-root-artifacts) § Numbered task-root artifacts).
 
 ## Meta
 

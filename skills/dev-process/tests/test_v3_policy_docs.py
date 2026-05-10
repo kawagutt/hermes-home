@@ -4,13 +4,25 @@ These tests exercise documentation/policy invariants from the approved dev-proce
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# Inline Markdown links: ](target) or ](target#frag) — skip URLs and same-file fragments.
+_MD_LINK_RE = re.compile(r"\]\(([^)]+)\)")
+
 
 def read_rel(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
+
+
+def section_after_heading(heading: str, text: str) -> str:
+    start = text.find(heading)
+    assert start != -1, f"missing heading {heading!r}"
+    after = text[start + len(heading) :].lstrip("\n")
+    cut = after.find("\n## ")
+    return after if cut == -1 else after[:cut]
 
 
 def all_markdown() -> str:
@@ -87,3 +99,87 @@ def test_helper_readme_documents_dependencies_timeline_and_comment_policy() -> N
     assert "Time | Stage | Action | Output" in readme
     assert "may drop YAML comments" in readme
     assert "`## Recommendation`" in readme
+
+
+def test_orchestrator_human_gates_subsection_covers_required_decisions() -> None:
+    skill = read_rel("SKILL.md")
+    hg = section_after_heading("## Human gates", skill)
+    assert "Required human decisions" in hg
+    assert "one by one in chat" in hg
+    assert "final approval" in hg
+    assert "generic" in hg.lower()
+
+
+def test_orchestrator_lines_do_not_imply_ok_after_summary_only() -> None:
+    skill = read_rel("SKILL.md")
+    needles = ("after the summary is provided", "after the concise japanese summary")
+    tokens = (
+        "Required human decisions",
+        "one by one",
+        "individually",
+        "required decision items",
+    )
+    for i, line in enumerate(skill.splitlines(), start=1):
+        lower = line.lower()
+        if not any(n in lower for n in needles):
+            continue
+        assert any(t in line for t in tokens), f"line {i} may imply OK after summary only: {line!r}"
+
+
+def test_test_skill_matches_explicit_role_transition_policy() -> None:
+    test_skill = read_rel("test/SKILL.md")
+    assert "explicit role transition" in test_skill
+    assert "Do not silently change role" in test_skill
+    assert (
+        "Do not stop merely because the test stage boundary or role boundary was reached" in test_skill
+    )
+
+
+def test_safe_deterministic_helper_execution_documented() -> None:
+    validation_skill = read_rel("validation/SKILL.md")
+    assert "### Safe deterministic helper execution" in validation_skill
+    assert "validate_state.py" in validation_skill
+    assert "review_round.py --dry-run" in validation_skill
+
+
+def test_human_decision_prompt_template_exists_and_is_linked() -> None:
+    prompt = read_rel("templates/human_decision_prompt.md")
+    assert "one by one" in prompt
+    assert "Final approval question" in prompt
+    gate = read_rel("templates/human_spec_gate.md")
+    assert "human_decision_prompt.md" in gate
+    assert read_rel("templates/final_human_gate.md").count("human_decision_prompt.md") >= 1
+
+
+def test_spec_skill_ties_ok_to_individual_decisions() -> None:
+    spec = read_rel("spec/SKILL.md")
+    assert "one by one in chat" in spec
+    assert "Required human decisions" in spec
+
+
+def test_japanese_summary_templates_require_individual_decisions_before_ok() -> None:
+    for path in ("templates/spec_summary_ja.md", "templates/final_summary_ja.md"):
+        text = read_rel(path)
+        assert "Required human decisions" in text
+        assert "個別" in text
+        assert "最終承認" in text
+
+
+def test_markdown_relative_links_resolve_under_dev_process_skill() -> None:
+    """Fail if Markdown points to missing paths (catches ../../ typos vs skill layout)."""
+
+    skipped_prefixes = ("http://", "https://", "mailto:", "tel:")
+
+    for md_path in sorted(ROOT.rglob("*.md")):
+        text = md_path.read_text(encoding="utf-8")
+        for m in _MD_LINK_RE.finditer(text):
+            raw = m.group(1).strip()
+            if any(raw.startswith(p) for p in skipped_prefixes):
+                continue
+            path_part = raw.partition("#")[0].strip()
+            if not path_part:
+                continue
+            if path_part.startswith("<") and path_part.endswith(">"):
+                path_part = path_part[1:-1].strip()
+            candidate = (md_path.parent / path_part).resolve()
+            assert candidate.exists(), f"{md_path.relative_to(ROOT)}: broken link ({raw!r}) -> {candidate}"
