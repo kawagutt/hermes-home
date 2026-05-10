@@ -24,9 +24,11 @@ When continuing an existing task, read `.hermes/tasks/<task-id>/state.yaml` firs
 
 `/goal` may continue across ordinary stage or phase boundaries when the next action is legally allowed by `state.yaml`, gate approvals, required artifacts, latest review synthesis, role permissions, and the approved plan. Do **not** stop merely because a phase completed if the next stage is legal and the same agent/session may perform it.
 
-A bounded advancement may be one stage, one implementation phase, one review target plus selected agents, one synthesis/status step, or a **short** legal chain of those steps until a required stop condition **or a role boundary** is reached.
+A bounded advancement may be one stage, one implementation phase, one review target plus selected agents, one synthesis/status step, or a **short** legal chain of those steps until a required stop condition is reached. **Role boundary is not an automatic stop condition.** Do not stop solely because the next legal action belongs to another role.
 
-When the next legal action requires a different role (for example PlanAgent → TestAuthorAgent → ImplementationAgent → ReviewerAgent), either **stop** with a handoff report (see Operational stops) or **explicitly start a new bounded role run**. Do not silently change role inside the same `/goal` loop.
+When the next legal action requires a different role (for example PlanAgent → TestAuthorAgent → ImplementationAgent → ReviewerAgent), continue with an **explicit role transition** when the next action is legal under `state.yaml`, approvals, latest review synthesis, role permissions, and the approved plan. An explicit role transition names the new role and allowed scope; it is not a human gate. Stop with a handoff report only when continuing would be unsafe or illegal, the next role requires unavailable context/tools, or a required gate/escalation decision is pending. Do not silently change role inside the same `/goal` loop, but also do not stop solely because the next legal action belongs to another role. Normal role/stage transitions **do not require human confirmation** merely because the next action belongs to another dev-process role. Human confirmation is required only at hard human gates or when escalation, scope, safety, branch, or policy decisions require it.
+
+Explicit role transition must not weaken review context isolation. Reviewer roles should receive approved artifacts, diffs, test outputs, and prior review summaries as needed, but not ImplementationAgent chat rationale unless explicitly requested. In particular, ImplementationAgent → ReviewerAgent transitions should preserve independent review context instead of reusing implementation rationale as review evidence.
 
 ### Hard human gates
 
@@ -40,14 +42,14 @@ Before human-facing approval requests, provide a concise Japanese summary:
 - `artifacts.spec_summary_ja` (path from `state.yaml`) before `human_spec_gate`: goal, non-goals, success criteria, risks, and required human decisions.
 - `artifacts.final_summary_ja`: follow [templates/final_summary_ja.md](templates/final_summary_ja.md) — draft before final review (diff, validation, review focus); after final review synthesis, update with findings and recommendation before `final_human_gate`.
 
-A short CUI approval such as `OK` is valid after the summary is provided. Record the approval and any comments in the relevant gate artifacts (`artifacts.human_spec_gate` / `artifacts.final_human_gate`; paths from `state.yaml`). Summary and gate artifacts remain task-local working logs and are not committed by default.
+A short CUI approval such as `OK` is valid after the summary is provided **and after any `Required human decisions` have been presented one by one in chat with an opportunity for the human to answer or discuss them**. Human gates must not collapse multiple required human decisions into a single generic `OK` prompt. Record the approval and any comments in the relevant gate artifacts (`artifacts.human_spec_gate` / `artifacts.final_human_gate`; paths from `state.yaml`). Summary and gate artifacts remain task-local working logs and are not committed by default.
 
 ### Operational stops
 
 Outside hard human gates, stop only when continuing would be unsafe or illegal, including:
 
 - blocking review synthesis or unresolved escalation;
-- next required action belongs to a different role and handoff is needed;
+- next required action belongs to a different role **and** continuing by explicit role transition would be unsafe, illegal, or missing required context/tools;
 - required artifacts are missing or inconsistent;
 - continuing would change scope, public behavior, role permissions, artifact policy, branch/commit policy, or validation policy;
 - the agent is uncertain which stage is legally next.
@@ -87,7 +89,23 @@ Prefer deterministic commands over LLM reasoning for mechanical checks: tests, l
 
 For Python validation on Python changes, precedence is: user-explicit command > project docs/config (`AGENTS.md`, README, Makefile, `pyproject.toml`, etc.) > dev-process default. If no project rule exists, plan Ruff checks per Python-changing phase, preferably `uv run ruff check <touched-python-paths>` or `.venv/bin/python -m ruff check <touched-python-paths>` when appropriate. Do not silently use unrelated system Python when the project appears to use `uv` / `.venv`; stop and report environment ambiguity.
 
-This section documents process behavior for Hermes `/goal`; it does not implement or require Hermes CLI, gateway, slash-command, agent-loop, or executable model-routing changes.
+This section documents process behavior for Hermes `/goal`; it does not implement or require Hermes CLI, gateway, slash-command, agent-loop, or executable model-routing changes. NodeFlow integration is out of scope for dev-process v3 unless a future approved task explicitly adds it.
+
+### Review-depth preset selection
+
+Review depth is selected by **remaining uncertainty** and **impact if broken**, not by diff size alone. First run deterministic checks where possible, then choose the smallest preset that still covers the remaining risk. Human preference for a lighter preset does not override high-risk triggers.
+
+Canonical preset definitions live in [`review/presets.md`](review/presets.md). Do not define competing reviewer lists or synthesis rules elsewhere.
+
+### Deterministic helper utilities
+
+Small deterministic helpers live under [`scripts/`](scripts/) and are documented in [`scripts/README.md`](scripts/README.md). They reduce mechanical process mistakes but are **not** a workflow engine and do not replace role judgment, reviewer synthesis, human gates, or approved plans.
+
+Current helpers:
+
+- `validate_state.py` — task state/artifact/review/branch consistency checks.
+- `review_round.py` — create a review round directory, then finish it only after real synthesis exists.
+- `branch_precondition.py` — verify/record task branch precondition evidence and append a timeline row.
 
 ## Canonical pipeline (source of truth)
 

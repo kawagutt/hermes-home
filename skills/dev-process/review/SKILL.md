@@ -107,9 +107,11 @@ Same pattern applies whether the finding came from checkpoint review or final re
 
 ---
 
-## Standard recipes (combinations only)
+## Standard target recipes (combinations only)
 
-Recipes name **targets** and **review agents** only. **Synthesis** is a separate line (merge step). **Detailed bullets stay in agent files.**
+These are default **target recipes** for the `standard` preset. The single source of truth for preset reviewer requirements and synthesis rules is [`presets.md`](presets.md). For `light` or `deep`, use [`presets.md`](presets.md). Do not treat this section as overriding the selected review-depth preset.
+
+Recipes name **targets** and common standard **review agents** only. **Synthesis** is a separate line (merge step). **Detailed bullets stay in agent files.**
 
 ### Spec review
 

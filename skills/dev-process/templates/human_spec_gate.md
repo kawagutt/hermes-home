@@ -30,9 +30,13 @@ What is the **highest-risk** failure mode, and where is it captured in **`artifa
 
 > 
 
+## Required human decisions
+
+If **`artifacts.spec`** contains `Required human decisions`, present those items **one by one in chat** before asking for final approval. For each item, record the decision question, recommendation, practical consequences, whether it blocks plan, and the artifact section to update. The gate artifact records the discussion; it is not a substitute for the discussion.
+
 ## Short CUI approval
 
-Before asking for approval, provide a concise Japanese summary at **`artifacts.spec_summary_ja`** (path from `state.yaml`). A short response such as `OK` is acceptable after that summary. Record the exact response and any comments here. If comments require material changes to **`artifacts.spec`**, update it, rerun required spec review if material, provide an updated Japanese summary, and ask for confirmation again before plan.
+Before asking for approval, provide a concise Japanese summary at **`artifacts.spec_summary_ja`** (path from `state.yaml`). A short response such as `OK` is acceptable only after the summary and after required decision items have been presented individually with an opportunity for the human to answer or discuss them. Do not collapse multiple required human decisions into a single generic `OK` prompt. Record the exact response and any comments here. If comments require material changes to **`artifacts.spec`**, update it, rerun required spec review if material, provide an updated Japanese summary, and ask for confirmation again before plan.
 
 ## 5. Approval
 
