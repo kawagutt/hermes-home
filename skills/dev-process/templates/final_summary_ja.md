@@ -27,7 +27,7 @@ Hermes は session / model 別の使用状況を出せますが、**dev-process 
 |------|------|
 | **review-depth preset（最終）** | `[light \| standard \| deep]` （途中昇格があれば `artifacts.timeline` または **`artifacts.model_usage`** を参照） |
 | **reasoning effort** | `[medium / high / unknown + 理由]` 実運用での切り替え要約。**`Model usage record required?` = yes** のときは可能な範囲で session / reasoning evidence を残す。観測できない場合は `unknown` とし、**理由**を同じセルまたは直下に書く（無言の空欄は避ける）。**no** のときは簡潔でよい。 |
-| **main model の根拠** | **`Model usage record required?` = no** の例: 「`artifacts.plan` により詳細な model usage 記録は不要」と一言。**yes** の例: `[session id / hermes insights / Hermes Dashboard / 要約・編集済みの証跡のみ]` |
+| **main model の根拠** | **`Model usage record required?` = no** の例: 「`light` または docs-only で **Reason** が `no need`」／「`standard`/`deep` で人間が **`artifacts.plan` の Reason** に記録省略を明示承認」。**yes** の例: `[session id / hermes insights / Hermes Dashboard / 要約・編集済みの証跡のみ]` |
 | **補助（auxiliary tier）** | `[必要なら: approval 等が別 tier だった場合のみ]` |
 
 生ログやプロンプト全文を task artifact に貼らない（機微・クレデンシャル・他ユーザデータの可能性）。詳細な行は **`Model usage record required?` = yes** のときのみ **`artifacts.model_usage`** を正としてよい。**no** のときは空の **`artifacts.model_usage`** で矛盾しない。

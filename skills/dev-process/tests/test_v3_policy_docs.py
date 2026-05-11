@@ -147,6 +147,8 @@ def test_human_decision_prompt_template_exists_and_is_linked() -> None:
     prompt = read_rel("templates/human_decision_prompt.md")
     assert "one by one" in prompt
     assert "Final approval question" in prompt
+    assert "Visibility rule" in prompt
+    assert "numbered" in prompt.casefold()
     gate = read_rel("templates/human_spec_gate.md")
     assert "human_decision_prompt.md" in gate
     assert read_rel("templates/final_human_gate.md").count("human_decision_prompt.md") >= 1

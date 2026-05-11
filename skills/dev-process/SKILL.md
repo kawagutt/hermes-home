@@ -78,11 +78,14 @@ Before approval, give a concise **Japanese** summary:
 
 If the spec, summary, or gate artifact contains **`Required human decisions`**, present each decision **one by one in chat** before asking for **final approval**. For each decision item:
 
+- a **visible title** (what is being decided — do not assume the human remembers prior turns);
 - decision question;
 - recommended answer, if any;
 - practical consequence of each option;
 - whether it blocks the next stage;
 - artifact section to update.
+
+**Inline options:** list every discrete choice as **numbered or lettered lines in the same assistant message** (see [templates/human_decision_prompt.md](templates/human_decision_prompt.md)). Do **not** refer to “options above” or UI-only choice lists that may not render in the user’s client.
 
 A short CUI approval such as `OK` is valid **after the summary is provided** **and** after any `Required human decisions` have been presented **one by one in chat**, with chance to answer or discuss — and only **after all required decision items have been individually presented** with opportunity for follow-up or changes. Human gates must not collapse multiple required human decisions into a single generic `OK` prompt. Do not ask a generic "OK?" while unresolved required human decisions remain.
 
@@ -108,7 +111,7 @@ Summary: all test and product work on the **dev-process task branch**; Orchestra
 
 ## Validation and helpers
 
-Cost-aware validation, Python/Ruff precedence, **safe deterministic helper execution**, and script listing: [validation/SKILL.md](validation/SKILL.md).
+Cost-aware validation, Python/Ruff precedence, **safe deterministic helper execution**, and script listing: [validation/SKILL.md](validation/SKILL.md). Optional: Hermes profile resolution for an action or `state.yaml` stage via [`scripts/dp_hermes.py`](scripts/dp_hermes.py) — [scripts/README.md](scripts/README.md).
 
 ## Review-depth preset selection
 

@@ -1,0 +1,15 @@
+# Example only — not loaded by dp_hermes.py or Hermes automatically.
+# dev-process does not bind raw provider/model IDs in skills.
+# Create profiles with:  hermes profile create dp-code --clone
+# Then edit each profile’s own config under ~/.hermes/profiles/<name>/
+#
+# The keys below are documentation placeholders matching
+# skills/dev-process/config/model_policy.yaml (profiles: strong_reasoning → dp-strong, etc.).
+
+documentation_profiles:
+  dp-strong:
+    purpose: spec / plan / final review / deep review (high-stakes reasoning)
+  dp-code:
+    purpose: implementation, test authoring, fixes
+  dp-cheap:
+    purpose: light orchestration, test command choice, short log summaries

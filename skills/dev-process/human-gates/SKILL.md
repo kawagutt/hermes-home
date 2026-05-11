@@ -16,6 +16,13 @@ Use when operating a staged process that includes human approval gates—for exa
 
 A human gate is not satisfied merely because an artifact exists or because a summary was written. The human must receive the required decisions in chat with a chance to answer or discuss them.
 
+Canonical question format (must stay stable unless a workflow explicitly overrides it):
+
+1. Ask with visible **numbered choices** (`1.`, `2.`, `3.`) whenever practical.
+2. Do **not** post a long paragraph/list and then ask only a generic `OK?`.
+3. Before waiting, explicitly state **how to answer** (e.g. `Reply with 1/2/3 or a short comment.`).
+4. Do **not** change the question format mid-gate without a clear reason announced in chat.
+
 If the gate has multiple required decisions:
 
 1. Present the concise decision summary first, in the workflow's required language and format.
@@ -54,6 +61,8 @@ At a spec gate, consider prompting separately for:
 - Do not treat an artifact that lists decisions as enough; the decisions must be presented in chat.
 - Do not record approval before the human had a reasonable chance to respond to the individual items.
 - Do not mix approval of implementation with approval to commit/push/merge unless the human explicitly confirms those actions.
+- Do not switch from numbered choices to free-form-only prompts mid-sequence unless you first explain why.
+- **Invisible choices:** Some UIs show “pick from the options above” without rendering options (e.g. narrow terminals). Always repeat **numbered options and decision titles in plain chat text** in the same message; duplicate AskQuestion options in the body ([`human_decision_prompt.md`](../templates/human_decision_prompt.md) § Visibility rule).
 
 ## References
 

@@ -14,7 +14,11 @@ Prefer deterministic commands over LLM reasoning for mechanical checks: tests, l
 
 ### Model strength policy
 
-dev-process **does not** bind concrete provider or model IDs. Typical Hermes layout (adjust to team defaults):
+dev-process **does not** bind concrete provider or model IDs. **Logical roles and Hermes profile *names*** (for example `dp-strong`, `dp-code`, `dp-cheap`) **are** bound in [`config/model_policy.yaml`](../config/model_policy.yaml); those profiles must exist in your Hermes install (`hermes profile create …`). Actual API models and providers stay in each profile’s Hermes `config.yaml` / `.env` — not in dev-process skills.
+
+To start Hermes with the correct profile for a dev-process **action** or **stage** without editing global config, use [`scripts/dp_hermes.py`](../scripts/dp_hermes.py) (see [scripts/README.md](../scripts/README.md)). That wrapper only resolves the profile at **process start**; it does not switch models mid-session.
+
+Typical Hermes layout (adjust to team defaults):
 
 | Role | Tier | Reasoning effort |
 |------|------|------------------|
@@ -57,7 +61,7 @@ Spend **high** reasoning on **remaining uncertainty and high impact**, not on me
 
 Hermes can show **per-model tokens and estimated cost** (Hermes Dashboard Analytics, Models page); CLI: `hermes insights`. That does **not** attribute usage to dev-process **stages** or **preset**—record that on the task.
 
-**When to create `artifacts.model_usage`:** normally when preset is **`deep`** or **high** reasoning effort is used for primary-loop work, not only shallow side tasks; cost/usage accountability; human-requested **detailed model usage records**; **final summary** needs **detailed per-session model evidence**; or **`Model usage record required?` yes** in the plan. **Exception:** if **`artifacts.plan`** explicitly records that **only final-summary-level model/reasoning evidence** (no per-stage `model_usage` rows) is enough for this task, you may set **`Model usage record required?` no** and leave **`artifacts.model_usage`** empty even when the preset is `deep`—document that choice in the plan **Reason** field. Skip typical **light** tasks with **`Model usage record required?` no** (leave **`artifacts.model_usage`** empty).
+**When to create `artifacts.model_usage`:** **Default yes** for preset **`standard`** or **`deep`**—materialize and append rows at major stage boundaries regardless of whether the final summary repeats the same facts. Also create when **`Model usage record required?` yes** in the plan for other reasons (**high** primary-loop reasoning, accountability, human request, etc.). **Light** preset or trivial **docs-only / mechanical** tasks may use **`Model usage record required?` no** and leave **`artifacts.model_usage`** empty with **Reason** `no need`. A **`standard`** or **`deep`** task that skips **`artifacts.model_usage`** MUST record **explicit human approval** for the skip in **`artifacts.plan` Reason** (and ideally **`artifacts.timeline`**)—undocumented omission is non-compliant with dev-process defaults.
 
 **Evidence preference order** (cheap and low-risk first):
 
@@ -134,7 +138,7 @@ Small deterministic helpers live under [`scripts/`](../scripts/) and are documen
 
 Current helpers:
 
-- `validate_state.py` — task state/artifact/review/branch consistency checks.
+- `validate_state.py` — task state/artifact/review/branch consistency checks. Pass the task directory (`.hermes/tasks/<task-id>`), not the `state.yaml` file path.
 - `review_round.py` — create a review round directory, then finish it only after real synthesis exists.
 - `branch_precondition.py` — verify/record task branch precondition evidence and append a timeline row.
 

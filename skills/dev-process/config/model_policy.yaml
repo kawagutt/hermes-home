@@ -1,0 +1,37 @@
+# dev-process model policy (logical roles → Hermes profile names).
+# Raw provider/model IDs are not bound here; configure actual models in each Hermes profile's config.
+
+schema_version: 1
+
+# Logical role keys → Hermes profile names (must exist under ~/.hermes/profiles/<name>/ or equivalent).
+profiles:
+  strong_reasoning: dp-strong
+  code_main: dp-code
+  cheap_aux: dp-cheap
+
+# Keys MUST match state.yaml → current_stage exactly (e.g. implementation, not implement).
+stage_defaults:
+  spec: strong_reasoning
+  plan: strong_reasoning
+  implementation: code_main
+  test: cheap_aux
+  review: code_main
+  final: strong_reasoning
+  final_human_gate: strong_reasoning
+
+# dev-process --action names → logical role keys (short names such as "implement" live here only).
+action_overrides:
+  spec: strong_reasoning
+  plan: strong_reasoning
+  implement: code_main
+  write_tests: code_main
+  run_tests: cheap_aux
+  summarize_test_logs: cheap_aux
+  fix_test_failure: code_main
+  review_light: cheap_aux
+  review_standard: code_main
+  review_deep: strong_reasoning
+  final_review: strong_reasoning
+  final_summary: cheap_aux
+
+escalation_rules: []

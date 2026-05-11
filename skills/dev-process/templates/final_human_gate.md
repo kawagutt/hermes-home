@@ -30,7 +30,7 @@ Before merge/completion, review the final synthesis, validation evidence, and Ja
 
 ## Required human decisions
 
-Use the chat structure in [human_decision_prompt.md](human_decision_prompt.md) when presenting items (adapt the final approval line to merge/completion for this gate).
+Use the chat structure in [human_decision_prompt.md](human_decision_prompt.md) when presenting items (adapt the final approval line to merge/completion for this gate). Follow **§ Visibility rule** there: each decision needs a **clear title** (what is being decided) and **numbered options repeated in plain chat text** in the same message—do not rely on UI-only choice lists.
 
 If the final summary contains `Required human decisions`, present those items **one by one in chat** before asking for final approval. For each item, record the decision question, recommendation, practical consequences, whether it blocks completion/merge, and the artifact section to update. The gate artifact records the discussion; it is not a substitute for the discussion.
 

@@ -12,20 +12,22 @@ If one stage spans **multiple Hermes sessions** in the primary dev-process loop,
 
 **Stage ids** use the same labels as **`artifacts.plan`** (Model usage § optional per-stage table): they mirror **`state.yaml`** (`current_stage`, `review_rounds` keys), **`reviews/<stage>/`** (`spec`, `plan`, `test`, `final`, …), the spec gate (**`human_spec_gate`** / **`artifacts.human_spec_gate`**), implementation checkpoint reviews (**`implementation_review`** ↔ `reviews/implementation_phase_*/`), and end-of-task artifacts (**`final_summary`**, **`final_human_gate`**).
 
-| Time | Stage id | Selected review-depth preset | Main model (expected/evidence) | Reasoning effort (expected / observed if available) | Session id | Evidence |
-|------|----------|------------------------------|--------------------------------|-----------------------------------------------------|------------|----------|
-| | `spec` | | | | | logs / `hermes sessions` |
-| | `spec_review` | | | | | |
-| | `human_spec_gate` | | | | | |
-| | `plan` | | | | | |
-| | `plan_review` | | | | | |
-| | `test` | | | | | |
-| | `test_review` | | | | | |
-| | `implementation` | | | | | |
-| | `implementation_review` | | | | | |
-| | `final_review` | | | | | |
-| | `final_summary` | | | | | |
-| | `final_human_gate` | | | | | |
+When using Hermes with dev-process profile resolution, optionally note **`dp_hermes.py` --action**, the logical **role** from [`skills/dev-process/config/model_policy.yaml`](../config/model_policy.yaml), and the **Hermes profile** name (not the raw API model id).
+
+| Time | Stage id | dev-process action (if any) | Logical role | Hermes profile | Selected review-depth preset | Main model (expected/evidence) | Reasoning effort (expected / observed if available) | Session id | Evidence |
+|------|----------|-------------------------------|--------------|----------------|------------------------------|--------------------------------|-----------------------------------------------------|------------|----------|
+| | `spec` | | | | | | | | logs / `hermes sessions` |
+| | `spec_review` | | | | | | | | |
+| | `human_spec_gate` | | | | | | | | |
+| | `plan` | | | | | | | | |
+| | `plan_review` | | | | | | | | |
+| | `test` | | | | | | | | |
+| | `test_review` | | | | | | | | |
+| | `implementation` | | | | | | | | |
+| | `implementation_review` | | | | | | | | |
+| | `final_review` | | | | | | | | |
+| | `final_summary` | | | | | | | | |
+| | `final_human_gate` | | | | | | | | |
 
 **Evidence column:** summarized pointers only — e.g. `hermes insights --days 7`, Hermes Dashboard per-model row, **redacted** one-line log hint, `hermes sessions export` path. Logs under `~/.hermes/logs/` may contain sensitive content; excerpt carefully.
 
