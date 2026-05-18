@@ -22,7 +22,7 @@ def main() -> int:
     parser.add_argument(
         "--stage-id",
         required=True,
-        help="artifacts.model_usage stage id (stage_actions key)",
+        help="usage stage id for artifacts.model_usage (stage_actions key)",
     )
     parser.add_argument("--action", default=None, help="Optional action override")
     parser.add_argument("--policy", default=None, help="Path to model_policy.yaml")

@@ -15,13 +15,14 @@ profiles:
   code_main: dp-code
   cheap_aux: dp-cheap
 
+# usage_stage_id → action (for --stage-id / artifacts.model_usage rows; not state.yaml current_stage)
 stage_actions:
   spec_review: spec
   human_spec_gate: record_gate
   plan_review: plan
   test_review: write_tests
+  implementation: implement
   implementation_review: review_standard
-  implementation-final: implement
   final_review: final_review
   final_summary: final_summary
   final_human_gate: record_gate

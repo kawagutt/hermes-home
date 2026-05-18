@@ -14,7 +14,7 @@ review_depth_preset: ""
 # last_hermes_profile: ""
 # last_dev_process_action: ""
 # last_resolution_source: ""   # action | stage
-# last_model_stage_id: ""      # artifacts.model_usage stage id used at last handoff
+# last_model_stage_id: ""      # usage stage id (stage_actions key) used at last handoff
 
 # Human / process gates: spec text ready and human read-back done. No default human plan gate.
 approved:

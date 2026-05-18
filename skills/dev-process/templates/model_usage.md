@@ -6,15 +6,21 @@
 
 **Row generation:** [scripts/README.md](../scripts/README.md) — `dp_stage_boundary.py --print-markdown-row` (not `session_usage.py --resolve`).
 
-**Stage ids:** `stage_actions` keys in [config/model_policy.yaml](../config/model_policy.yaml) (`spec_review`, `plan_review`, …). `state.yaml` → `current_stage` uses canonical stages only (`spec`, `plan`, `implementation`, …).
+**Usage stage id** (column `Stage id`): keys from `model_policy.yaml` → `stage_actions` (`spec_review`, `implementation`, …). Passed to `dp_stage_boundary.py --stage-id` / `dp_hermes.py --stage-id`.
+
+**State stage** (`state.yaml` → `current_stage`): orchestrator stages only (`spec`, `plan`, `test`, `implementation`, `final`, …). Resolved via `stage_defaults` when no `--stage-id`. Do **not** put state-stage values in this table unless they are also a `stage_actions` key (e.g. `implementation`).
+
+Row examples below omit **human gates** (`human_spec_gate`, `final_human_gate`) — they use `dp-cheap` / `record_gate` and are usually brief; add rows when the plan requires stage-attributed evidence for gates.
 
 | Time | Stage id | Action | Profile / role | Preset / reasoning | Session | Model | Usage / cost | Evidence |
 |------|----------|--------|----------------|-------------------|---------|-------|--------------|----------|
 | | `spec_review` | | | | | | | |
 | | `plan_review` | | | | | | | |
 | | `test_review` | | | | | | | |
+| | `implementation` | | | | | | | |
 | | `implementation_review` | | | | | | | |
 | | `final_review` | | | | | | | |
+| | `final_summary` | | | | | | | |
 | | `final_human_gate` | | | | | | | |
 
 **Cumulative values:** `hermes sessions export` token counts are cumulative per session; deltas between rows for the same session id give per-boundary usage.

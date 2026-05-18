@@ -74,7 +74,7 @@ Behavior:
 
 Resolves which **Hermes profile** (`dp-strong`, `dp-review`, `dp-code`, `dp-cheap`, …) to use for a dev-process **action** or **`state.yaml` stage**, then optionally runs `hermes` with `--profile=…`. It **does not** modify global Hermes configuration.
 
-**Policy file:** [`config/model_policy.yaml`](../config/model_policy.yaml) (`schema_version: 2` only). `stage_actions` maps **`artifacts.model_usage` stage ids**; `stage_defaults` maps **`state.yaml` → `current_stage`** only. `reasoning_expected` is policy-only; actual effort is in each Hermes profile `config.yaml`.
+**Policy file:** [`config/model_policy.yaml`](../config/model_policy.yaml) (`schema_version: 2` only). **`stage_actions`** → **usage stage id** (`--stage-id`, `artifacts.model_usage` rows). **`stage_defaults`** → **state stage** (`state.yaml` → `current_stage` only). `reasoning_expected` is policy-only; actual effort is in each Hermes profile `config.yaml`.
 
 **Prerequisites**
 
@@ -108,7 +108,7 @@ python3 skills/dev-process/scripts/dp_hermes.py \
   -- chat -q "hello"
 ```
 
-If `--action` is omitted, use **`--stage-id`** (`stage_actions` key) or **`state.yaml` → `current_stage`** (`stage_defaults` key). Launch with **`--record-state`** so `handoff_required` works on the next boundary.
+If `--action` is omitted, use **`--stage-id`** (usage stage id / `stage_actions` key) or **`state.yaml` → `current_stage`** (state stage / `stage_defaults` key). Launch with **`--record-state`** so `handoff_required` works on the next boundary.
 
 **Output**
 

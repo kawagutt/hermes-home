@@ -213,7 +213,7 @@ def resolve_model(
         stage_actions = policy["stage_actions"]
         if stage_id_norm not in stage_actions:
             raise ModelResolveError(
-                f"unknown --stage-id {stage_id_norm!r} (not in stage_actions)"
+                f"unknown usage stage id {stage_id_norm!r} (expected stage_actions key)"
             )
         mapped = stage_actions[stage_id_norm]
         if not isinstance(mapped, str) or not mapped.strip():

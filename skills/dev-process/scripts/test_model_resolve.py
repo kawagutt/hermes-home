@@ -64,6 +64,20 @@ class TestModelResolve(unittest.TestCase):
         self.assertEqual(r["action"], "review_standard")
         self.assertEqual(r["reasoning_expected"], "medium")
 
+    def test_stage_id_implementation_dp_code(self) -> None:
+        task = self._write_state("t_impl")
+        r = resolve_for_task(task, stage_id="implementation")
+        self.assertEqual(r["hermes_profile"], "dp-code")
+        self.assertEqual(r["action"], "implement")
+        self.assertEqual(r["role"], "code_main")
+        self.assertEqual(r["reasoning_expected"], "medium")
+
+    def test_implementation_final_not_a_usage_stage_id(self) -> None:
+        task = self._write_state("t_impl_bad")
+        with self.assertRaises(ModelResolveError) as ctx:
+            resolve_for_task(task, stage_id="implementation-final")
+        self.assertIn("expected stage_actions key", str(ctx.exception))
+
     def test_handoff_required_when_profile_changes(self) -> None:
         task = self._write_state("t4", last_hermes_profile="dp-strong")
         r = resolve_for_task(task, stage_id="test_review")

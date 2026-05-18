@@ -113,7 +113,7 @@ def main() -> None:
     parser.add_argument(
         "--stage-id",
         default=None,
-        help="artifacts.model_usage stage id (stage_actions key; when --action omitted).",
+        help="usage stage id for artifacts.model_usage (stage_actions key; when --action omitted).",
     )
     parser.add_argument(
         "--policy",
