@@ -29,10 +29,11 @@ Include at minimum:
 
 - **`Selected review-depth preset`** for this task: `light`, `standard`, or `deep` — per [review/presets.md](../review/presets.md); restate escalation rule if preset may change mid-task (`standard → deep` when high-risk triggers appear).  
 - **`Reasoning effort plan`** aligned with selected review-depth preset (Hermes-compatible: e.g. `/reasoning`): **`light`** — default/medium reasoning effort, high not used unless preset escalates; **`standard`** — default/medium reasoning effort unless escalated to `deep`; **`deep`** — high reasoning effort for syntheses, ambiguous blocker triage, architecture/impact, final recommendation ([validation/SKILL.md](../validation/SKILL.md#reasoning-effort-by-review-depth-preset)).  
+- When plan is approved, set **`state.yaml` → `review_depth_preset`** to the same value as **Selected review-depth preset** (drives automatic profile/reasoning resolution via `model_policy.yaml`).
 - **`Model usage`** — always the **compact** block in [templates/plan.md](../templates/plan.md): **`Model usage record required?`** (yes/no), **Reason**, **Artifact** expectations. **Default yes** for preset **`standard`** or **`deep`**; **light** or trivial **docs-only / mechanical** tasks may set **no** with reason `no need` and leave **`artifacts.model_usage`** empty. Skipping **`artifacts.model_usage`** on **`standard`**/**`deep`** requires **documented human approval** in **Reason** (see template).  
 - **When `Model usage record required?` is yes** (default for **`standard`**/**`deep`**; also when **high** primary-loop reasoning, accountability, human request, etc.): materialize task-root file from [templates/model_usage.md](../templates/model_usage.md), set `state.yaml` → **`artifacts.model_usage`**, **append** rows at major stage/session boundaries; optionally fill the template’s **optional per-stage** table in the plan body. See [validation/SKILL.md — Model usage](../validation/SKILL.md#model-usage).  
 - Branch feasibility status checked before `human_spec_gate` and the task branch precondition (after plan review, before test implementation)  
-- Implementation phases (small, ordered)  
+- Implementation phases (small, ordered) — sized per [§ Implementation phase sizing](#implementation-phase-sizing); include a **Size** column in the plan table  
 - Expected changed files per phase  
 - Forbidden changes (what must not be touched), including **existing** git-untracked product/project files unless explicitly instructed; new product/test files the plan lists or clearly permits are allowed  
 - Validation per phase (commands), including selected Python/Ruff commands for phases that touch Python code unless project policy overrides them  
@@ -40,6 +41,71 @@ Include at minimum:
 - Reviewer assignment notes (which review targets/agents later)  
 - Test strategy (including when “red test before implementation” does not apply, e.g. docs-only)  
 
+## Implementation phase sizing
+
+Plan phases exist so **one ImplementationAgent `/goal` run** (within the configured Hermes **`agent.max_turns`** limit) can **implement, run that phase’s validation, and record `phase_results`** without hitting the iteration ceiling mid-work. Oversized phases are the main cause of half-finished product code and skipped validation.
+
+**Do not over-split:** phases that already meet the **light** profile below need no further subdivision. Extra phases add review overhead without reducing agent risk.
+
+### Light phase (keep as one phase; do not subdivide)
+
+A phase is **light** when **all** apply:
+
+- **At most one** product source file **or** only docs/examples/templates (no product code).  
+- **At most three** ImplementationAgent checklist items (excluding validation recording).  
+- Validation is **one or two** short commands (single linter path, single focused test file/module).  
+- No new cross-module contracts **and** heavy parsing/rendering logic in the same phase.  
+
+Examples: README tweak, single-field config addition with existing patterns, manifest field threaded through one call site.
+
+### When to split (oversized)
+
+Split into additional ordered phases when **any** trigger applies:
+
+| Trigger | Guideline |
+|---------|-----------|
+| **Product file spread** | More than **two** product source files in one **implementation** phase (test-only phases may touch more test files — see below). |
+| **Heavy modules combined** | Two or more “heavy” areas in one phase (e.g. large config parser + scene graph + pipeline/manifest). |
+| **Checklist depth** | More than **eight** ImplementationAgent checklist items for one phase. |
+| **New surface area** | More than **three** new public types/functions **across modules**, **or** one file gaining **more than five** new non-trivial helpers/parsers in one phase. |
+| **Validation breadth** | Phase validation routinely runs **more than four** test modules **or** full-suite commands — narrow per-phase commands instead, or split phases. |
+| **Subsystem mix** | Unrelated concerns bundled (schema/validation + IO output + runtime behavior) that can be validated independently. |
+| **Agent budget** | PlanAgent judges the phase unlikely to finish implementation **and** phase validation within default `max_turns` even if other triggers are borderline. |
+
+When splitting: renumber phases, duplicate the per-phase structure in **`artifacts.phase_checklists`**, narrow **allowed files** and **validation** per phase, and add one row per phase in the plan table. Prefer splits along **natural validation boundaries** (contracts → wiring → output), not arbitrary line counts.
+
+### Test-authoring phases (RED / TestAuthorAgent)
+
+Test-only phases may list **more than two** test files when the plan forbids product changes. Still split when:
+
+- Distinct subsystems need separate RED waves (e.g. config schema vs pipeline/manifest), **or**  
+- Checklist/validation would exceed the triggers above.
+
+Do **not** split a test-only phase that only adds a **small** focused test module and one validation command.
+
+### Plan table (required columns)
+
+In **`artifacts.plan`**, the implementation table must include:
+
+| Column | Content |
+|--------|---------|
+| **Phase** | Ordered id |
+| **Objective** | One outcome |
+| **Key files** | Expected touch set |
+| **Size** | `light` / `medium` / `heavy` — `heavy` must not ship without split or documented waiver |
+| **Split note** | `—` if `light`/`medium`; if `heavy`, either **split plan before review** or **waiver**: why one phase is still safe (rare; prefer split) |
+
+`medium` = within caps but not trivial; still one `/goal` per phase at implementation time.
+
+### Phase checklists alignment
+
+**One checklist section per implementation phase** in **`artifacts.phase_checklists`**. Allowed files, forbidden changes, checklist items, and validation commands must match the plan row — no wider scope in checklists than in the plan.
+
+Set `state.yaml` → `current_phase` to the active phase id (e.g. `2`, `2b`) when resuming so `/goal` does not rely on chat memory alone ([goal/SKILL.md](../goal/SKILL.md)).
+
+### Plan review gate
+
+Plan review ([review/SKILL.md](../review/SKILL.md), target `plan`) must treat an implementation phase marked **`heavy` without split or waiver** as **blocking** (`checklist_compliance` / `architecture`). `impact` should flag phases that combine public contract changes with wide file spread.
 
 ## Validation environment policy
 

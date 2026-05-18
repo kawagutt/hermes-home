@@ -27,27 +27,29 @@ Set **`Model usage record required?`** to **yes** when any applies: preset is **
 
 **Optional per-stage table** — fill **only** when **`Model usage record required?`** is **yes**. Stage ids align with **`state.yaml`** (`current_stage`, `review_rounds` keys such as `spec` / `plan` / `test` / `final`), **`reviews/<stage>/`**, **`artifacts.human_spec_gate`**, and `skills/dev-process/templates/model_usage.md`:
 
-| Stage id | Selected review-depth preset | Main model expectation | Reasoning effort expectation | Evidence captured (redacted summaries only) |
-|----------|------------------------------|------------------------|-----------------------------|---------------------------------------------|
-| `spec` | | | | |
-| `spec_review` | | | | |
-| `human_spec_gate` | | | | |
-| `plan` | | | | |
-| `plan_review` | | | | |
-| `test` | | | | |
-| `test_review` | | | | |
-| `implementation` | | | | |
-| `implementation_review` | | | | |
-| `final_review` | | | | |
-| `final_summary` | | | | |
-| `final_human_gate` | | | | |
+| Stage id | Selected review-depth preset | Main model expectation | Reasoning effort expectation | Token/cost evidence plan | Evidence captured (redacted summaries only) |
+|----------|------------------------------|------------------------|-----------------------------|--------------------------|---------------------------------------------|
+| `spec` | | | | `hermes sessions export` / dashboard / insights | |
+| `spec_review` | | | | | |
+| `human_spec_gate` | | | | | |
+| `plan` | | | | | |
+| `plan_review` | | | | | |
+| `test` | | | | | |
+| `test_review` | | | | | |
+| `implementation` | | | | | |
+| `implementation_review` | | | | | |
+| `final_review` | | | | | |
+| `final_summary` | | | | | |
+| `final_human_gate` | | | | | |
 
 ## Implementation phases
 
-| Phase | Objective | Key files (expected) |
-|-------|-----------|----------------------|
-| 1 | | |
-| 2 | | |
+Size each phase per `skills/dev-process/plan/SKILL.md` § **Implementation phase sizing**. Prefer more **medium** phases over one **heavy** phase. Do not subdivide **light** phases.
+
+| Phase | Objective | Key files (expected) | Size (`light` / `medium` / `heavy`) | Split note |
+|-------|-----------|----------------------|---------------------------------------|------------|
+| 1 | | | | `—` or why split / waiver |
+| 2 | | | | |
 
 ## Forbidden changes
 

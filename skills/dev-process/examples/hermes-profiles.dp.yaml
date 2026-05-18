@@ -1,15 +1,51 @@
-# Example only — not loaded by dp_hermes.py or Hermes automatically.
-# dev-process does not bind raw provider/model IDs in skills.
-# Create profiles with:  hermes profile create dp-code --clone
-# Then edit each profile’s own config under ~/.hermes/profiles/<name>/
+# Example Hermes profile tiers for dev-process (NOT loaded automatically).
 #
-# The keys below are documentation placeholders matching
-# skills/dev-process/config/model_policy.yaml (profiles: strong_reasoning → dp-strong, etc.).
+#   hermes profile create dp-strong --clone
+#   hermes profile create dp-review --clone
+#   hermes profile create dp-code --clone
+#   hermes profile create dp-cheap --clone
+#
+# Edit each profile's config under ~/.hermes/profiles/<name>/config.yaml
+# Policy mapping: config/model_policy.yaml
 
 documentation_profiles:
   dp-strong:
-    purpose: spec / plan / final review / deep review (high-stakes reasoning)
+    purpose: spec / plan / deep review / final synthesis
+    recommended_main_model: gpt-5.5
+    recommended_reasoning_effort: high
+  dp-review:
+    purpose: standard review, implementation checkpoint synthesis
+    recommended_main_model: gpt-5.5
+    recommended_reasoning_effort: medium
   dp-code:
     purpose: implementation, test authoring, fixes
+    recommended_main_model: gpt-5.4
+    recommended_reasoning_effort: medium
   dp-cheap:
-    purpose: light orchestration, test command choice, short log summaries
+    purpose: gate recording, test log summaries, run_tests hints
+    recommended_main_model: gpt-5.4-mini
+    recommended_reasoning_effort: low
+
+# reasoning_by_preset → reasoning_expected in artifacts is policy-only (not runtime).
+
+profile_config_snippets:
+  dp-strong:
+    model:
+      default: gpt-5.5
+    agent:
+      reasoning_effort: high
+  dp-review:
+    model:
+      default: gpt-5.5
+    agent:
+      reasoning_effort: medium
+  dp-code:
+    model:
+      default: gpt-5.4
+    agent:
+      reasoning_effort: medium
+  dp-cheap:
+    model:
+      default: gpt-5.4-mini
+    agent:
+      reasoning_effort: low

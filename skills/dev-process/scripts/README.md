@@ -72,9 +72,9 @@ Behavior:
 
 ## `dp_hermes.py`
 
-Resolves which **Hermes profile** (`dp-strong`, `dp-code`, `dp-cheap`, …) to use for a dev-process **action** or **`state.yaml` stage**, then optionally runs `hermes` with `--profile=…`. It **does not** modify global Hermes configuration.
+Resolves which **Hermes profile** (`dp-strong`, `dp-review`, `dp-code`, `dp-cheap`, …) to use for a dev-process **action** or **`state.yaml` stage**, then optionally runs `hermes` with `--profile=…`. It **does not** modify global Hermes configuration.
 
-**Policy file:** [`config/model_policy.yaml`](../config/model_policy.yaml) (`schema_version: 1`). Raw model IDs are **not** listed there — only logical roles and Hermes profile names.
+**Policy file:** [`config/model_policy.yaml`](../config/model_policy.yaml) (`schema_version: 2` only). `stage_actions` maps **`artifacts.model_usage` stage ids**; `stage_defaults` maps **`state.yaml` → `current_stage`** only. `reasoning_expected` is policy-only; actual effort is in each Hermes profile `config.yaml`.
 
 **Prerequisites**
 
@@ -108,7 +108,7 @@ python3 skills/dev-process/scripts/dp_hermes.py \
   -- chat -q "hello"
 ```
 
-If `--action` is omitted, resolution uses **`state.yaml` → `current_stage`** against `stage_defaults` (keys must match `current_stage` exactly, e.g. `implementation`, not `implement`). **`implement`** is only an `--action` name via `action_overrides`.
+If `--action` is omitted, use **`--stage-id`** (`stage_actions` key) or **`state.yaml` → `current_stage`** (`stage_defaults` key). Launch with **`--record-state`** so `handoff_required` works on the next boundary.
 
 **Output**
 
@@ -132,4 +132,48 @@ Mostly uses `--print-profile-only` / `--print-json`; probe/launch paths are cove
 
 **Strict errors (exit 2)**
 
-Missing/invalid policy file, `schema_version` ≠ 1, empty `profiles` / `stage_defaults` / `action_overrides`, unknown `--action`, empty or unknown `current_stage` when `--action` is omitted, unknown logical role, empty Hermes profile string, **resolved-profile probe** failure (normal mode only), etc. **No silent fallback** from actions to stages.
+Missing/invalid policy file, unsupported `schema_version`, empty `profiles` / `stage_defaults` / `action_overrides`, unknown `--action` / `--stage-id`, empty or unknown `current_stage` when both omitted, unknown logical role, empty Hermes profile string, **resolved-profile probe** failure (normal mode only), etc. **No silent fallback** from actions to stages.
+
+## Stage boundaries
+
+At each major boundary (when the plan requires usage recording):
+
+**A. Completed stage — usage row**
+
+```bash
+hermes sessions list
+hermes sessions export /tmp/usage_<task>_<stage>.jsonl --session-id '<id>'
+python3 skills/dev-process/scripts/dp_stage_boundary.py \
+  --task-dir .hermes/tasks/<task-id> \
+  --stage-id '<completed-stage>' \
+  --dev-action '<short label>' \
+  --session-export /tmp/usage_<task>_<stage>.jsonl \
+  --print-markdown-row >> .hermes/tasks/<task-id>/<model_usage>.md
+```
+
+**B. Next segment — profile resolution and launch**
+
+```bash
+python3 skills/dev-process/scripts/dp_stage_boundary.py \
+  --task-dir .hermes/tasks/<task-id> \
+  --stage-id '<next-stage>' \
+  --print-json
+
+python3 skills/dev-process/scripts/dp_hermes.py \
+  --task-dir .hermes/tasks/<task-id> \
+  --stage-id '<next-stage>' \
+  --record-state \
+  -- chat
+```
+
+Use different `--stage-id` values for (A) vs (B). `--print-markdown-row` never prints handoff hints.
+
+## `dp_stage_boundary.py`
+
+Resolves `model_policy.yaml` for a `stage_actions` id; prints JSON and/or a compact `artifacts.model_usage` row.
+
+## `session_usage.py`
+
+Parses one `hermes sessions export` JSONL line (`--format json` or manual `--format markdown`). For dev-process rows, use **`dp_stage_boundary.py --print-markdown-row`** instead.
+
+**Tests:** `test_session_usage.py`, `test_model_resolve.py`, `test_dp_hermes.py`

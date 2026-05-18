@@ -16,7 +16,18 @@ A short request such as `Start a new task. Goal: ...` is enough to begin a dev-p
 
 When continuing an existing task, read `.hermes/tasks/<task-id>/state.yaml` first. Resume from `current_stage`, `current_phase`, `review_rounds`, and `latest_reviews`; do not rely on chat history alone.
 
-**Hermes-compatible hint:** Prefer **one main model** for the primary dev-process loop, and use **auxiliary tiers** only for shallow side tasks—not full-depth reviewer passes. **Reasoning effort follows the chosen review-depth preset** (`light` → no high by default; `standard` → medium until escalated; `deep` → high reasoning effort for syntheses, ambiguous triage, impact/architecture, final recommendation). See [validation/SKILL.md — Reasoning effort by review-depth preset](../validation/SKILL.md#reasoning-effort-by-review-depth-preset) and **`artifacts.plan`** preset lines.
+**Hermes-compatible hint:** Use **one main model tier per Hermes session**, switching **Hermes profiles** (`dp-strong`, `dp-review`, `dp-code`, `dp-cheap`) at stage boundaries when the next role needs a different tier. **Reasoning effort follows the chosen review-depth preset** (`light` → no high by default; `standard` → medium until escalated; `deep` → high reasoning effort for syntheses, ambiguous triage, impact/architecture, final recommendation). See [validation/SKILL.md — Reasoning effort by review-depth preset](../validation/SKILL.md#reasoning-effort-by-review-depth-preset) and **`artifacts.plan`** preset lines.
+
+When the approved plan is written, set **`state.yaml` → `review_depth_preset`** to `light`, `standard`, or `deep` (must match the plan). If omitted, helpers infer it from **`artifacts.plan`** when possible.
+
+## Stage-boundary model profile and usage (default)
+
+At major stage boundaries:
+
+1. Resolve the **next** stage profile with `dp_stage_boundary.py --stage-id <next> --print-json` (see [scripts/README.md](../scripts/README.md)). If `handoff_required`, end the session and launch with `dp_hermes.py --stage-id <next> --record-state -- chat`. Profiles do not switch mid-session.
+2. When **`Model usage record required?`** is **yes** in the approved plan, append a usage row for the **completed** stage via the same procedure in [validation/SKILL.md § Default stage-boundary usage recording](../validation/SKILL.md#default-stage-boundary-usage-recording).
+
+Safe deterministic helpers — no human confirmation. On helper failure, record `unknown` and continue.
 
 ## Legal continuation vs required stops
 

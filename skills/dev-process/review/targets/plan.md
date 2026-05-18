@@ -15,7 +15,7 @@ Review **`artifacts.plan`**, **`artifacts.phase_checklists`**, and validation st
 
 ## Review focus areas (routing hints)
 
-- Phasing size and sequencing  
+- Phasing size and sequencing — enforce `skills/dev-process/plan/SKILL.md` § **Implementation phase sizing** (`heavy` without split/waiver is blocking)  
 - Alignment with forbidden changes  
 - Practical validation commands vs environment  
 - Whether tests can realistically be authored from spec + plan  

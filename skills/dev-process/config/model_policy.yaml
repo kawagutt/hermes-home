@@ -1,25 +1,42 @@
 # dev-process model policy (logical roles → Hermes profile names).
-# Raw provider/model IDs are not bound here; configure actual models in each Hermes profile's config.
+# schema_version 2 only. Configure API models in ~/.hermes/profiles/<name>/config.yaml.
+#
+# Tier intent (examples only — not bound here):
+#   dp-strong  → gpt-5.5 high   (spec/plan/deep review/final)
+#   dp-review  → gpt-5.5 medium (standard review / implementation checkpoint)
+#   dp-code    → gpt-5.4 medium (implement / write_tests / fix)
+#   dp-cheap   → gpt-5.4-mini low (gates / run_tests / log summary)
 
-schema_version: 1
+schema_version: 2
 
-# Logical role keys → Hermes profile names (must exist under ~/.hermes/profiles/<name>/ or equivalent).
 profiles:
   strong_reasoning: dp-strong
+  review_main: dp-review
   code_main: dp-code
   cheap_aux: dp-cheap
 
-# Keys MUST match state.yaml → current_stage exactly (e.g. implementation, not implement).
+stage_actions:
+  spec_review: spec
+  human_spec_gate: record_gate
+  plan_review: plan
+  test_review: write_tests
+  implementation_review: review_standard
+  implementation-final: implement
+  final_review: final_review
+  final_summary: final_summary
+  final_human_gate: record_gate
+
 stage_defaults:
   spec: strong_reasoning
   plan: strong_reasoning
+  human_spec_gate: cheap_aux
   implementation: code_main
-  test: cheap_aux
-  review: code_main
+  test: code_main
+  review: review_main
   final: strong_reasoning
-  final_human_gate: strong_reasoning
+  final_human_gate: cheap_aux
+  completed: cheap_aux
 
-# dev-process --action names → logical role keys (short names such as "implement" live here only).
 action_overrides:
   spec: strong_reasoning
   plan: strong_reasoning
@@ -29,9 +46,32 @@ action_overrides:
   summarize_test_logs: cheap_aux
   fix_test_failure: code_main
   review_light: cheap_aux
-  review_standard: code_main
+  review_standard: review_main
   review_deep: strong_reasoning
   final_review: strong_reasoning
   final_summary: cheap_aux
+  record_gate: cheap_aux
 
-escalation_rules: []
+reasoning_by_preset:
+  light:
+    strong_reasoning: medium
+    review_main: medium
+    code_main: medium
+    cheap_aux: low
+  standard:
+    strong_reasoning: medium
+    review_main: medium
+    code_main: medium
+    cheap_aux: low
+  deep:
+    strong_reasoning: high
+    review_main: medium
+    code_main: medium
+    cheap_aux: medium
+
+action_reasoning_overrides:
+  deep:
+    record_gate: low
+    run_tests: low
+    summarize_test_logs: low
+    final_summary: medium

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate a dev-process task state.yaml with deterministic local checks."""
+
 from __future__ import annotations
 
 import argparse
@@ -8,7 +9,9 @@ from pathlib import Path
 
 import yaml
 
-LATEST_RE = re.compile(r"^reviews/(?P<stage>[^/]+)/round_(?P<num>\d{2,})/synthesis\.md$")
+LATEST_RE = re.compile(
+    r"^reviews/(?P<stage>[^/]+)/round_(?P<num>\d{2,})/synthesis\.md$"
+)
 NUMBERED_TASK_ROOT_MD_RE = re.compile(r"^\d{4}_[^/]+\.md$")
 
 
@@ -34,11 +37,17 @@ def main() -> int:
     errors: list[str] = []
 
     if state.get("task_id") != task.name:
-        errors.append(f"task_id mismatch: state={state.get('task_id')!r} dir={task.name!r}")
+        errors.append(
+            f"task_id mismatch: state={state.get('task_id')!r} dir={task.name!r}"
+        )
 
     artifacts = state.get("artifacts") or {}
     task_root_markdown_files = {p.name for p in task.glob("*.md")}
-    numbered_root_markdown_files = {name for name in task_root_markdown_files if NUMBERED_TASK_ROOT_MD_RE.match(name)}
+    numbered_root_markdown_files = {
+        name
+        for name in task_root_markdown_files
+        if NUMBERED_TASK_ROOT_MD_RE.match(name)
+    }
     for name in task_root_markdown_files:
         if not NUMBERED_TASK_ROOT_MD_RE.match(name):
             errors.append(f"task-root markdown is not numbered NNNN_<stem>.md: {name}")
@@ -50,7 +59,9 @@ def main() -> int:
             errors.append(f"missing artifact {key}: {rel}")
             continue
         if is_task_root_markdown(rel) and not NUMBERED_TASK_ROOT_MD_RE.match(rel):
-            errors.append(f"artifact {key} is task-root markdown but not numbered NNNN_<stem>.md: {rel}")
+            errors.append(
+                f"artifact {key} is task-root markdown but not numbered NNNN_<stem>.md: {rel}"
+            )
     for name in numbered_root_markdown_files:
         if name not in {rel for rel in artifacts.values() if rel}:
             # Numbered task-root files may be historical versions, so this is allowed.
@@ -61,7 +72,9 @@ def main() -> int:
     for stage, rel in latest.items():
         count = int(rounds.get(stage, 0) or 0)
         if count and not rel:
-            errors.append(f"latest review missing for {stage} with review_rounds={count}")
+            errors.append(
+                f"latest review missing for {stage} with review_rounds={count}"
+            )
             continue
         if not count and rel:
             errors.append(f"latest review set for {stage} while review_rounds=0: {rel}")
@@ -76,7 +89,9 @@ def main() -> int:
             if path_stage != stage:
                 errors.append(f"latest review stage mismatch: key={stage} path={rel}")
             if count and path_num != count:
-                errors.append(f"latest review round mismatch for {stage}: review_rounds={count} path={rel}")
+                errors.append(
+                    f"latest review round mismatch for {stage}: review_rounds={count} path={rel}"
+                )
         if rel and not (task / rel).exists():
             errors.append(f"missing latest review {stage}: {rel}")
 

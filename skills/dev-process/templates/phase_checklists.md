@@ -1,6 +1,6 @@
 # Phase checklists
 
-Duplicate or adapt per phase from **`artifacts.plan`** (path from `state.yaml`). One section per phase.
+Duplicate or adapt per phase from **`artifacts.plan`** (path from `state.yaml`). **One section per implementation phase** — scope must match the plan row (allowed files, validation, checklist count). Do not widen a checklist beyond its plan phase; split the plan first per `skills/dev-process/plan/SKILL.md` § **Implementation phase sizing**.
 
 ## Phase 1: [name]
 

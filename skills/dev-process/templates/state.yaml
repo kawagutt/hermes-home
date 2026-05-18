@@ -7,10 +7,14 @@ task_id: ""
 current_stage: ""      # e.g. spec | plan | test | implementation | final | final_human_gate
 current_phase: ""      # e.g. 01 or null when N/A
 
-# Optional: last Hermes profile resolution from skills/dev-process/scripts/dp_hermes.py (only if you pass --record-state).
+# Set when plan is approved (light | standard | deep). Leave empty until then; helpers may infer from artifacts.plan.
+review_depth_preset: ""
+
+# Optional: last Hermes profile resolution from dp_hermes.py / dp_stage_boundary.py (--record-state on dp_hermes).
 # last_hermes_profile: ""
 # last_dev_process_action: ""
 # last_resolution_source: ""   # action | stage
+# last_model_stage_id: ""      # artifacts.model_usage stage id used at last handoff
 
 # Human / process gates: spec text ready and human read-back done. No default human plan gate.
 approved:

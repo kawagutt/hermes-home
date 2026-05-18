@@ -1,4 +1,5 @@
 """Tests for small deterministic dev-process helper utilities."""
+
 from __future__ import annotations
 
 import subprocess
@@ -9,7 +10,9 @@ ROOT = Path(__file__).resolve().parents[3]
 SCRIPTS = ROOT / "skills" / "dev-process" / "scripts"
 
 
-def run_helper(name: str, *args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+def run_helper(
+    name: str, *args: str, cwd: Path | None = None
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(SCRIPTS / name), *args],
         cwd=str(cwd or ROOT),
@@ -28,7 +31,9 @@ def make_task(tmp_path: Path) -> Path:
         "| Time | Stage | Action | Output |\n|---|---|---|---|\n",
         encoding="utf-8",
     )
-    (task / "reviews" / "spec" / "round_01" / "synthesis.md").write_text("# Synthesis\n", encoding="utf-8")
+    (task / "reviews" / "spec" / "round_01" / "synthesis.md").write_text(
+        "# Synthesis\n", encoding="utf-8"
+    )
     (task / "state.yaml").write_text(
         """
 task_id: "20260510_example"
@@ -119,7 +124,9 @@ def test_validate_state_detects_unnumbered_task_root_markdown(tmp_path: Path) ->
     state = task / "state.yaml"
     (task / "spec.md").write_text("# Legacy spec\n", encoding="utf-8")
     state.write_text(
-        state.read_text(encoding="utf-8").replace('spec: "0000_spec.md"', 'spec: "spec.md"'),
+        state.read_text(encoding="utf-8").replace(
+            'spec: "0000_spec.md"', 'spec: "spec.md"'
+        ),
         encoding="utf-8",
     )
     bad = run_helper("validate_state.py", str(task))
@@ -127,7 +134,9 @@ def test_validate_state_detects_unnumbered_task_root_markdown(tmp_path: Path) ->
     assert "not numbered NNNN_<stem>.md" in bad.stdout
 
 
-def test_review_round_helper_create_does_not_update_state_then_finish_does(tmp_path: Path) -> None:
+def test_review_round_helper_create_does_not_update_state_then_finish_does(
+    tmp_path: Path,
+) -> None:
     task = make_task(tmp_path)
     dry = run_helper("review_round.py", str(task), "plan", "--dry-run")
     assert dry.returncode == 0, dry.stdout + dry.stderr
@@ -167,13 +176,19 @@ def test_review_round_helper_create_does_not_update_state_then_finish_does(tmp_p
     assert "reviews/plan/round_01/synthesis.md" in state_after_finish
 
 
-def test_branch_precondition_dry_run_and_apply_updates_state_and_timeline(tmp_path: Path) -> None:
+def test_branch_precondition_dry_run_and_apply_updates_state_and_timeline(
+    tmp_path: Path,
+) -> None:
     task = make_task(tmp_path)
     branch = "dev-process/20260510_example"
-    dry = run_helper("branch_precondition.py", str(task), branch, "--dry-run", "--skip-git-check")
+    dry = run_helper(
+        "branch_precondition.py", str(task), branch, "--dry-run", "--skip-git-check"
+    )
     assert dry.returncode == 0, dry.stdout + dry.stderr
     assert "DRY-RUN" in dry.stdout
-    assert "task_branch_precondition_met: false" in (task / "state.yaml").read_text(encoding="utf-8")
+    assert "task_branch_precondition_met: false" in (task / "state.yaml").read_text(
+        encoding="utf-8"
+    )
 
     applied = run_helper(
         "branch_precondition.py",
@@ -193,8 +208,17 @@ def test_branch_precondition_dry_run_and_apply_updates_state_and_timeline(tmp_pa
     assert "git switch -c dev-process/20260510_example" in timeline
 
 
-def test_branch_precondition_checks_current_git_branch_by_default(tmp_path: Path) -> None:
+def test_branch_precondition_checks_current_git_branch_by_default(
+    tmp_path: Path,
+) -> None:
     task = make_task(tmp_path)
-    bad = run_helper("branch_precondition.py", str(task), "not-current-branch", "--apply", "--repo", str(ROOT))
+    bad = run_helper(
+        "branch_precondition.py",
+        str(task),
+        "not-current-branch",
+        "--apply",
+        "--repo",
+        str(ROOT),
+    )
     assert bad.returncode == 1
     assert "does not match expected task branch" in bad.stdout

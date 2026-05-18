@@ -2,6 +2,7 @@
 
 These tests exercise documentation/policy invariants from the approved dev-process v3 plan.
 """
+
 from __future__ import annotations
 
 import re
@@ -44,7 +45,10 @@ def test_review_depth_has_single_canonical_preset_table() -> None:
 
 def test_standard_recipes_do_not_override_presets() -> None:
     review = read_rel("review/SKILL.md")
-    assert "single source of truth for preset reviewer requirements and synthesis rules" in review
+    assert (
+        "single source of truth for preset reviewer requirements and synthesis rules"
+        in review
+    )
     assert "For `light` or `deep`, use [`presets.md`](presets.md)" in review
     assert "Do not treat this section as overriding" in review
 
@@ -52,7 +56,9 @@ def test_standard_recipes_do_not_override_presets() -> None:
 def test_explicit_role_transition_preserves_review_independence() -> None:
     text = all_markdown()
     assert "Explicit role transition must not weaken review context isolation" in text
-    assert "but not ImplementationAgent chat rationale unless explicitly requested" in text
+    assert (
+        "but not ImplementationAgent chat rationale unless explicitly requested" in text
+    )
 
 
 def test_review_depth_selection_uses_uncertainty_and_impact_not_diff_size() -> None:
@@ -88,7 +94,10 @@ def test_nodeflow_is_explicitly_out_of_scope() -> None:
 def test_role_boundary_is_not_an_automatic_stop_reason() -> None:
     text = all_markdown()
     assert "Role boundary is not an automatic stop condition" in text
-    assert "Do not stop solely because the next legal action belongs to another role" in text
+    assert (
+        "Do not stop solely because the next legal action belongs to another role"
+        in text
+    )
     assert "explicit role transition" in text
     assert "or a role boundary" not in text
 
@@ -124,7 +133,9 @@ def test_orchestrator_lines_do_not_imply_ok_after_summary_only() -> None:
         lower = line.lower()
         if not any(n in lower for n in needles):
             continue
-        assert any(t in line for t in tokens), f"line {i} may imply OK after summary only: {line!r}"
+        assert any(
+            t in line for t in tokens
+        ), f"line {i} may imply OK after summary only: {line!r}"
 
 
 def test_test_skill_matches_explicit_role_transition_policy() -> None:
@@ -132,7 +143,8 @@ def test_test_skill_matches_explicit_role_transition_policy() -> None:
     assert "explicit role transition" in test_skill
     assert "Do not silently change role" in test_skill
     assert (
-        "Do not stop merely because the test stage boundary or role boundary was reached" in test_skill
+        "Do not stop merely because the test stage boundary or role boundary was reached"
+        in test_skill
     )
 
 
@@ -151,7 +163,9 @@ def test_human_decision_prompt_template_exists_and_is_linked() -> None:
     assert "numbered" in prompt.casefold()
     gate = read_rel("templates/human_spec_gate.md")
     assert "human_decision_prompt.md" in gate
-    assert read_rel("templates/final_human_gate.md").count("human_decision_prompt.md") >= 1
+    assert (
+        read_rel("templates/final_human_gate.md").count("human_decision_prompt.md") >= 1
+    )
 
 
 def test_spec_skill_ties_ok_to_individual_decisions() -> None:
@@ -204,4 +218,6 @@ def test_markdown_relative_links_resolve_under_dev_process_skill() -> None:
             if path_part.startswith("<") and path_part.endswith(">"):
                 path_part = path_part[1:-1].strip()
             candidate = (md_path.parent / path_part).resolve()
-            assert candidate.exists(), f"{md_path.relative_to(ROOT)}: broken link ({raw!r}) -> {candidate}"
+            assert (
+                candidate.exists()
+            ), f"{md_path.relative_to(ROOT)}: broken link ({raw!r}) -> {candidate}"

@@ -153,3 +153,7 @@ Write reviewer and synthesis artifacts under `.hermes/tasks/<task-id>/reviews/<s
 ### Filenames inside each `round_NN`
 
 Use **conventional unprefixed names** (e.g. `requirements.md`, `architecture.md`, `synthesis.md`) per agent role and [`templates/review_result.md`](templates/review_result.md) / [`templates/synthesis_result.md`](templates/synthesis_result.md). **Do not** use `NNNN_` prefixes under `reviews/`—those apply only to **task-root** artifacts ([`artifacts/SKILL.md`](../artifacts/SKILL.md) § Numbered task-root artifacts).
+
+## Task completion tail
+
+After implementation validation: run checkpoint + **final** review (`reviews/final/round_NN/`), materialize **`artifacts.final_summary_ja`** and **`artifacts.final_human_gate`**, present numbered final-gate options, then on approval set `approved.final_human_gate: true` and re-run `validate_state.py`. **Do not** auto-commit, merge, or push; final gate approval is not a git operation.

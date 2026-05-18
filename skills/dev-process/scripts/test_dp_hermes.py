@@ -27,15 +27,25 @@ def _run(
     *,
     task_dir: Path,
     action: str | None = None,
+    stage_id: str | None = None,
     print_profile_only: bool = False,
     print_json: bool = False,
     record_state: bool = False,
     hermes_args: list[str] | None = None,
     env_overrides: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    cmd: list[str] = [sys.executable, str(SCRIPT), "--task-dir", str(task_dir), "--policy", str(POLICY)]
+    cmd: list[str] = [
+        sys.executable,
+        str(SCRIPT),
+        "--task-dir",
+        str(task_dir),
+        "--policy",
+        str(POLICY),
+    ]
     if action is not None:
         cmd.extend(["--action", action])
+    if stage_id is not None:
+        cmd.extend(["--stage-id", stage_id])
     if print_profile_only:
         cmd.append("--print-profile-only")
     if print_json:
@@ -104,7 +114,7 @@ class TestDpHermesResolve(unittest.TestCase):
         _write_state(task, "t4", "implementation")
         r = _run(task_dir=task, action="bad_action", print_profile_only=True)
         self.assertEqual(r.returncode, 2)
-        self.assertIn("unknown --action", r.stderr)
+        self.assertIn("unknown action", r.stderr)
 
     def test_stage_only_implementation_dp_code(self) -> None:
         task = self.tmp_path / "t5"
@@ -119,6 +129,20 @@ class TestDpHermesResolve(unittest.TestCase):
         r = _run(task_dir=task, action=None, print_profile_only=True)
         self.assertEqual(r.returncode, 2)
         self.assertIn("unknown current_stage", r.stderr)
+
+    def test_stage_id_spec_review_dp_strong(self) -> None:
+        task = self.tmp_path / "t_stage"
+        _write_state(task, "t_stage", "spec")
+        r = _run(task_dir=task, stage_id="spec_review", print_profile_only=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.strip(), "dp-strong")
+
+    def test_stage_id_human_spec_gate_dp_cheap(self) -> None:
+        task = self.tmp_path / "t_gate"
+        _write_state(task, "t_gate", "spec")
+        r = _run(task_dir=task, stage_id="human_spec_gate", print_profile_only=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.strip(), "dp-cheap")
 
     def test_print_profile_only_stdout_is_profile_name_only(self) -> None:
         task = self.tmp_path / "t7"
@@ -166,7 +190,7 @@ class TestDpHermesResolve(unittest.TestCase):
         fake_hermes = self.tmp_path / "fake_hermes_ok.sh"
         fake_hermes.write_text(
             "#!/usr/bin/env bash\n"
-            "if [ \"$2\" = \"version\" ]; then exit 0; fi\n"
+            'if [ "$2" = "version" ]; then exit 0; fi\n'
             "exit 0\n",
             encoding="utf-8",
         )
@@ -192,7 +216,7 @@ class TestDpHermesResolve(unittest.TestCase):
         fake_hermes = self.tmp_path / "fake_hermes_fail.sh"
         fake_hermes.write_text(
             "#!/usr/bin/env bash\n"
-            "if [ \"$2\" = \"version\" ]; then exit 0; fi\n"
+            'if [ "$2" = "version" ]; then exit 0; fi\n'
             "exit 7\n",
             encoding="utf-8",
         )

@@ -21,7 +21,7 @@ This file is the **must-read orchestrator**. Keep detailed policy in focused ref
 | `/goal`, stops, role transitions | Continuation contract | [goal/SKILL.md](goal/SKILL.md) |
 | Branch / commits | Task branch, who may commit | [git/SKILL.md](git/SKILL.md) |
 | Paths & numbering | Task-root `NNNN_`, persistence, `reviews/` layout | [artifacts/SKILL.md](artifacts/SKILL.md) |
-| Validation & helpers | Cost-aware checks, safe helpers, scripts | [validation/SKILL.md](validation/SKILL.md) |
+| Validation & helpers | Cost-aware checks, safe helpers, model profile handoff | [validation/SKILL.md](validation/SKILL.md) |
 | Gate prompting (companion) | Generic human-gate discipline when dev-process is loaded | [human-gates/SKILL.md](human-gates/SKILL.md) |
 | Templates | Gate and task files | [templates/](templates/) |
 | Scripts | Helper CLI | [scripts/README.md](scripts/README.md) |

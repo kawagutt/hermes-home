@@ -25,6 +25,8 @@ Do not use any pre-existing branch for task work unless the human **explicitly**
 
 ## Phase execution
 
+Each phase must fit the sizing rules in [plan/SKILL.md § Implementation phase sizing](../plan/SKILL.md#implementation-phase-sizing). One bounded `/goal` advance should complete **at most one** implementation phase (implement → validate → `phase_results` → checkpoint review) before starting the next.
+
 For each phase in **`artifacts.plan`**:
 
 1. Perform only scoped changes permitted by **`artifacts.phase_checklists`**.  

@@ -17,6 +17,6 @@ Use [`../templates/review_result.md`](../templates/review_result.md). **Blocking
 
 ## Special role
 
-For **plan** target: confirm plan is reviewable, phased, and testable per checklists.  
+For **plan** target: confirm plan is reviewable, phased, and testable per checklists; **no implementation phase marked `heavy` without split or documented waiver**; each phase has matched checklist section, allowed files, and validation commands per `skills/dev-process/plan/SKILL.md` § **Implementation phase sizing**.  
 For **test** target: confirm tests align with planned validation strategy.  
 For **implementation_phase** target: **hard stop** if compliance fails before advancing.
