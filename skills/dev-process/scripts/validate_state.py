@@ -6,8 +6,11 @@ from __future__ import annotations
 import argparse
 import re
 from pathlib import Path
+from typing import Any
 
 import yaml
+
+POLICY_PATH = Path(__file__).resolve().parent.parent / "config" / "model_policy.yaml"
 
 LATEST_RE = re.compile(
     r"^reviews/(?P<stage>[^/]+)/round_(?P<num>\d{2,})/synthesis\.md$"
@@ -23,6 +26,24 @@ def load_state(task: Path) -> dict:
         return yaml.safe_load(f) or {}
 
 
+def load_policy() -> dict[str, Any]:
+    if not POLICY_PATH.is_file():
+        raise SystemExit(f"ERROR policy file not found: {POLICY_PATH}")
+    with POLICY_PATH.open(encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+    if not isinstance(data, dict):
+        raise SystemExit(f"ERROR policy root must be a mapping: {POLICY_PATH}")
+    return data
+
+
+def usage_only_stage_ids(policy: dict[str, Any]) -> set[str]:
+    stage_actions = policy.get("stage_actions") or {}
+    stage_defaults = policy.get("stage_defaults") or {}
+    if not isinstance(stage_actions, dict) or not isinstance(stage_defaults, dict):
+        return set()
+    return set(stage_actions) - set(stage_defaults)
+
+
 def is_task_root_markdown(rel: str) -> bool:
     path = Path(rel)
     return len(path.parts) == 1 and path.suffix == ".md"
@@ -31,10 +52,35 @@ def is_task_root_markdown(rel: str) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("task", help="Path to .hermes/tasks/<task-id>")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Treat warnings (e.g. missing last_hermes_profile) as errors.",
+    )
     args = parser.parse_args()
     task = Path(args.task)
     state = load_state(task)
+    policy = load_policy()
     errors: list[str] = []
+    warnings: list[str] = []
+
+    current_stage = (state.get("current_stage") or "").strip()
+    if current_stage:
+        bad_usage = usage_only_stage_ids(policy)
+        if current_stage in bad_usage:
+            errors.append(
+                f"current_stage {current_stage!r} is a usage stage id only "
+                f"(stage_actions key, not a state stage). Use orchestrator stages "
+                f"({', '.join(sorted((policy.get('stage_defaults') or {}).keys()))}) "
+                f"in state.yaml; pass --stage-id {current_stage!r} to dp_hermes.py instead."
+            )
+
+    last_profile = state.get("last_hermes_profile")
+    if not (isinstance(last_profile, str) and last_profile.strip()):
+        warnings.append(
+            "missing last_hermes_profile (run dp_hermes.py with --record-state after "
+            "each profile boundary so handoff_required works)"
+        )
 
     if state.get("task_id") != task.name:
         errors.append(
@@ -107,9 +153,13 @@ def main() -> int:
         if key not in branch:
             errors.append(f"missing branch field: {key}")
 
+    for warning in warnings:
+        print(f"WARNING {warning}")
     if errors:
         for error in errors:
             print(f"ERROR {error}")
+        return 1
+    if args.strict and warnings:
         return 1
     print(f"OK {task}")
     return 0

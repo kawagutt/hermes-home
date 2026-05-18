@@ -15,10 +15,19 @@ SCRIPT = Path(__file__).resolve().parent / "dp_hermes.py"
 POLICY = Path(__file__).resolve().parent.parent / "config" / "model_policy.yaml"
 
 
-def _write_state(task_root: Path, task_id: str, current_stage: str) -> None:
+def _write_state(
+    task_root: Path,
+    task_id: str,
+    current_stage: str,
+    *,
+    last_hermes_profile: str | None = None,
+) -> None:
     task_root.mkdir(parents=True, exist_ok=True)
+    extra = ""
+    if last_hermes_profile is not None:
+        extra = f'last_hermes_profile: "{last_hermes_profile}"\n'
     (task_root / "state.yaml").write_text(
-        f'task_id: "{task_id}"\ncurrent_stage: "{current_stage}"\n',
+        f'task_id: "{task_id}"\ncurrent_stage: "{current_stage}"\n{extra}',
         encoding="utf-8",
     )
 
@@ -30,6 +39,7 @@ def _run(
     stage_id: str | None = None,
     print_profile_only: bool = False,
     print_json: bool = False,
+    handoff_only: bool = False,
     record_state: bool = False,
     hermes_args: list[str] | None = None,
     env_overrides: dict[str, str] | None = None,
@@ -50,6 +60,8 @@ def _run(
         cmd.append("--print-profile-only")
     if print_json:
         cmd.append("--print-json")
+    if handoff_only:
+        cmd.append("--handoff-only")
     if record_state:
         cmd.append("--record-state")
     if hermes_args:
@@ -171,6 +183,22 @@ class TestDpHermesResolve(unittest.TestCase):
         self.assertEqual(obj["resolution_source"], "stage")
         self.assertEqual(obj["hermes_profile"], "dp-code")
         self.assertIsNone(obj["action"])
+
+    def test_handoff_only_prints_json_without_hermes(self) -> None:
+        task = self.tmp_path / "t_handoff"
+        _write_state(
+            task,
+            "t_handoff",
+            "implementation",
+            last_hermes_profile="dp-strong",
+        )
+        r = _run(task_dir=task, stage_id="test_review", handoff_only=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        obj = json.loads(r.stdout)
+        self.assertTrue(obj["handoff_required"])
+        self.assertEqual(obj["hermes_profile"], "dp-code")
+        self.assertIn("handoff_required", r.stderr)
+        self.assertNotIn("Model usage:", r.stdout)
 
     def test_probe_failure_exit_2_when_hermes_missing(self) -> None:
         task = self.tmp_path / "t10"

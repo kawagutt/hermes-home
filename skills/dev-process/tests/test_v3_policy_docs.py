@@ -14,6 +14,11 @@ ROOT = Path(__file__).resolve().parents[1]
 _MD_LINK_RE = re.compile(r"\]\(([^)]+)\)")
 
 
+def strip_md_emphasis(text: str) -> str:
+    """Remove common Markdown emphasis for substring policy checks."""
+    return re.sub(r"\*+", "", text)
+
+
 def read_rel(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
@@ -193,7 +198,7 @@ def test_model_usage_review_can_be_skipped_for_light_tasks() -> None:
 def test_model_usage_warns_not_to_paste_raw_logs_and_is_stage_attribution_aid() -> None:
     model_usage = read_rel("templates/model_usage.md")
     validation = read_rel("validation/SKILL.md")
-    text = model_usage + validation
+    text = strip_md_emphasis(model_usage + validation)
     assert "Do not paste raw log" in text
     assert "secrets" in text
     assert "redacted" in text.casefold()

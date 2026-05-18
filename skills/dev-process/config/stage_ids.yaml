@@ -1,0 +1,21 @@
+# Canonical stage id lists for drift tests (see tests/test_stage_id_drift.py).
+usage_stage_ids:
+  - spec_review
+  - human_spec_gate
+  - plan_review
+  - test_review
+  - implementation
+  - implementation_review
+  - final_review
+  - final_summary
+  - final_human_gate
+
+state_stages:
+  - spec
+  - plan
+  - human_spec_gate
+  - test
+  - implementation
+  - final
+  - final_human_gate
+  - completed

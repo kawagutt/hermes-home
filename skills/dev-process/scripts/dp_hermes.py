@@ -23,14 +23,15 @@ except ImportError as e:  # pragma: no cover
     print("dp_hermes.py: PyYAML is required (pip install pyyaml)", file=sys.stderr)
     raise SystemExit(2) from e
 
-from model_resolve import (
-    ModelResolveError,
-    default_policy_path,
-    load_task_state,
-    load_yaml,
-    resolve_for_task,
-    validate_policy,
+from dp_cli_common import (
+    add_policy_arg,
+    add_task_dir_arg,
+    print_handoff_notes,
+    print_resolution_json,
+    resolve_policy_path,
+    resolve_task_boundary,
 )
+from model_resolve import load_task_state, load_yaml, validate_policy
 
 
 def _script_dir() -> Path:
@@ -79,32 +80,41 @@ def _record_state(
     stage_id: str | None,
 ) -> None:
     state_path = task_dir / "state.yaml"
-    data = load_task_state(task_dir)
-    data["last_hermes_profile"] = hermes_profile
-    data["last_dev_process_action"] = action if action is not None else ""
-    data["last_resolution_source"] = resolution_source
+    updates = {
+        "last_hermes_profile": hermes_profile,
+        "last_dev_process_action": action if action is not None else "",
+        "last_resolution_source": resolution_source,
+    }
     if stage_id:
-        data["last_model_stage_id"] = stage_id
+        updates["last_model_stage_id"] = stage_id
+    try:
+        from ruamel.yaml import YAML
+
+        ry = YAML()
+        ry.preserve_quotes = True
+        with state_path.open(encoding="utf-8") as f:
+            data = ry.load(f)
+        if not isinstance(data, dict):
+            raise ValueError("state.yaml root must be a mapping")
+        data.update(updates)
+        with state_path.open("w", encoding="utf-8") as f:
+            ry.dump(data, f)
+        return
+    except ImportError:
+        pass
+    data = load_task_state(task_dir)
+    data.update(updates)
     with state_path.open("w", encoding="utf-8") as f:
         yaml.dump(
             data, f, sort_keys=False, allow_unicode=True, default_flow_style=False
         )
 
 
-def _exit_resolve_error(exc: ModelResolveError) -> None:
-    print(f"dp_hermes.py: {exc}", file=sys.stderr)
-    raise SystemExit(2)
-
-
 def main() -> None:
     wrapper_argv, hermes_argv = _split_argv(sys.argv[1:])
 
     parser = argparse.ArgumentParser(prog="dp_hermes.py")
-    parser.add_argument(
-        "--task-dir",
-        required=True,
-        help="Path to .hermes/tasks/<task-id> (directory containing state.yaml).",
-    )
+    add_task_dir_arg(parser)
     parser.add_argument(
         "--action",
         default=None,
@@ -115,11 +125,7 @@ def main() -> None:
         default=None,
         help="usage stage id for artifacts.model_usage (stage_actions key; when --action omitted).",
     )
-    parser.add_argument(
-        "--policy",
-        default=None,
-        help="Path to model_policy.yaml (default: skills/dev-process/config/model_policy.yaml).",
-    )
+    add_policy_arg(parser)
     parser.add_argument(
         "--print-profile-only",
         action="store_true",
@@ -135,8 +141,21 @@ def main() -> None:
         action="store_true",
         help="Update state.yaml last_* fields after Hermes exits 0 (default: never write state).",
     )
+    parser.add_argument(
+        "--handoff-only",
+        action="store_true",
+        help="Resolve only: print JSON on stdout and exit 0 without launching Hermes.",
+    )
 
     args = parser.parse_args(wrapper_argv)
+
+    if args.handoff_only and (args.print_profile_only or args.record_state):
+        print(
+            "dp_hermes.py: --handoff-only cannot be combined with --print-profile-only "
+            "or --record-state",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
 
     if args.print_profile_only and args.print_json:
         print(
@@ -146,8 +165,6 @@ def main() -> None:
         raise SystemExit(2)
 
     task_dir = Path(args.task_dir).resolve()
-    policy_path = Path(args.policy).resolve() if args.policy else default_policy_path()
-
     action_arg = args.action.strip() if args.action else None
     if action_arg == "":
         print("dp_hermes.py: empty --action is invalid", file=sys.stderr)
@@ -157,25 +174,28 @@ def main() -> None:
         print("dp_hermes.py: empty --stage-id is invalid", file=sys.stderr)
         raise SystemExit(2)
 
-    try:
-        resolved = resolve_for_task(
-            task_dir,
-            policy_path=policy_path,
-            action=action_arg,
-            stage_id=stage_id_arg if not action_arg else None,
-        )
-    except ModelResolveError as exc:
-        _exit_resolve_error(exc)
+    resolved = resolve_task_boundary(
+        "dp_hermes.py",
+        task_dir=task_dir,
+        policy_path=resolve_policy_path(args.policy),
+        stage_id=stage_id_arg if not action_arg else None,
+        action=action_arg,
+    )
 
     hermes_profile = resolved["hermes_profile"]
     hermes = _hermes_exe()
+
+    if args.handoff_only:
+        print_resolution_json(resolved)
+        print_handoff_notes("dp_hermes.py", resolved, handoff_only=True)
+        return
 
     if args.print_profile_only:
         print(hermes_profile, flush=True)
         return
 
     if args.print_json:
-        print(json.dumps(resolved, ensure_ascii=False, indent=2) + "\n", end="", flush=True)
+        print_resolution_json(resolved)
         return
 
     _probe_resolved_profile(hermes, hermes_profile)
@@ -194,14 +214,7 @@ def main() -> None:
         ),
         flush=True,
     )
-    if resolved.get("handoff_required"):
-        print(
-            "Model handoff: start a new Hermes session with "
-            f"`hermes --profile={hermes_profile}` (or re-run this script with `--`). "
-            "Use --record-state to persist last_hermes_profile. "
-            "Profiles do not switch mid-session.",
-            file=sys.stderr,
-        )
+    print_handoff_notes("dp_hermes.py", resolved)
 
     cmd = [hermes, f"--profile={hermes_profile}", *hermes_argv]
     try:

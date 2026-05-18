@@ -25,22 +25,21 @@ Set **`Model usage record required?`** to **yes** when any applies: preset is **
 
 **Default policy (`dev-process`):** Tasks on preset **`standard`** or **`deep`** MUST set **`Model usage record required?`** to **yes**, bind **`artifacts.model_usage`**, materialize from `skills/dev-process/templates/model_usage.md`, and **append rows** at major stage boundaries (see `skills/dev-process/validation/SKILL.md` § Model usage). Preset **`light`** or **trivial docs-only / mechanical tasks** MAY set **`no`** with **Reason** `no need` and leave **`artifacts.model_usage`** empty. A **`standard`** or **`deep`** plan that sets **`no`** MUST document **explicit human approval** for skipping **`artifacts.model_usage`** (copied rationale in **Reason** plus a pointer such as **`artifacts.timeline`**)—silent waivers are **non-compliant**.
 
-**Optional per-stage table** — fill **only** when **`Model usage record required?`** is **yes**. Stage ids align with **`state.yaml`** (`current_stage`, `review_rounds` keys such as `spec` / `plan` / `test` / `final`), **`reviews/<stage>/`**, **`artifacts.human_spec_gate`**, and `skills/dev-process/templates/model_usage.md`:
+**Optional per-stage table** — fill **only** when **`Model usage record required?`** is **yes**. **Stage id** column = **usage stage id** (`model_policy.yaml` → `stage_actions` keys; same as `skills/dev-process/templates/model_usage.md`). This is **not** the same as `state.yaml` → `current_stage` (orchestrator stages: `spec`, `plan`, `test`, `implementation`, `final`). For primary-loop **draft** work (spec/plan/test body), omit `--stage-id` and resolve via `current_stage` → `stage_defaults`.
 
 | Stage id | Selected review-depth preset | Main model expectation | Reasoning effort expectation | Token/cost evidence plan | Evidence captured (redacted summaries only) |
 |----------|------------------------------|------------------------|-----------------------------|--------------------------|---------------------------------------------|
-| `spec` | | | | `hermes sessions export` / dashboard / insights | |
-| `spec_review` | | | | | |
+| `spec_review` | | | | `hermes sessions export` / dashboard / insights | |
 | `human_spec_gate` | | | | | |
-| `plan` | | | | | |
 | `plan_review` | | | | | |
-| `test` | | | | | |
 | `test_review` | | | | | |
 | `implementation` | | | | | |
 | `implementation_review` | | | | | |
 | `final_review` | | | | | |
 | `final_summary` | | | | | |
 | `final_human_gate` | | | | | |
+
+**Deep preset:** checkpoint rows (`implementation_review`, …) follow the **standard** target recipes in `skills/dev-process/review/SKILL.md`; **final** review uses the full reviewer set in `skills/dev-process/review/presets.md`.
 
 ## Implementation phases
 
@@ -68,6 +67,8 @@ Size each phase per `skills/dev-process/plan/SKILL.md` § **Implementation phase
 ## Reviewer assignment notes
 
 Which review targets/agents run after major milestones — **See:** `skills/dev-process/review/SKILL.md`.
+
+**Per-phase synthesis (optional skip):** For a **low-risk** implementation phase (`light` size, focused diff, existing tests green, no API/architecture/security scope), you **may** skip per-phase synthesis if the plan documents **Reason** here and records the skip on **`artifacts.timeline`**. Do **not** skip final synthesis when merge/completion decisions matter.
 
 ## Test strategy
 

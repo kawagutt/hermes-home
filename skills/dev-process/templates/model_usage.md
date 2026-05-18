@@ -1,6 +1,6 @@
 # Model usage
 
-**Purpose:** Stage-attributed session token/cost evidence when the approved plan requires it.
+**Purpose:** Stage-attributed session token/cost evidence when the approved plan requires it. Hermes `insights` / Dashboard show per-model totals; this table does not replace that—it attributes usage to dev-process **usage stage ids** and presets on the task.
 
 **Bindings:** `state.yaml` → `artifacts.model_usage` (append-only; numbering: [artifacts/SKILL.md](../artifacts/SKILL.md)).
 

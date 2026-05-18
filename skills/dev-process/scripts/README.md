@@ -125,8 +125,11 @@ When state is written, **PyYAML `yaml.dump()` rewrites the whole file** — inli
 **Tests**
 
 ```bash
-python3 skills/dev-process/scripts/test_dp_hermes.py -v
+python3 -m pytest skills/dev-process/tests -q
+python3 -m unittest discover -s skills/dev-process/scripts -p 'test_*.py' -q
 ```
+
+CI runs the same commands on push/PR (see `.github/workflows/dev-process.yml`). From repo root: `make test-dev-process`.
 
 Mostly uses `--print-profile-only` / `--print-json`; probe/launch paths are covered with a temporary fake `HERMES_EXE`.
 

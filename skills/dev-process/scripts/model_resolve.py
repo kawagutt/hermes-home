@@ -85,6 +85,18 @@ def validate_policy(policy: Any) -> dict[str, Any]:
     if overrides is not None and not isinstance(overrides, dict):
         raise ModelResolveError("action_reasoning_overrides must be a mapping when present")
 
+    stage_actions = policy.get("stage_actions")
+    if isinstance(stage_actions, dict):
+        action_overrides = policy["action_overrides"]
+        for usage_id, mapped_action in stage_actions.items():
+            if not isinstance(mapped_action, str) or not mapped_action.strip():
+                raise ModelResolveError(f"empty stage_actions[{usage_id!r}]")
+            if mapped_action.strip() not in action_overrides:
+                raise ModelResolveError(
+                    f"stage_actions[{usage_id!r}] → {mapped_action!r} "
+                    "is not an action_overrides key"
+                )
+
     return policy
 
 
@@ -248,6 +260,19 @@ def resolve_model(
         last_profile = None
 
     profile_changed = bool(last_profile and last_profile != hermes_profile)
+    usage_review_boundary = bool(
+        stage_id_norm
+        and (
+            stage_id_norm.endswith("_review")
+            or stage_id_norm in ("final_review", "final_summary")
+        )
+    )
+    context_reset_recommended = bool(
+        not profile_changed
+        and last_profile
+        and last_profile == hermes_profile
+        and (usage_review_boundary or stage_display in ("spec", "plan"))
+    )
 
     return {
         "resolution_source": resolution_source,
@@ -264,6 +289,7 @@ def resolve_model(
         "last_hermes_profile": last_profile,
         "handoff_required": profile_changed,
         "last_profile_unknown": last_profile is None,
+        "context_reset_recommended": context_reset_recommended,
     }
 
 

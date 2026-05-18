@@ -27,13 +27,14 @@ stage_actions:
   final_summary: final_summary
   final_human_gate: record_gate
 
+# state.yaml current_stage only (orchestrator). "review" is not a state stage —
+# checkpoint review uses current_stage=implementation + --stage-id implementation_review.
 stage_defaults:
   spec: strong_reasoning
   plan: strong_reasoning
   human_spec_gate: cheap_aux
   implementation: code_main
   test: code_main
-  review: review_main
   final: strong_reasoning
   final_human_gate: cheap_aux
   completed: cheap_aux

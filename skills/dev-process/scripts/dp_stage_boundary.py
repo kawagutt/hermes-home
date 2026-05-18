@@ -8,24 +8,30 @@ B. Next segment launch: --print-json for --stage-id of the stage you are about t
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
-from model_resolve import ModelResolveError, default_policy_path, resolve_for_task
+from dp_cli_common import (
+    add_policy_arg,
+    add_task_dir_arg,
+    print_handoff_notes,
+    print_resolution_json,
+    resolve_policy_path,
+    resolve_task_boundary,
+)
 from session_usage import _load_session, build_summary, markdown_row, resolve_time_cell
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="dp_stage_boundary.py")
-    parser.add_argument("--task-dir", required=True, help="Path to .hermes/tasks/<task-id>")
+    add_task_dir_arg(parser)
     parser.add_argument(
         "--stage-id",
         required=True,
         help="usage stage id for artifacts.model_usage (stage_actions key)",
     )
     parser.add_argument("--action", default=None, help="Optional action override")
-    parser.add_argument("--policy", default=None, help="Path to model_policy.yaml")
+    add_policy_arg(parser)
     parser.add_argument(
         "--session-export",
         default=None,
@@ -48,23 +54,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    policy_path = Path(args.policy).resolve() if args.policy else default_policy_path()
     task_dir = Path(args.task_dir).resolve()
     stage_id = args.stage_id.strip()
-    if not stage_id:
-        print("dp_stage_boundary.py: empty --stage-id", file=sys.stderr)
-        return 2
-
-    try:
-        resolved = resolve_for_task(
-            task_dir,
-            policy_path=policy_path,
-            action=args.action.strip() if args.action else None,
-            stage_id=stage_id,
-        )
-    except ModelResolveError as exc:
-        print(f"dp_stage_boundary.py: {exc}", file=sys.stderr)
-        return 2
+    resolved = resolve_task_boundary(
+        "dp_stage_boundary.py",
+        task_dir=task_dir,
+        policy_path=resolve_policy_path(args.policy),
+        stage_id=stage_id,
+        action=args.action,
+    )
 
     if args.print_markdown_row:
         if not args.session_export:
@@ -95,18 +93,8 @@ def main() -> int:
         )
         return 0
 
-    print(json.dumps(resolved, ensure_ascii=False, indent=2))
-    if resolved.get("handoff_required"):
-        print(
-            f"Model handoff: hermes --profile={resolved['hermes_profile']} "
-            f"(or dp_hermes.py --record-state …)",
-            file=sys.stderr,
-        )
-    elif resolved.get("last_profile_unknown"):
-        print(
-            "Note: last_hermes_profile unset; use dp_hermes.py --record-state after launch.",
-            file=sys.stderr,
-        )
+    print_resolution_json(resolved)
+    print_handoff_notes("dp_stage_boundary.py", resolved)
     return 0
 
 

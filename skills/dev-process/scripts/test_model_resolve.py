@@ -84,6 +84,12 @@ class TestModelResolve(unittest.TestCase):
         self.assertEqual(r["hermes_profile"], "dp-code")
         self.assertTrue(r["handoff_required"])
 
+    def test_context_reset_recommended_same_profile_review(self) -> None:
+        task = self._write_state("t_ctx", last_hermes_profile="dp-strong")
+        r = resolve_for_task(task, stage_id="spec_review")
+        self.assertFalse(r["handoff_required"])
+        self.assertTrue(r["context_reset_recommended"])
+
     def test_no_handoff_when_last_profile_missing(self) -> None:
         task = self._write_state("t4b", review_depth_preset="deep")
         r = resolve_for_task(task, stage_id="spec_review")

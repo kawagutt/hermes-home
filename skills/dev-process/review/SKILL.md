@@ -9,6 +9,15 @@ description: >-
 
 # Review process (router)
 
+## Reviewer launch checklist
+
+Before starting a review round:
+
+- Use approved artifacts, concise diffs, test outputs, and prior review summaries only.
+- Do **not** pass ImplementationAgent chat logs or rationale unless the human explicitly requests them.
+- Confirm `state.yaml` / latest synthesis / gate approvals match the review target.
+- Launch Hermes with the correct usage **`--stage-id`** (or **`--action review_deep`** on deep checkpoint) per [goal/SKILL.md](../goal/SKILL.md)—not `current_stage` alone.
+
 Reviews combine:
 
 1. A **target** from [`targets/`](targets/) — defines *what* is in scope.  

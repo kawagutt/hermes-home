@@ -22,10 +22,23 @@ When the approved plan is written, set **`state.yaml` → `review_depth_preset`*
 
 ## Stage-boundary model profile and usage (default)
 
+**`current_stage` vs `--stage-id`:** `state.yaml` → `current_stage` is the orchestrator stage (`spec`, `plan`, `test`, `implementation`, `final`, …). **`--stage-id`** is the **usage stage id** (`stage_actions` key) for `artifacts.model_usage` rows and profile resolution when review, gates, or boundary recording need a different profile than `stage_defaults[current_stage]`. **Do not launch `dp_hermes.py` for review, gates, or boundary recording using only `current_stage`**—always pass the usage **`--stage-id`** (or the matching **`--action`**). With `current_stage=implementation` and no `--stage-id`, resolution uses `stage_defaults` → `dp-code`, which is wrong for checkpoint review.
+
+| Work | `current_stage` | `--stage-id` at launch |
+|------|-----------------|------------------------|
+| spec draft | `spec` | omit → `dp-strong` via `stage_defaults` |
+| spec review | `spec` | `spec_review` |
+| implementation | `implementation` | `implementation` |
+| checkpoint review | `implementation` | `implementation_review` |
+| final review | `final` | `final_review` |
+
+**Deep preset checkpoint review:** keep `--stage-id implementation_review` for usage rows; launch with **`--action review_deep`** when the approved plan requires `dp-strong` for that checkpoint (action overrides `stage_actions` mapping). Final review uses `--stage-id final_review` (maps to `final_review` → `dp-strong`).
+
 At major stage boundaries:
 
-1. Resolve the **next** stage profile with `dp_stage_boundary.py --stage-id <next> --print-json` (see [scripts/README.md](../scripts/README.md)). If `handoff_required`, end the session and launch with `dp_hermes.py --stage-id <next> --record-state -- chat`. Profiles do not switch mid-session.
-2. When **`Model usage record required?`** is **yes** in the approved plan, append a usage row for the **completed** stage via the same procedure in [validation/SKILL.md § Default stage-boundary usage recording](../validation/SKILL.md#default-stage-boundary-usage-recording).
+1. Resolve the **next** stage profile with `dp_stage_boundary.py --stage-id <next> --print-json` (see [scripts/README.md](../scripts/README.md)). If `handoff_required`, you **MUST** end the current Hermes session—do not continue in the same session after a profile change. Launch the next segment with `dp_hermes.py --stage-id <next> --record-state -- chat` so `last_hermes_profile` updates after Hermes exits 0. Profiles do not switch mid-session.
+2. When **`Model usage record required?`** is **yes** in the approved plan, append **one** usage row for the **completed** boundary (not multiple rounds in one row) via [validation/SKILL.md § Default stage-boundary usage recording](../validation/SKILL.md#default-stage-boundary-usage-recording).
+3. **SHOULD** start a new Hermes session when beginning a new review round even if the profile is unchanged (especially after long `dp-strong` chains such as spec → plan).
 
 Safe deterministic helpers — no human confirmation. On helper failure, record `unknown` and continue.
 
