@@ -10,15 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-try:
-    import yaml
-except ImportError:
-    print(
-        "validate_model_governance.py: PyYAML is required (pip install pyyaml)",
-        file=sys.stderr,
-    )
-    raise SystemExit(2) from None
-
 from model_resolve import (
     ModelResolveError,
     default_policy_path,
@@ -27,9 +18,13 @@ from model_resolve import (
     load_yaml,
     validate_policy,
 )
+from primary_segments import (
+    load_primary_segments,
+    resolve_required_usage_stage_ids,
+)
 
-PRIMARY_SEGMENTS_NAME = "primary_segments.yaml"
 SESSION_ID_RE = re.compile(r"^\d{8}_\d{6}_[0-9a-f]{6}$", re.IGNORECASE)
+HERMES_PROFILE_RE = re.compile(r"^(dp-[a-z0-9-]+)", re.IGNORECASE)
 INVALID_SESSION = frozenset(
     {"", "unknown", "[session]", "<session-id>", "<id>", "n/a", "na"}
 )
@@ -56,22 +51,8 @@ def _script_dir() -> Path:
     return Path(__file__).resolve().parent
 
 
-def default_primary_segments_path() -> Path:
-    return _script_dir().parent / "config" / PRIMARY_SEGMENTS_NAME
-
-
 def default_review_targets_path() -> Path:
     return _script_dir().parent / "config" / "review_targets.yaml"
-
-
-def load_primary_segments(path: Path | None = None) -> dict[str, Any]:
-    p = (path or default_primary_segments_path()).resolve()
-    if not p.is_file():
-        raise ModelResolveError(f"primary segments file not found: {p}")
-    data = load_yaml(p)
-    if not isinstance(data, dict) or "segments" not in data:
-        raise ModelResolveError(f"{p}: root must contain segments")
-    return data
 
 
 def load_review_targets(path: Path | None = None) -> dict[str, Any]:
@@ -117,6 +98,17 @@ def _plan_path(state: dict[str, Any], task_dir: Path) -> Path | None:
     return path if path.is_file() else None
 
 
+def parse_hermes_profile_from_cell(cell: str) -> str | None:
+    """Parse leading dp-* profile from Profile / role column (e.g. dp-strong / strong_reasoning)."""
+    if not isinstance(cell, str):
+        return None
+    raw = cell.strip()
+    if not raw:
+        return None
+    m = HERMES_PROFILE_RE.match(raw)
+    return m.group(1) if m else None
+
+
 def parse_session_id(cell: str) -> str | None:
     if not isinstance(cell, str):
         return None
@@ -133,16 +125,20 @@ def parse_session_id(cell: str) -> str | None:
     return None
 
 
-def parse_model_usage_table(text: str) -> tuple[dict[str, str], list[str]]:
-    """Return stage_id -> session_id (last row wins) and parse errors."""
+def parse_model_usage_table(
+    text: str,
+) -> tuple[dict[str, str], dict[str, str | None], list[str]]:
+    """Return stage_id -> session_id, stage_id -> dp-* profile, and parse errors."""
     rows: dict[str, str] = {}
+    profiles: dict[str, str | None] = {}
     errors: list[str] = []
     header_idx: int | None = None
     col_stage: int | None = None
     col_session: int | None = None
+    col_profile: int | None = None
 
     lines = text.splitlines()
-    for i, line in enumerate(lines):
+    for line in lines:
         if not line.strip().startswith("|"):
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
@@ -150,17 +146,21 @@ def parse_model_usage_table(text: str) -> tuple[dict[str, str], list[str]]:
             continue
         lowered = [c.lower() for c in cells]
         if header_idx is None and "stage id" in lowered and "session" in lowered:
-            header_idx = i
+            header_idx = 0
             try:
                 col_stage = lowered.index("stage id")
             except ValueError:
                 errors.append("model_usage table missing Stage id column")
-                return rows, errors
+                return rows, profiles, errors
             try:
                 col_session = lowered.index("session")
             except ValueError:
                 errors.append("model_usage table missing Session column")
-                return rows, errors
+                return rows, profiles, errors
+            for label in ("profile / role", "profile"):
+                if label in lowered:
+                    col_profile = lowered.index(label)
+                    break
             continue
         if header_idx is None or col_stage is None or col_session is None:
             continue
@@ -178,96 +178,34 @@ def parse_model_usage_table(text: str) -> tuple[dict[str, str], list[str]]:
             rows[stage_raw] = sid
         elif session_raw.lower() == "unknown":
             rows[stage_raw] = "unknown"
-    return rows, errors
+        if col_profile is not None and len(cells) > col_profile:
+            profiles[stage_raw] = parse_hermes_profile_from_cell(cells[col_profile])
+    return rows, profiles, errors
 
 
-def expand_implementation_phase_ids(
-    state: dict[str, Any], task_dir: Path, pattern: str
+def find_profile_crossing_violations(
+    session_by_stage: dict[str, str | None],
+    profile_by_stage: dict[str, str | None],
 ) -> list[str]:
-    ids: set[str] = set()
-    rounds = state.get("review_rounds")
-    if isinstance(rounds, dict):
-        for key, raw in rounds.items():
-            m = re.match(r"implementation_phase_(\d+)$", str(key))
-            if not m:
-                continue
-            try:
-                if int(raw) <= 0:
-                    continue
-            except (TypeError, ValueError):
-                continue
-            ids.add(pattern.format(phase=m.group(1)))
-
-    phase = state.get("current_phase")
-    if isinstance(phase, str) and phase.strip():
-        p = phase.strip()
-        if p.isdigit():
-            ids.add(pattern.format(phase=p.zfill(2) if len(p) < 2 else p))
-
-    artifacts = state.get("artifacts")
-    if isinstance(artifacts, dict):
-        pcl = artifacts.get("phase_checklists")
-        if isinstance(pcl, str) and pcl.strip():
-            path = task_dir / pcl.strip()
-            if path.is_file():
-                text = path.read_text(encoding="utf-8", errors="replace")
-                for m in re.finditer(r"implementation_phase_(\d+)", text):
-                    ids.add(pattern.format(phase=m.group(1)))
-
-    return sorted(ids)
-
-
-def implementation_usage_stage_ids(
-    state: dict[str, Any], task_dir: Path, pattern: str
-) -> list[str]:
-    """Per-phase ids when known; otherwise single implementation fallback row."""
-    phase_ids = expand_implementation_phase_ids(state, task_dir, pattern)
-    if phase_ids:
-        return phase_ids
-    return ["implementation"]
-
-
-def resolve_required_usage_stage_ids(
-    state: dict[str, Any], task_dir: Path, segments_cfg: dict[str, Any]
-) -> list[str]:
-    preset = get_review_depth_preset(state, task_dir)
-    seg_root = segments_cfg.get("segments")
-    if not isinstance(seg_root, dict):
-        raise ModelResolveError("primary_segments.yaml: segments must be a mapping")
-    preset_cfg = seg_root.get(preset)
-    if not isinstance(preset_cfg, dict):
-        raise ModelResolveError(
-            f"primary_segments.yaml: no segment definition for preset {preset!r}"
+    """Same session_id with different dp-* profiles across stages."""
+    by_session: dict[str, list[tuple[str, str]]] = {}
+    for uid, sid in session_by_stage.items():
+        if not sid:
+            continue
+        prof = profile_by_stage.get(uid)
+        if not prof:
+            continue
+        by_session.setdefault(sid, []).append((uid, prof))
+    messages: list[str] = []
+    for sid, pairs in by_session.items():
+        profs = {p for _, p in pairs}
+        if len(profs) < 2:
+            continue
+        detail = ", ".join(f"{st}={p}" for st, p in pairs)
+        messages.append(
+            f"process violation: session {sid} crosses profile boundary ({detail})"
         )
-
-    required: list[str] = []
-    static = preset_cfg.get("static")
-    if isinstance(static, list):
-        for entry in static:
-            if isinstance(entry, dict):
-                uid = entry.get("usage_stage_id")
-                if isinstance(uid, str) and uid.strip():
-                    required.append(uid.strip())
-
-    dynamic = preset_cfg.get("dynamic")
-    if isinstance(dynamic, dict):
-        impl = dynamic.get("implementation_phases")
-        if isinstance(impl, dict):
-            pattern = str(
-                impl.get("usage_stage_id_pattern") or "implementation_phase_{phase}"
-            )
-            if impl.get("required", True):
-                required.extend(
-                    implementation_usage_stage_ids(state, task_dir, pattern)
-                )
-
-    seen: set[str] = set()
-    out: list[str] = []
-    for uid in required:
-        if uid not in seen:
-            seen.add(uid)
-            out.append(uid)
-    return out
+    return messages
 
 
 def _governance_waiver_text(task_dir: Path, state: dict[str, Any]) -> str:
@@ -315,8 +253,6 @@ def _latest_review_rounds(state: dict[str, Any]) -> dict[str, int]:
         if not isinstance(stage, str) or not stage.strip():
             continue
         stage_norm = stage.strip()
-        if stage_norm.startswith("implementation_phase_"):
-            continue
         try:
             n = int(raw)
         except (TypeError, ValueError):
@@ -327,7 +263,9 @@ def _latest_review_rounds(state: dict[str, Any]) -> dict[str, int]:
 
 
 def _manifest_path(task_dir: Path, stage: str, round_num: int) -> Path:
-    return task_dir / "reviews" / stage / f"round_{round_num:02d}" / "review_manifest.yaml"
+    return (
+        task_dir / "reviews" / stage / f"round_{round_num:02d}" / "review_manifest.yaml"
+    )
 
 
 def validate_manifest(
@@ -336,6 +274,8 @@ def validate_manifest(
     preset: str,
     targets: dict[str, Any],
     strict: bool,
+    expected_stage: str | None = None,
+    expected_round: int | None = None,
 ) -> list[Issue]:
     issues: list[Issue] = []
     if not manifest_path.is_file():
@@ -351,6 +291,31 @@ def validate_manifest(
     if not isinstance(data, dict):
         issues.append(Issue("error", f"malformed {manifest_path}: root not a mapping"))
         return issues
+
+    if expected_stage is not None:
+        actual_stage = data.get("review_stage")
+        if actual_stage != expected_stage:
+            issues.append(
+                Issue(
+                    "error",
+                    f"{manifest_path}: review_stage {actual_stage!r} "
+                    f"does not match expected {expected_stage!r}",
+                )
+            )
+    if expected_round is not None:
+        raw_round = data.get("round")
+        try:
+            actual_round = int(raw_round)
+        except (TypeError, ValueError):
+            actual_round = -1
+        if actual_round != expected_round:
+            issues.append(
+                Issue(
+                    "error",
+                    f"{manifest_path}: round {raw_round!r} "
+                    f"does not match expected {expected_round}",
+                )
+            )
 
     presets = targets.get("presets")
     if not isinstance(presets, dict):
@@ -395,11 +360,7 @@ def validate_manifest(
         issues.append(Issue("error", f"{manifest_path}: synthesis block missing"))
         return issues
     syn_sid_raw = synthesis.get("session_id")
-    syn_sid = (
-        parse_session_id(syn_sid_raw)
-        if isinstance(syn_sid_raw, str)
-        else None
-    )
+    syn_sid = parse_session_id(syn_sid_raw) if isinstance(syn_sid_raw, str) else None
     if not syn_sid:
         issues.append(
             Issue(
@@ -450,79 +411,120 @@ def validate_task(
         )
 
     usage_rows: dict[str, str] = {}
+    usage_profiles: dict[str, str | None] = {}
+    preset = get_review_depth_preset(state, task_dir)
     if model_usage_name:
         mu_path = task_dir / model_usage_name
         if not mu_path.is_file():
             issues.append(Issue("error", f"missing model_usage artifact: {mu_path}"))
         else:
-            usage_rows, parse_errors = parse_model_usage_table(
+            usage_rows, usage_profiles, parse_errors = parse_model_usage_table(
                 mu_path.read_text(encoding="utf-8", errors="replace")
             )
             for err in parse_errors:
                 issues.append(Issue("error", err))
 
     if usage_required:
-        try:
-            segments_cfg = load_primary_segments(segments_path)
-            required_ids = resolve_required_usage_stage_ids(
-                state, task_dir, segments_cfg
-            )
-        except ModelResolveError as exc:
-            issues.append(Issue("error", str(exc)))
-            required_ids = []
-        except Exception as exc:
-            issues.append(Issue("error", f"primary segments: {exc}"))
-            required_ids = []
-
         session_by_stage: dict[str, str | None] = {}
-        for uid in required_ids:
-            cell = usage_rows.get(uid, "")
-            cell_stripped = cell.strip().strip("`").strip() if cell else ""
-            sid = parse_session_id(cell) if cell else None
-            is_unknown = cell_stripped.lower() == "unknown"
-            session_by_stage[uid] = sid
 
-            if strict:
-                if sid:
-                    pass
-                elif is_unknown:
-                    if not _has_model_governance_waiver(task_dir, state, uid):
+        if preset in ("standard", "deep"):
+            try:
+                segments_cfg = load_primary_segments(segments_path)
+                required_ids = resolve_required_usage_stage_ids(
+                    state, task_dir, segments_cfg
+                )
+            except ModelResolveError as exc:
+                issues.append(Issue("error", str(exc)))
+                required_ids = []
+            except Exception as exc:
+                issues.append(Issue("error", f"primary segments: {exc}"))
+                required_ids = []
+
+            for uid in required_ids:
+                cell = usage_rows.get(uid, "")
+                cell_stripped = cell.strip().strip("`").strip() if cell else ""
+                sid = parse_session_id(cell) if cell else None
+                is_unknown = cell_stripped.lower() == "unknown"
+                session_by_stage[uid] = sid
+
+                if strict:
+                    if sid:
+                        pass
+                    elif is_unknown:
                         issues.append(
                             Issue(
                                 "error",
                                 f"unresolved unknown Session for stage {uid}",
                             )
                         )
-                else:
-                    issues.append(
-                        Issue(
-                            "error",
-                            f"required primary usage row missing/invalid: {uid}",
+                    else:
+                        issues.append(
+                            Issue(
+                                "error",
+                                f"required primary usage row missing/invalid: {uid}",
+                            )
                         )
+                elif is_unknown and not _has_model_governance_waiver(
+                    task_dir, state, uid
+                ):
+                    issues.append(
+                        Issue("warning", f"unresolved unknown Session for stage {uid}")
                     )
-            elif is_unknown and not _has_model_governance_waiver(
-                task_dir, state, uid
-            ):
-                issues.append(
-                    Issue("warning", f"unresolved unknown Session for stage {uid}")
-                )
 
-        dupes: dict[str, list[str]] = {}
-        for uid, sid in session_by_stage.items():
-            if sid:
-                dupes.setdefault(sid, []).append(uid)
-        for sid, stages in dupes.items():
-            if len(stages) < 2:
-                continue
-            msg = (
-                f"duplicate primary session_id {sid} on stages: "
-                + ", ".join(stages)
-            )
-            waiver = _has_duplicate_session_waiver(task_dir, state, stages)
-            if strict and not waiver:
+        elif preset == "light" and usage_rows:
+            for uid, cell in usage_rows.items():
+                cell_stripped = cell.strip().strip("`").strip() if cell else ""
+                sid = parse_session_id(cell) if cell else None
+                is_unknown = cell_stripped.lower() == "unknown"
+                session_by_stage[uid] = sid
+                if strict and is_unknown:
+                    if _has_model_governance_waiver(task_dir, state, uid):
+                        issues.append(
+                            Issue(
+                                "warning",
+                                f"unresolved unknown Session for stage {uid} (waiver)",
+                            )
+                        )
+                    else:
+                        issues.append(
+                            Issue(
+                                "error",
+                                f"unresolved unknown Session for stage {uid}",
+                            )
+                        )
+                elif is_unknown and not _has_model_governance_waiver(
+                    task_dir, state, uid
+                ):
+                    issues.append(
+                        Issue("warning", f"unresolved unknown Session for stage {uid}")
+                    )
+
+        if session_by_stage:
+            for msg in find_profile_crossing_violations(
+                session_by_stage, usage_profiles
+            ):
                 issues.append(Issue("error", msg))
-            elif not strict:
-                issues.append(Issue("warning", msg))
+
+            dupes: dict[str, list[str]] = {}
+            for uid, sid in session_by_stage.items():
+                if sid:
+                    dupes.setdefault(sid, []).append(uid)
+            for sid, stages in dupes.items():
+                if len(stages) < 2:
+                    continue
+                msg = f"duplicate primary session_id {sid} on stages: " + ", ".join(
+                    stages
+                )
+                waiver = _has_duplicate_session_waiver(task_dir, state, stages)
+                if strict:
+                    if preset in ("standard", "deep"):
+                        issues.append(Issue("error", msg))
+                    elif waiver:
+                        issues.append(Issue("warning", msg))
+                    else:
+                        issues.append(Issue("error", msg))
+                elif not waiver:
+                    issues.append(Issue("warning", msg))
 
     if strict and not state.get("last_hermes_profile"):
         issues.append(
@@ -532,13 +534,17 @@ def validate_task(
             )
         )
 
-    preset = get_review_depth_preset(state, task_dir)
     targets = load_review_targets(targets_path)
     latest = _latest_review_rounds(state)
     for stage, rnd in latest.items():
         mpath = _manifest_path(task_dir, stage, rnd)
         round_issues = validate_manifest(
-            mpath, preset=preset, targets=targets, strict=strict
+            mpath,
+            preset=preset,
+            targets=targets,
+            strict=strict,
+            expected_stage=stage,
+            expected_round=rnd,
         )
         issues.extend(round_issues)
 

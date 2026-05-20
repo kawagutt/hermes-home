@@ -11,7 +11,9 @@ from pathlib import Path
 try:
     import yaml  # noqa: F401
 except ImportError:
-    print("check_helper_env.py: PyYAML is required (pip install pyyaml)", file=sys.stderr)
+    print(
+        "check_helper_env.py: PyYAML is required (pip install pyyaml)", file=sys.stderr
+    )
     raise SystemExit(2) from None
 
 from model_resolve import default_policy_path, load_yaml, validate_policy
@@ -28,7 +30,9 @@ def _run_help(script: Path) -> None:
         text=True,
     )
     if r.returncode != 0:
-        raise RuntimeError(f"{script.name} --help failed (exit {r.returncode}): {r.stderr}")
+        raise RuntimeError(
+            f"{script.name} --help failed (exit {r.returncode}): {r.stderr}"
+        )
 
 
 def main() -> int:

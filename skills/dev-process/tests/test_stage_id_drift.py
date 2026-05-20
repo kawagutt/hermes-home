@@ -29,7 +29,6 @@ def _backtick_ids(text: str) -> set[str]:
 def test_usage_stage_ids_match_policy_and_templates() -> None:
     canonical = set(_load_stage_ids()["usage_stage_ids"])
     policy_ids = _policy_usage_ids()
-    model_usage = (ROOT / "templates" / "model_usage.md").read_text(encoding="utf-8")
     plan = (ROOT / "templates" / "plan.md").read_text(encoding="utf-8")
 
     table_section = plan.split("Optional per-stage table", 1)[-1]
@@ -66,6 +65,6 @@ def test_model_usage_primary_examples_match_primary_usage_stage_ids() -> None:
             example_ids.add(sid)
     # implementation_phase_01 is illustrative; primary list uses implementation fallback.
     example_ids.discard("implementation_phase_01")
-    assert example_ids <= primary | {"implementation_phase_01"}, (
-        f"model_usage primary examples drift: {example_ids - primary}"
-    )
+    assert example_ids <= primary | {
+        "implementation_phase_01"
+    }, f"model_usage primary examples drift: {example_ids - primary}"

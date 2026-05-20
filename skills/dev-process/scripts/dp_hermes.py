@@ -144,6 +144,11 @@ def main() -> None:
         action="store_true",
         help="Resolve only: print JSON on stdout and exit 0 without launching Hermes.",
     )
+    parser.add_argument(
+        "--strict-launch",
+        action="store_true",
+        help="Fail when current_stage=implementation and neither --stage-id nor --action is set.",
+    )
 
     args = parser.parse_args(wrapper_argv)
 
@@ -179,6 +184,35 @@ def main() -> None:
             file=sys.stderr,
         )
         raise SystemExit(2)
+
+    strict_launch = args.strict_launch or os.environ.get(
+        "DEV_PROCESS_STRICT_LAUNCH", ""
+    ).strip() in ("1", "true", "yes")
+    if not action_arg and not stage_id_arg:
+        try:
+            state = load_task_state(task_dir)
+            current_stage = state.get("current_stage")
+            if (
+                isinstance(current_stage, str)
+                and current_stage.strip() == "implementation"
+            ):
+                msg = (
+                    "dp_hermes.py: current_stage=implementation with no --stage-id or "
+                    "--action resolves to dp-code (implement). For primary phase work use "
+                    "--stage-id implementation_phase_NN; for checkpoint reviewers use "
+                    "--action review_<agent> (manifest only, not model_usage)."
+                )
+                if strict_launch:
+                    print(msg, file=sys.stderr)
+                    raise SystemExit(2)
+                print(f"WARNING: {msg}", file=sys.stderr)
+        except Exception as exc:
+            if strict_launch:
+                print(
+                    f"dp_hermes.py: strict-launch precheck failed: {exc}",
+                    file=sys.stderr,
+                )
+                raise SystemExit(2) from exc
 
     resolved = resolve_task_boundary(
         "dp_hermes.py",
@@ -217,6 +251,11 @@ def main() -> None:
             ", handoff_required=true"
             if resolved.get("handoff_required")
             else ", handoff_required=false"
+        )
+        + (
+            ", session_reset_required=true"
+            if resolved.get("session_reset_required")
+            else ", session_reset_required=false"
         ),
         flush=True,
     )

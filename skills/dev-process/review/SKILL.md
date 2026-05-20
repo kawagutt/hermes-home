@@ -16,7 +16,7 @@ Before starting a review round:
 - Use approved artifacts, concise diffs, test outputs, and prior review summaries only.
 - Do **not** pass ImplementationAgent chat logs or rationale unless the human explicitly requests them.
 - Confirm `state.yaml` / latest synthesis / gate approvals match the review target.
-- Launch Hermes with the correct usage **`--stage-id`** (or **`--action review_deep`** on deep checkpoint) per [goal/SKILL.md](../goal/SKILL.md)—not `current_stage` alone.
+- Launch Hermes with the correct usage **`--stage-id`** (or **`--action review_*`**) per [goal/SKILL.md](../goal/SKILL.md)—**never** rely on `current_stage=implementation` alone (that resolves to `dp-code`). Use `dp_hermes.py --strict-launch` or `DEV_PROCESS_STRICT_LAUNCH=1` to fail fast when `--stage-id` is omitted.
 
 ## Review worker sessions (MUST)
 

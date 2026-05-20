@@ -12,6 +12,19 @@
 
 **Column contract (validator):** Header names are fixed. **`Session`** holds the Hermes **session id only** (backticks or plain `YYYYMMDD_HHMMSS_abcdef`).
 
+**Primary segment session rule (`standard` / `deep`):** One required primary usage row = **one Hermes session**. Do not reuse the same `session_id` across multiple Stage id rows. Cumulative export values are per-session; do not share one session across boundaries unless preset is `light` and a deviation waiver is recorded in timeline/plan (waiver does not make `--strict` pass on `standard`/`deep`).
+
+**`Profile / role` format (fixed):** Leading token is the Hermes profile name; validator reads `dp-*` before `/`:
+
+```text
+dp-strong / strong_reasoning
+dp-review / review_main
+dp-code / code_main
+dp-cheap / cheap_aux
+```
+
+`dp_stage_boundary.py --print-markdown-row` emits this shape.
+
 | Time | Stage id | Action | Profile / role | Preset / reasoning | Session | Model | Usage / cost | Evidence |
 |------|----------|--------|----------------|-------------------|---------|-------|--------------|----------|
 | | `spec` | | | | | | | |
@@ -24,6 +37,6 @@
 
 Row examples omit **human gates** (`human_spec_gate`, `final_human_gate`) unless the plan requires stage-attributed evidence. Optional boundary ids such as `spec_review` belong in the plan optional table when used; review worker sessions still go in `review_manifest.yaml`.
 
-**Cumulative values:** `hermes sessions export` token counts are cumulative per session; deltas between rows for the same session id give per-boundary usage.
+**Token values:** `hermes sessions export` reports cumulative tokens per session. Each row should use a **distinct** session id for its boundary; do not rely on deltas from a shared session id on `standard`/`deep` tasks.
 
 **Preset / reasoning column:** `expected …` is policy-only; actual reasoning comes from the Hermes profile `config.yaml` at launch (see [validation/SKILL.md](../validation/SKILL.md)).

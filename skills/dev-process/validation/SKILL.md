@@ -16,17 +16,22 @@ Prefer deterministic commands over LLM reasoning for mechanical checks: tests, l
 
 dev-process **does not** bind concrete provider or model IDs. **Logical roles and Hermes profile *names*** (for example `dp-strong`, `dp-review`, `dp-code`, `dp-cheap`) **are** bound in [`config/model_policy.yaml`](../config/model_policy.yaml); those profiles must exist in your Hermes install (`hermes profile create …`). Actual API models and providers stay in each profile’s Hermes `config.yaml` / `.env` — not in dev-process skills.
 
-To start Hermes with the correct profile for a dev-process **action** or **stage** without editing global config, use [`scripts/dp_hermes.py`](../scripts/dp_hermes.py) or [`scripts/dp_stage_boundary.py`](../scripts/dp_stage_boundary.py) (see [scripts/README.md](../scripts/README.md)). Resolution uses [`config/model_policy.yaml`](../config/model_policy.yaml) (`schema_version: 2`): **`stage_actions`** maps **usage stage ids** (`--stage-id`, `artifacts.model_usage` rows) to actions/profiles; **`stage_defaults`** maps **state stages** (`state.yaml` → `current_stage`). `reasoning_by_preset` ties effort to **`state.yaml` → `review_depth_preset`**. The wrapper only applies the profile at **process start**—**start a new Hermes session** when `handoff_required` is true; it does not switch models mid-session.
+Launch profiles with [`scripts/dp_hermes.py`](../scripts/dp_hermes.py) / [`scripts/dp_stage_boundary.py`](../scripts/dp_stage_boundary.py) ([`scripts/README.md`](../scripts/README.md)). Resolution: [`config/model_policy.yaml`](../config/model_policy.yaml) (`stage_actions` = usage `--stage-id`; `stage_defaults` = `state.yaml` → `current_stage`). Profiles apply at **process start** only.
 
-**Session handoff (MUST):** When resolution reports `handoff_required: true` (Hermes profile change at a boundary), you **MUST** end the current Hermes session and start a **new** session for the next segment. **MUST** launch the next segment with `dp_hermes.py --stage-id <usage-stage> --record-state …` (or equivalent `hermes --profile=…` after boundary resolve) so `last_hermes_profile` updates **only after Hermes exits 0**. Do **not** continue the same session after a profile boundary—stderr warnings alone are not sufficient. Use `dp_hermes.py --handoff-only` to inspect handoff JSON without launching Hermes when you need to confirm before starting a new session.
+**`reasoning_expected`** is policy-only for `artifacts.model_usage`; actual effort is each profile’s `config.yaml` ([`examples/hermes-profiles.dp.yaml`](../examples/hermes-profiles.dp.yaml)).
 
-**Context reset (SHOULD):** Even when `handoff_required` is false (same profile), **SHOULD** start a **new** Hermes session at the start of a new **review round** or when chaining long `dp-strong` work (e.g. spec → plan) to limit context/cache growth. Same profile does not require `handoff_required` but long sessions still hurt quality and cost attribution.
+**Review worker sessions:** `dp_review_job.py` + `reviews/.../review_manifest.yaml` only — not `artifacts.model_usage`; no `--record-state` on `review_*` actions.
 
-**Per-task automatic switching (required at stage boundaries):** Before each major stage in `/goal`, run `dp_stage_boundary.py --task-dir … --stage-id <next-stage> --print-json`, then launch with `dp_hermes.py --record-state …` (or `hermes --profile=…`). Configure distinct models per profile under `~/.hermes/profiles/` (see [examples/hermes-profiles.dp.yaml](../examples/hermes-profiles.dp.yaml)).
+### Primary session governance
 
-**`reasoning_expected` is not runtime control:** Values from `reasoning_by_preset` in `model_policy.yaml` are **policy expectations for `artifacts.model_usage` only**. `dp_hermes.py` sets **`--profile=<name>` only**; it does **not** change Hermes `agent.reasoning_effort`. Actual effort comes from the launched profile’s `config.yaml` (e.g. set `dp-strong` → `high`, `dp-cheap` → `low` per [examples/hermes-profiles.dp.yaml](../examples/hermes-profiles.dp.yaml)).
+- **`handoff_required=true`:** Hermes profile changes — **MUST** start a new session (`dp_hermes.py --stage-id <usage-stage> --record-state …`).
+- **`session_reset_required=true`:** `standard` / `deep` primary boundary — **MUST** start a new session even if the profile is unchanged (one `model_usage` row = one session).
+- **`process_violation_if_same_session`** = `handoff_required OR session_reset_required`.
+- **`light`:** profile handoff is MUST; other reuse may be documented in timeline/plan (waiver = deviation record, not strict pass on `standard`/`deep` rules).
+- **`context_reset_recommended`:** advisory (`light` only).
+- Run **`validate_model_governance.py --strict`** before final on **`standard`** / **`deep`**.
 
-**Review worker sessions** are resolved by `dp_review_job.py` and recorded only in `reviews/.../review_manifest.yaml`; do not use `--record-state` for `review_*` actions.
+Stage-boundary commands, Hermes CLI examples, and governance checks: [scripts/README.md § Stage boundaries](../scripts/README.md#stage-boundaries), [§ validate_model_governance.py](../scripts/README.md#validate_model_governancepy).
 
 Typical Hermes layout (adjust to team defaults):
 
@@ -88,87 +93,9 @@ Hermes can show **per-model tokens and estimated cost** (Hermes Dashboard Analyt
 
 The plan always includes the **compact** model usage block (`Model usage record required?`, `Reason`, `Artifact`); expand the **optional per-stage** table in the plan only when **`Model usage record required?`** is **yes**.
 
-### Default stage-boundary usage recording
+**Recording:** default **yes** on `standard`/`deep`; one boundary → one row ([`templates/model_usage.md`](../templates/model_usage.md)). Procedure and Hermes CLI: [scripts/README.md § Stage boundaries](../scripts/README.md#stage-boundaries). Do **not** paste raw logs into artifacts — redacted session id / model / command only.
 
-When **`Model usage record required?`** is **yes** (default for **`standard`** / **`deep`**; **`light`** may omit per [templates/plan.md](../templates/plan.md)), append one row per major boundary to **`artifacts.model_usage`**.
-
-**One boundary, one row (MUST):** Each major stage boundary gets **exactly one** table row—do **not** merge multiple review rounds or boundaries into a single row. If several rounds share a session id, still append **separate** rows per boundary; use session export deltas per [templates/model_usage.md](../templates/model_usage.md) for per-boundary usage.
-
-**Procedure:** [scripts/README.md § Stage boundaries](../scripts/README.md#stage-boundaries) (`hermes sessions export` + `dp_stage_boundary.py --print-markdown-row`). Use `--stage-id` for the **completed** stage. Cumulative token semantics: [templates/model_usage.md](../templates/model_usage.md).
-
-**Useful Hermes-facing commands** (availability depends on install; see [CLI reference](https://hermes-agent.nousresearch.com/docs/reference/cli-commands)):
-
-```bash
-hermes insights --days 7
-hermes insights --days 30
-hermes dashboard
-hermes sessions list
-hermes sessions stats
-hermes sessions export /tmp/hermes_sessions.jsonl --session-id '<session-id>'
-hermes logs list
-hermes logs -n 200
-hermes logs --level INFO --since 2h
-hermes logs --session '<session-id>'
-```
-
-Grepping local logs (last resort; see **Evidence preference order** above):
-
-```bash
-grep -RniE 'gpt-5\.|model|provider|token|usage|cost|reasoning|auxiliary' ~/.hermes/logs | tail -n 200
-```
-
-Do not paste raw log output into task-root artifacts when it may include **secrets**, **private prompt content**, **tokens**, **credentials**, **full file paths**, or **unrelated user data**. Keep **redacted snippets** or summarized evidence (session id, model name, CLI command used) in **`artifacts.model_usage`** and **`artifacts.final_summary_ja`**.
-
-**Record at each boundary:**
-
-- task id (`state.yaml`)
-- stage (spec, plan review, …)
-- preset effective for that slice
-- reasoning expected by plan vs **observed** session setting if available
-- session id(s) for Hermes sessions in the primary dev-process loop
-- session token usage (`input_tokens`, `output_tokens`, `reasoning_tokens`; note cache tokens separately if relevant)
-- session cost evidence (`actual_cost_usd` and/or `estimated_cost_usd` when available)
-- pointer to insights/Dashboard/export or redacted log line
-- whether the token values are cumulative within a shared session (note in Evidence if so)
-
-For consistent extraction from exported session JSONL, use:
-
-```bash
-python3 skills/dev-process/scripts/session_usage.py /tmp/hermes_session.jsonl --format json
-```
-
-### Primary segment handoff and governance
-
-**Enforcement model:** Hermes cannot be stopped mid-session by dev-process scripts. **Operational rule:** when `handoff_required=true` (or preset `standard`/`deep` major segment boundaries), end the current session and launch the next segment in a **new** session. **Detection:** run governance validation before final (and after major boundaries when practical):
-
-```bash
-python3 skills/dev-process/scripts/check_helper_env.py
-python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id>
-python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id> --strict
-```
-
-Use **`--strict`** before **`final_review`** / **`final_human_gate`** when preset is **`standard`** or **`deep`**.
-
-| Evidence | Canonical location |
-|----------|-------------------|
-| Primary segment Hermes sessions | `artifacts.model_usage` → **`Session`** column (session id only) |
-| Review worker sessions | `reviews/<stage>/round_NN/review_manifest.yaml` |
-| Last primary handoff profile | `state.yaml` → `last_hermes_profile` (supplemental) |
-
-**`model_usage_required` resolution:** `state.yaml` → `model_usage_required` if set; else plan table **Model usage record required?**; else `standard`/`deep` → yes, `light` → no unless plan says yes.
-
-**Required primary usage rows** come from [`config/primary_segments.yaml`](../config/primary_segments.yaml): primary draft segments (`spec`, `plan`, `test`), `implementation` or `implementation_phase_NN` (not both), plus `final_review` / `final_summary`. Do **not** put review-worker stages (`spec_review`, …) in `model_usage` — those sessions live in `review_manifest.yaml`. **`--strict`** fails on missing/invalid `Session` cells, duplicate session ids across required rows (no waiver), and latest-round manifest gaps.
-
-**Helper preflight:** run `check_helper_env.py` at task start or before first governance helper. Use the same Python environment that has **PyYAML**; do not silently switch to a bare `uv run python` without dependencies.
-
-**Waivers:** unresolved `unknown` session/model values require a short waiver in **`artifacts.timeline`** or **`artifacts.plan`** (e.g. gateway did not expose model, PyYAML missing on helper host).
-
-or generate a complete row:
-
-```bash
-python3 skills/dev-process/scripts/session_usage.py /tmp/hermes_session.jsonl \
-  --format markdown --time auto --stage-id test --preset deep --reasoning 'high / observed medium'
-```
+**Governance (`--strict`):** required rows from [`config/primary_segments.yaml`](../config/primary_segments.yaml) (`spec`, `plan`, `test`, `implementation` or `implementation_phase_NN`, `final_*`). Review/checkpoint sessions → `review_manifest.yaml` only. Details: [scripts/README.md § validate_model_governance.py](../scripts/README.md#validate_model_governancepy).
 
 For Python validation on Python changes, precedence is: user-explicit command > project docs/config (`AGENTS.md`, README, Makefile, `pyproject.toml`, etc.) > dev-process default. If no project rule exists, plan Ruff checks per Python-changing phase, preferably `uv run ruff check <touched-python-paths>` or `.venv/bin/python -m ruff check <touched-python-paths>` when appropriate. Do not silently use unrelated system Python when the project appears to use `uv` / `.venv`; stop and report environment ambiguity.
 

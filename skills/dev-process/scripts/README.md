@@ -177,6 +177,38 @@ python3 skills/dev-process/scripts/dp_hermes.py \
 
 Use different `--stage-id` values for (A) vs (B). `--print-markdown-row` never prints handoff hints.
 
+### Primary session governance (policy summary)
+
+- `handoff_required=true` → profile changed; new Hermes session required.
+- `session_reset_required=true` → `standard`/`deep` primary segment; new session required even if profile unchanged.
+- `process_violation_if_same_session = handoff_required OR session_reset_required`.
+- Primary `model_usage` rows: `spec`, `plan`, `test`, `implementation` or `implementation_phase_NN`, `final_review`, `final_summary` ([`config/primary_segments.yaml`](../config/primary_segments.yaml)).
+- Review/checkpoint workers: `reviews/<stage>/round_NN/review_manifest.yaml` only — **not** `model_usage` (including `implementation_phase_NN` checkpoint reviews).
+
+Preflight and strict validation:
+
+```bash
+python3 skills/dev-process/scripts/check_helper_env.py
+python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id>
+python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id> --strict
+```
+
+Run **`--strict`** before `final_review` / `final_human_gate` when preset is `standard` or `deep`.
+
+### Useful Hermes commands (usage evidence)
+
+```bash
+hermes insights --days 7
+hermes sessions list
+hermes sessions stats
+hermes sessions export /tmp/hermes_session.jsonl --session-id '<session-id>'
+python3 skills/dev-process/scripts/session_usage.py /tmp/hermes_session.jsonl --format json
+```
+
+Log grep is last resort only; do not paste raw log output into task artifacts (secrets, prompts, tokens). See [validation/SKILL.md](../validation/SKILL.md) evidence preference order.
+
+`dp_hermes.py` supports `--strict-launch` or `DEV_PROCESS_STRICT_LAUNCH=1` when `current_stage=implementation` without `--stage-id` / `--action` (warns or exits).
+
 ## `dp_stage_boundary.py`
 
 Resolves `model_policy.yaml` for a `stage_actions` id; prints JSON and/or a compact `artifacts.model_usage` row.
@@ -213,7 +245,11 @@ python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<t
 python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id> --strict
 ```
 
-Checks primary-loop `artifacts.model_usage` **`Session`** column (required rows from [`config/primary_segments.yaml`](../config/primary_segments.yaml)), latest-round [`review_manifest.yaml`](../review/templates/review_manifest.yaml), and `model_usage_required` inference. **`--strict`** before final on **`standard`** / **`deep`**: missing/invalid sessions, duplicate primary session ids (no waiver), synthesis session must differ from reviewers.
+Checks primary-loop `artifacts.model_usage` **`Session`** column (required rows from [`config/primary_segments.yaml`](../config/primary_segments.yaml)), latest-round [`review_manifest.yaml`](../review/templates/review_manifest.yaml), and `model_usage_required` inference.
+
+**`--strict` on `standard` / `deep`:** missing/invalid `Session` cells; **duplicate primary session ids** (waiver does not pass strict); **same session crossing different `dp-*` profiles**; missing latest-round manifests (including `reviews/implementation_phase_NN/` when `review_rounds` shows a completed checkpoint round). **`light`:** optional rows; unknown `Session` with waiver → warning only under strict.
+
+Synthesis `session_id` must differ from reviewer sessions in each manifest.
 
 ## `check_helper_env.py`
 

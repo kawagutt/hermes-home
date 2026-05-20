@@ -1,7 +1,8 @@
 # Required primary-loop usage stage ids for artifacts.model_usage (Session column).
-# Primary draft segments: orchestrator stage names (spec, plan, test) resolved via stage_defaults.
-# implementation_phase_{NN}: dynamic per-phase rows (resolved as implement → code_main).
-# Review worker / synthesis sessions: reviews/.../review_manifest.yaml only — not listed here.
+# usage_stage_id values are primary model_usage stage ids (not review worker stages).
+# Static ids (spec, plan, test, final_*) should match model_policy stage_actions or stage_defaults.
+# Dynamic implementation_phase_{NN} ids are resolved by primary_segments.py + model_resolve.py
+# (action implement → dp-code). Review/checkpoint sessions: reviews/.../review_manifest.yaml only.
 
 segments:
   standard:

@@ -179,8 +179,8 @@ def _resolve_usage_stage_id(
         return ("stage", role, profile, action)
 
     if IMPLEMENTATION_PHASE_STAGE_RE.match(usage_stage_id):
-        source, role, profile = _resolve_action(policy, "implement")
-        return source, role, profile, "implement"
+        _source, role, profile = _resolve_action(policy, "implement")
+        return "primary_dynamic_stage", role, profile, "implement"
 
     raise ModelResolveError(
         f"unknown usage stage id {usage_stage_id!r} "
@@ -324,8 +324,39 @@ def resolve_model(
             or stage_id_norm in ("final_review", "final_summary")
         )
     )
+    handoff_required = profile_changed
+
+    session_reset_required = False
+    if stage_id_norm and task_dir is not None and preset in ("standard", "deep"):
+        if IMPLEMENTATION_PHASE_STAGE_RE.match(stage_id_norm):
+            session_reset_required = True
+        else:
+            from primary_segments import is_required_primary_stage_id
+
+            session_reset_required = is_required_primary_stage_id(
+                preset,
+                stage_id_norm,
+                state,
+                task_dir,
+            )
+    elif stage_id_norm and task_dir is not None and preset == "light":
+        try:
+            from primary_segments import is_required_primary_stage_id
+
+            session_reset_required = is_required_primary_stage_id(
+                preset,
+                stage_id_norm,
+                state,
+                task_dir,
+            )
+        except ModelResolveError:
+            session_reset_required = False
+
+    process_violation_if_same_session = handoff_required or session_reset_required
+
     context_reset_recommended = bool(
-        not profile_changed
+        preset == "light"
+        and not process_violation_if_same_session
         and last_profile
         and last_profile == hermes_profile
         and (usage_review_boundary or stage_display in ("spec", "plan"))
@@ -344,7 +375,9 @@ def resolve_model(
         "reasoning_source": "policy_expected",
         "profile_changed": profile_changed,
         "last_hermes_profile": last_profile,
-        "handoff_required": profile_changed,
+        "handoff_required": handoff_required,
+        "session_reset_required": session_reset_required,
+        "process_violation_if_same_session": process_violation_if_same_session,
         "last_profile_unknown": last_profile is None,
         "context_reset_recommended": context_reset_recommended,
     }

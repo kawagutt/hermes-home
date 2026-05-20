@@ -26,6 +26,20 @@ This file is the **must-read orchestrator**. Keep detailed policy in focused ref
 | Templates | Gate and task files | [templates/](templates/) |
 | Scripts | Helper CLI | [scripts/README.md](scripts/README.md) |
 
+## What to read
+
+Load only what the current action needs; do **not** read every sub-skill by default.
+
+| When | Read |
+|------|------|
+| Spec stage | [spec/SKILL.md](spec/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md) |
+| Plan stage | [plan/SKILL.md](plan/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md), [git/SKILL.md](git/SKILL.md) |
+| Test stage | [test/SKILL.md](test/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md), [git/SKILL.md](git/SKILL.md) |
+| Implementation | [implementation/SKILL.md](implementation/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md) |
+| Review round | [review/SKILL.md](review/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md) |
+| Boundary / governance | [validation/SKILL.md](validation/SKILL.md), [scripts/README.md](scripts/README.md) |
+| Human gate | [human-gates/SKILL.md](human-gates/SKILL.md), [templates/](templates/) |
+
 ## Canonical pipeline
 
 ```text

@@ -66,24 +66,34 @@ def print_resolution_json(resolved: dict[str, Any]) -> None:
 def print_handoff_notes(
     prog: str, resolved: dict[str, Any], *, handoff_only: bool = False
 ) -> None:
-    if resolved.get("handoff_required"):
-        profile = resolved["hermes_profile"]
+    profile = resolved.get("hermes_profile", "")
+    if resolved.get("session_reset_required"):
+        profile_note = " Hermes profile also changes." if resolved.get("handoff_required") else ""
+        print(
+            f"{prog}: session_reset_required=true — MUST start a new Hermes session "
+            "for this primary segment (standard/deep: one row = one session). "
+            "Continuing this session after the boundary is a process violation."
+            f"{profile_note}",
+            file=sys.stderr,
+        )
+    elif resolved.get("handoff_required"):
         if handoff_only:
             print(
-                f"{prog}: handoff_required=true — start a new Hermes session; "
-                "do not continue this session.",
+                f"{prog}: handoff_required=true — Hermes profile changes; "
+                "start a new session (do not continue this session).",
                 file=sys.stderr,
             )
         else:
             print(
                 f"{prog}: handoff_required=true — you MUST start a new Hermes session; "
-                "do not continue this session. Use --handoff-only to resolve without "
-                f"launching, then `hermes --profile={profile}` (or re-run with --record-state).",
+                "continuing this session after a profile boundary is invalid. "
+                "Use --handoff-only to resolve without launching, then "
+                f"`hermes --profile={profile}` (or re-run with --record-state).",
                 file=sys.stderr,
             )
     elif resolved.get("context_reset_recommended"):
         print(
-            f"{prog}: context_reset_recommended=true — same profile as last launch; "
+            f"{prog}: context_reset_recommended=true — advisory only (light preset); "
             "SHOULD start a new Hermes session for this review round or long chain.",
             file=sys.stderr,
         )

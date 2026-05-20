@@ -6,6 +6,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from model_resolve import (
     ModelResolveError,
@@ -63,6 +64,71 @@ class TestModelResolve(unittest.TestCase):
         r = resolve_for_task(task, stage_id="implementation_phase_01")
         self.assertEqual(r["hermes_profile"], "dp-code")
         self.assertEqual(r["action"], "implement")
+        self.assertEqual(r["resolution_source"], "primary_dynamic_stage")
+
+    def test_implementation_phase_explicit_session_reset_without_state(self) -> None:
+        task = self._write_state(
+            "t_phase3",
+            review_depth_preset="standard",
+            last_hermes_profile="dp-code",
+        )
+        state = load_task_state(task)
+        state["current_phase"] = ""
+        state["review_rounds"] = {}
+        r = resolve_model(
+            self.policy,
+            state=state,
+            task_dir=task,
+            stage_id="implementation_phase_01",
+        )
+        self.assertTrue(r["session_reset_required"])
+        self.assertTrue(r["process_violation_if_same_session"])
+
+    def test_implementation_phase_with_current_phase_session_reset(self) -> None:
+        task = self._write_state(
+            "t_phase2",
+            review_depth_preset="standard",
+            last_hermes_profile="dp-code",
+        )
+        state = load_task_state(task)
+        state["current_phase"] = "01"
+        state["review_rounds"] = {}
+        (task / "state.yaml").write_text(
+            'task_id: "t_phase2"\n'
+            'current_stage: "implementation"\n'
+            'review_depth_preset: "standard"\n'
+            'last_hermes_profile: "dp-code"\n'
+            'current_phase: "01"\n',
+            encoding="utf-8",
+        )
+        r = resolve_for_task(task, stage_id="implementation_phase_01")
+        self.assertEqual(r["hermes_profile"], "dp-code")
+        self.assertEqual(r["action"], "implement")
+        self.assertTrue(r["session_reset_required"])
+
+    def test_broken_primary_segments_raises_on_standard_stage_id(self) -> None:
+        task = self._write_state("t_broken", review_depth_preset="standard")
+        from primary_segments import is_required_primary_stage_id
+
+        with self.assertRaises(ModelResolveError):
+            is_required_primary_stage_id(
+                "standard",
+                "spec",
+                load_task_state(task),
+                task,
+                segments_cfg={"segments": "broken"},
+            )
+        with mock.patch(
+            "primary_segments.load_primary_segments",
+            side_effect=ModelResolveError("primary segments file not found: broken"),
+        ):
+            with self.assertRaises(ModelResolveError):
+                resolve_model(
+                    self.policy,
+                    state=load_task_state(task),
+                    task_dir=task,
+                    stage_id="spec",
+                )
 
     def test_stage_id_spec_review_dp_strong(self) -> None:
         task = self._write_state("t1", review_depth_preset="deep")
@@ -118,11 +184,30 @@ class TestModelResolve(unittest.TestCase):
         r = resolve_for_task(task, stage_id="test_review")
         self.assertEqual(r["hermes_profile"], "dp-code")
         self.assertTrue(r["handoff_required"])
+        self.assertTrue(r["process_violation_if_same_session"])
 
-    def test_context_reset_recommended_same_profile_review(self) -> None:
-        task = self._write_state("t_ctx", last_hermes_profile="dp-strong")
+    def test_session_reset_required_same_profile_primary_stage(self) -> None:
+        task = self._write_state(
+            "t_reset", review_depth_preset="standard", last_hermes_profile="dp-strong"
+        )
+        r = resolve_for_task(task, stage_id="plan")
+        self.assertEqual(r["hermes_profile"], "dp-strong")
+        self.assertFalse(r["handoff_required"])
+        self.assertTrue(r["session_reset_required"])
+        self.assertTrue(r["process_violation_if_same_session"])
+
+    def test_session_reset_not_required_for_light(self) -> None:
+        task = self._write_state("t_light", review_depth_preset="light")
+        r = resolve_for_task(task, stage_id="spec")
+        self.assertFalse(r["session_reset_required"])
+
+    def test_context_reset_recommended_light_only(self) -> None:
+        task = self._write_state(
+            "t_ctx", review_depth_preset="light", last_hermes_profile="dp-strong"
+        )
         r = resolve_for_task(task, stage_id="spec_review")
         self.assertFalse(r["handoff_required"])
+        self.assertFalse(r["session_reset_required"])
         self.assertTrue(r["context_reset_recommended"])
 
     def test_no_handoff_when_last_profile_missing(self) -> None:

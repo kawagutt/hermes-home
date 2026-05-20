@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
 import tempfile
@@ -65,7 +64,7 @@ class TestDpStageBoundary(unittest.TestCase):
         )
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("|", r.stdout)
-        self.assertNotIn("handoff_required", r.stderr)
+        self.assertEqual(r.stderr.strip(), "")
 
     def test_print_json_may_emit_handoff(self) -> None:
         _write_state(self.task, last_profile="dp-code")
@@ -83,6 +82,45 @@ class TestDpStageBoundary(unittest.TestCase):
         self.assertIn("hermes_profile", data)
         if data.get("handoff_required"):
             self.assertIn("handoff_required", r.stderr)
+
+    def test_print_json_implementation_phase_01(self) -> None:
+        (self.task / "state.yaml").write_text(
+            'task_id: "20260520_boundary"\n'
+            'current_stage: "implementation"\n'
+            "review_depth_preset: standard\n"
+            'current_phase: "01"\n',
+            encoding="utf-8",
+        )
+        r = _run(
+            "--task-dir",
+            str(self.task),
+            "--policy",
+            str(POLICY),
+            "--stage-id",
+            "implementation_phase_01",
+            "--print-json",
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        data = json.loads(r.stdout)
+        self.assertEqual(data["hermes_profile"], "dp-code")
+        self.assertEqual(data["action"], "implement")
+        self.assertEqual(data["resolution_source"], "primary_dynamic_stage")
+        self.assertTrue(data.get("session_reset_required"))
+
+    def test_print_json_session_reset_required_on_primary_stage(self) -> None:
+        r = _run(
+            "--task-dir",
+            str(self.task),
+            "--policy",
+            str(POLICY),
+            "--stage-id",
+            "spec",
+            "--print-json",
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        data = json.loads(r.stdout)
+        self.assertTrue(data.get("session_reset_required"))
+        self.assertIn("session_reset_required", r.stderr)
 
 
 if __name__ == "__main__":

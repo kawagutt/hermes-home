@@ -29,12 +29,13 @@ When the approved plan is written, set **`state.yaml` → `review_depth_preset`*
 | spec draft | `spec` | omit → `dp-strong` via `stage_defaults` |
 | spec review | `spec` | `spec_review` |
 | implementation | `implementation` | `implementation` |
-| checkpoint review | `implementation` | `implementation_review` |
+| checkpoint review (workers) | `implementation` | `--action review_*` (sessions in `review_manifest.yaml` only) |
+| implementation phase (primary) | `implementation` | `implementation_phase_NN` |
 | final review | `final` | `final_review` |
 
-**Deep preset checkpoint review:** keep `--stage-id implementation_review` for usage rows; launch with **`--action review_deep`** when the approved plan requires `dp-strong` for that checkpoint (action overrides `stage_actions` mapping). Final review uses `--stage-id final_review` (maps to `final_review` → `dp-strong`).
+**Checkpoint reviews:** Review worker and synthesis sessions are recorded only in `reviews/implementation_phase_NN/round_MM/review_manifest.yaml`; do **not** add them to `artifacts.model_usage`. Primary implementation phase rows use `--stage-id implementation_phase_NN`. Final review uses `--stage-id final_review`. Reviewer launch details: [review/SKILL.md](../review/SKILL.md), [scripts/README.md](../scripts/README.md).
 
-At **primary segment boundaries**, follow the stage-boundary / governance procedure in [validation/SKILL.md § Primary segment handoff and governance](../validation/SKILL.md#primary-segment-handoff-and-governance). If the next segment needs a different Hermes profile (`handoff_required=true`), **do not** continue in the current session—STOP, report the launch command, and start a new session with `dp_hermes.py --stage-id <next> --record-state -- chat`. Real-time session enforcement is not automatic; **`validate_model_governance.py --strict`** before final detects missing handoffs, duplicate primary session ids, and manifest gaps.
+At **primary segment boundaries**, follow [validation/SKILL.md § Primary session governance](../validation/SKILL.md#primary-session-governance). For **`standard`** / **`deep`**, a bounded `/goal` chain **must not** cross a primary segment boundary in one Hermes session (even when the profile is unchanged). **STOP** and restart with `dp_hermes.py --stage-id <next> --record-state -- chat`. Role boundaries alone are not stops; primary segment boundaries are session stops. `handoff_required` / `session_reset_required` violations are caught by **`validate_model_governance.py --strict`** before final.
 
 Safe deterministic helpers — no human confirmation. On helper failure, record `unknown` with reason and continue only until the next governance checkpoint; **`standard`** / **`deep`** tasks require **`validate_model_governance.py --strict`** before final.
 

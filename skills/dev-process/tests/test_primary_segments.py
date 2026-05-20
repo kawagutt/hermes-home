@@ -2,21 +2,17 @@
 
 from __future__ import annotations
 
-import tempfile
+import sys
 from pathlib import Path
-
-import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config"
 SCRIPTS = ROOT / "scripts"
 
-import sys
-
 sys.path.insert(0, str(SCRIPTS))
 
 from model_resolve import load_yaml, resolve_for_task, validate_policy  # noqa: E402
-from validate_model_governance import (  # noqa: E402
+from primary_segments import (  # noqa: E402
     expand_implementation_phase_ids,
     implementation_usage_stage_ids,
     load_primary_segments,
@@ -118,8 +114,6 @@ def test_resolve_required_no_duplicate_implementation(tmp_path: Path) -> None:
         "current_phase": "",
         "artifacts": {},
     }
-    required = resolve_required_usage_stage_ids(
-        state, task, load_primary_segments()
-    )
+    required = resolve_required_usage_stage_ids(state, task, load_primary_segments())
     assert "implementation_phase_01" in required
     assert "implementation" not in required
