@@ -82,7 +82,9 @@ def load_expected_reasoning_efforts(expectations_path: Path) -> dict[str, str]:
         if not isinstance(name, str) or not name.strip():
             continue
         if not isinstance(snippet, dict):
-            raise ValueError(f"{expectations_path}: snippet for {name!r} must be a mapping")
+            raise ValueError(
+                f"{expectations_path}: snippet for {name!r} must be a mapping"
+            )
         agent = snippet.get("agent")
         if not isinstance(agent, dict):
             raise ValueError(

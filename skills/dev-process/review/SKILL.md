@@ -76,15 +76,18 @@ Base loop:
 review NG → synthesis classifies blocking findings → fix in owning stage → run tests → rerun required review(s)
 ```
 
-**Synthesis must assign each blocking finding to exactly one rework owner:**
+**Synthesis must assign each blocking finding to exactly one rework owner** (MUST in `synthesis.md` when recommendation is not **Proceed**):
 
 - `implementation` — product code fix (bugs, checklist gaps inside plan, edge cases, diff-detail issues).  
 - `test` — test code/spec alignment, brittleness, wrong assertions/fixtures; **not** patched by ImplementationAgent.  
 - `plan` — plan wrong or superseded → PlanAgent → plan review → possibly test updates → implementation resumes.  
 - `spec` — spec wrong or ambiguous → SpecAgent → spec review → **human spec gate** if materially changed → re-execute plan and later stages as needed.  
+- `artifact` — numbered task-root artifact repair only (`artifacts.*`, timeline, gates) without product code changes.  
 - `human` — decision or policy required before any agent edits.
 
-Output must be **actionable**: not only “fix needed,” but **which stage owns the fix** and **what reruns next** (see [`templates/synthesis_result.md`](templates/synthesis_result.md)).
+**Blocking handoff columns (MUST):** for every blocking row in [`templates/synthesis_result.md`](templates/synthesis_result.md): **Owner**, **Exact file/section**, **Required action**, **Re-review required** (`yes — <stage> review` or `no`). Vague “fix needed” without location and next step is non-compliant; `review_round.py --finish` rejects incomplete synthesis.
+
+Output must be **actionable** for the **next session** — the owner stage should not re-litigate the same finding without new evidence.
 
 Cross-reference: [implementation/SKILL.md](../implementation/SKILL.md) (rework after review, test failure triage).
 

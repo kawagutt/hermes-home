@@ -53,7 +53,7 @@ Semantics:
 
 - `--create` creates only the next `reviews/<stage>/round_NN/` directory.
 - `--create` does **not** update `review_rounds` or `latest_reviews`.
-- `--finish` requires a non-placeholder `synthesis.md` containing a `## Recommendation` section, then updates `review_rounds.<stage>` and `latest_reviews.<stage>`.
+- `--finish` requires a complete `synthesis.md` with `## Recommendation` (exactly one `- [x]`) and blocking handoff rules per [`review/templates/synthesis_result.md`](../review/templates/synthesis_result.md) (validated by [`synthesis_handoff.py`](synthesis_handoff.py)). Manual check: `python3 skills/dev-process/scripts/synthesis_handoff.py .hermes/tasks/<task-id>/reviews/<stage>/round_NN/synthesis.md`. Then updates `review_rounds.<stage>` and `latest_reviews.<stage>`.
 
 This preserves the meaning of `review_rounds`: completed review rounds, not merely created directories.
 
@@ -296,10 +296,11 @@ Passes **`--hermes-home`** through to `check_hermes_profiles.py`.
 | `dp_review_job.py` | Review worker resolve + `review_manifest.yaml` |
 | `validate_model_governance.py` | Final-pre governance validation (`--strict`) |
 | `check_hermes_profiles.py` | Hermes profile `reasoning_effort` vs dev-process tiers |
+| `synthesis_handoff.py` | Validate `synthesis.md` blocking handoff before `review_round.py --finish` |
 | `check_helper_env.py` | Helper environment preflight (`--check-profiles` optional) |
 
 ## `session_usage.py`
 
 Parses one `hermes sessions export` JSONL line (`--format json` or manual `--format markdown`). For dev-process rows, use **`dp_stage_boundary.py --print-markdown-row`** instead. Other scripts import **`load_session_export`** and **`build_summary`** from this module.
 
-**Tests:** `test_session_usage.py`, `test_model_resolve.py`, `test_dp_hermes.py`, `test_dp_review_job.py`, `test_dp_stage_boundary.py`, `test_check_helper_env.py`, `test_check_hermes_profiles_integration.py`, `test_review_targets_drift.py`, `tests/test_validate_model_governance.py`, `tests/test_primary_segments.py`, `tests/test_check_hermes_profiles.py`
+**Tests:** `test_session_usage.py`, `test_model_resolve.py`, `test_dp_hermes.py`, `test_dp_review_job.py`, `test_dp_stage_boundary.py`, `test_check_helper_env.py`, `test_check_hermes_profiles_integration.py`, `test_review_targets_drift.py`, `tests/test_validate_model_governance.py`, `tests/test_primary_segments.py`, `tests/test_check_hermes_profiles.py`, `tests/test_synthesis_handoff.py`

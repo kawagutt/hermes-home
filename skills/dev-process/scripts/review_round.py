@@ -8,8 +8,7 @@ from pathlib import Path
 
 import yaml
 
-
-PLACEHOLDER_PREFIX = "# Synthesis placeholder"
+from synthesis_handoff import synthesis_is_complete as handoff_complete
 
 
 def load_state(task: Path) -> dict:
@@ -29,17 +28,6 @@ def next_round(state: dict, stage: str) -> int:
 
 def round_rel(stage: str, number: int) -> Path:
     return Path("reviews") / stage / f"round_{number:02d}"
-
-
-def synthesis_is_complete(path: Path) -> bool:
-    if not path.exists():
-        return False
-    text = path.read_text(encoding="utf-8").strip()
-    if not text:
-        return False
-    if text.startswith(PLACEHOLDER_PREFIX):
-        return False
-    return "## Recommendation" in text
 
 
 def main() -> int:
@@ -91,8 +79,11 @@ def main() -> int:
 
     synthesis_rel = rel_dir / "synthesis.md"
     synthesis_abs = task / synthesis_rel
-    if not synthesis_is_complete(synthesis_abs):
+    ok, handoff_errors = handoff_complete(synthesis_abs)
+    if not ok:
         print(f"ERROR synthesis is missing or appears incomplete: {synthesis_rel}")
+        for msg in handoff_errors:
+            print(f"  - {msg}")
         return 1
 
     rounds = state.setdefault("review_rounds", {})

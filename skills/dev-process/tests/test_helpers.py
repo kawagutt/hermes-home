@@ -176,6 +176,24 @@ def test_review_round_helper_create_does_not_update_state_then_finish_does(
     assert "reviews/plan/round_01/synthesis.md" in state_after_finish
 
 
+def test_review_round_finish_rejects_rework_without_blocking_handoff(
+    tmp_path: Path,
+) -> None:
+    task = make_task(tmp_path)
+    run_helper("review_round.py", str(task), "plan", "--create")
+    (task / "reviews" / "plan" / "round_01" / "synthesis.md").write_text(
+        "## Recommendation\n\n- [x] Rework plan\n\n"
+        "## Rework owner (blocking findings)\n\n"
+        "| ID | Summary | Owner | Exact file/section | Required action | Re-review required |\n"
+        "|----|---------|-------|--------------------|-----------------|------------------|\n"
+        "| F1 | gap | plan | | update phases | |\n",
+        encoding="utf-8",
+    )
+    bad = run_helper("review_round.py", str(task), "plan", "--finish")
+    assert bad.returncode == 1
+    assert "exact file/section" in bad.stdout
+
+
 def test_branch_precondition_dry_run_and_apply_updates_state_and_timeline(
     tmp_path: Path,
 ) -> None:

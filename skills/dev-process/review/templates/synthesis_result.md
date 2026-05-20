@@ -11,7 +11,7 @@ Written as **`synthesis.md`** inside **`.hermes/tasks/<task-id>/reviews/<stage>/
 
 ## Recommendation
 
-Pick one primary:
+Pick **exactly one** primary (one `- [x]`):
 
 - [ ] Proceed  
 - [ ] Rework tests  
@@ -25,14 +25,18 @@ Pick one primary:
 
 ## Rework owner (blocking findings)
 
-For **each blocking** finding, assign **one** owner and the **next operational step**. Do not leave “needs fix” without an owner stage.
+**Required when** the recommendation is anything other than **Proceed** (rework / stop). For each **blocking** finding from reviewers, fill **one row** — do not default every item to `implementation`.
 
-| ID source | Summary | Owner | Required next step |
-|-----------|---------|-------|---------------------|
-| e.g. F1 architecture | … | spec / plan / test / implementation / human | e.g. Return to PlanAgent → plan review |
-| | | | |
+| ID source | Summary | Owner | Exact file/section | Required action | Re-review required |
+|-----------|---------|-------|--------------------|-----------------|------------------|
+| e.g. F1 architecture | One-line finding | spec / plan / test / implementation / artifact / human | `path:line` or `artifacts.plan` §… | Concrete edit or command | yes — plan review |
+| | | | | | |
 
-**Owner values:** `spec` | `plan` | `test` | `implementation` | `human`
+**Owner values (exactly one per row):** `spec`, `plan`, `test`, `implementation`, `artifact` (task-root artifact repair only), or `human` — do not write slash-separated lists.
+
+**Re-review required:** `yes — <stage> review` or `no` (if fix is self-evident and preset allows).
+
+If **Proceed** and there are **no** blocking findings, use **one sentinel row** with `—` in every column (do not write `(none)` or other placeholder text — those are parsed as real rows and fail validation).
 
 ## Non-blocking / follow-ups
 

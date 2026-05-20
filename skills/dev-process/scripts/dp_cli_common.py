@@ -68,7 +68,9 @@ def print_handoff_notes(
 ) -> None:
     profile = resolved.get("hermes_profile", "")
     if resolved.get("session_reset_required"):
-        profile_note = " Hermes profile also changes." if resolved.get("handoff_required") else ""
+        profile_note = (
+            " Hermes profile also changes." if resolved.get("handoff_required") else ""
+        )
         print(
             f"{prog}: session_reset_required=true — MUST start a new Hermes session "
             "for this primary segment (standard/deep: one row = one session). "

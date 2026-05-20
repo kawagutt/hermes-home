@@ -73,6 +73,7 @@ def main() -> int:
             "validate_state.py",
             "validate_model_governance.py",
             "check_hermes_profiles.py",
+            "synthesis_handoff.py",
         ):
             _run_help(scripts / name)
         if args.check_profiles:

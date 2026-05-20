@@ -136,9 +136,7 @@ def test_missing_expected_effort_strict_error(tmp_path: Path) -> None:
         strict=True,
         skip_if_no_profiles_dir=False,
     )
-    assert any(
-        i.level == "error" and "dp-review" in i.message for i in issues
-    )
+    assert any(i.level == "error" and "dp-review" in i.message for i in issues)
 
 
 def test_run_check_strict_missing_profile(tmp_path: Path) -> None:
