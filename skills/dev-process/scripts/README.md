@@ -8,7 +8,13 @@ Helpers may update task-local artifacts only. They must not push, merge, commit,
 
 The Python helpers require `PyYAML` (`import yaml`). Use the repository environment if available; otherwise install it in the active environment before running helpers.
 
-Example:
+**Preflight (recommended at task start):**
+
+```bash
+python3 skills/dev-process/scripts/check_helper_env.py
+```
+
+Example install:
 
 ```bash
 python3 -m pip install PyYAML
@@ -200,6 +206,19 @@ python3 skills/dev-process/scripts/dp_hermes.py \
 
 **`review_synthesis_final`** is a review-worker synthesis action (`record-state` forbidden). **`final_review`** is a primary usage stage (`--stage-id final_review`; `record-state` allowed on `dp_hermes`).
 
+## `validate_model_governance.py`
+
+```bash
+python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id>
+python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id> --strict
+```
+
+Checks primary-loop `artifacts.model_usage` **`Session`** column (required rows from [`config/primary_segments.yaml`](../config/primary_segments.yaml)), latest-round [`review_manifest.yaml`](../review/templates/review_manifest.yaml), and `model_usage_required` inference. **`--strict`** before final on **`standard`** / **`deep`**: missing/invalid sessions, duplicate primary session ids (no waiver), synthesis session must differ from reviewers.
+
+## `check_helper_env.py`
+
+Verifies PyYAML, bundled `model_policy.yaml`, and `--help` for core helpers. CI runs this first.
+
 ## Helper responsibilities
 
 | Script | Role |
@@ -208,9 +227,11 @@ python3 skills/dev-process/scripts/dp_hermes.py \
 | `dp_stage_boundary.py` | Completed primary usage stage row / next profile JSON |
 | `session_usage.py` | Parse exported session JSONL; `load_session_export` / `build_summary` for other scripts |
 | `dp_review_job.py` | Review worker resolve + `review_manifest.yaml` |
+| `validate_model_governance.py` | Final-pre governance validation (`--strict`) |
+| `check_helper_env.py` | Helper environment preflight |
 
 ## `session_usage.py`
 
 Parses one `hermes sessions export` JSONL line (`--format json` or manual `--format markdown`). For dev-process rows, use **`dp_stage_boundary.py --print-markdown-row`** instead. Other scripts import **`load_session_export`** and **`build_summary`** from this module.
 
-**Tests:** `test_session_usage.py`, `test_model_resolve.py`, `test_dp_hermes.py`, `test_dp_review_job.py`, `test_review_targets_drift.py`
+**Tests:** `test_session_usage.py`, `test_model_resolve.py`, `test_dp_hermes.py`, `test_dp_review_job.py`, `test_dp_stage_boundary.py`, `test_check_helper_env.py`, `test_review_targets_drift.py`, `tests/test_validate_model_governance.py`, `tests/test_primary_segments.py`

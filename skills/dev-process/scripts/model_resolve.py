@@ -17,6 +17,9 @@ class ModelResolveError(Exception):
     """Policy or task resolution failure."""
 
 
+IMPLEMENTATION_PHASE_STAGE_RE = re.compile(r"^implementation_phase_(\d+)$")
+
+
 def default_policy_path() -> Path:
     return Path(__file__).resolve().parent.parent / "config" / "model_policy.yaml"
 
@@ -130,6 +133,62 @@ def _resolve_action(policy: dict[str, Any], action: str) -> tuple[str, str, str]
     return ("action", role, _role_to_profile(policy, role))
 
 
+# Primary-loop model_usage Stage ids that map via stage_defaults (orchestrator names).
+_PRIMARY_USAGE_ACTION: dict[str, str] = {
+    "spec": "spec",
+    "plan": "plan",
+    "test": "write_tests",
+}
+
+
+def _resolve_usage_stage_id(
+    policy: dict[str, Any], usage_stage_id: str
+) -> tuple[str, str, str, str]:
+    """Resolve a model_usage Stage id to (source, role, profile, action)."""
+    stage_actions = policy["stage_actions"]
+    if usage_stage_id in stage_actions:
+        mapped = stage_actions[usage_stage_id]
+        if not isinstance(mapped, str) or not mapped.strip():
+            raise ModelResolveError(f"empty stage_actions[{usage_stage_id!r}]")
+        mapped = mapped.strip()
+        if mapped not in policy["action_overrides"]:
+            raise ModelResolveError(
+                f"stage_actions[{usage_stage_id!r}] → {mapped!r} is not an action_overrides key"
+            )
+        source, role, profile = _resolve_action(policy, mapped)
+        return source, role, profile, mapped
+
+    if usage_stage_id in _PRIMARY_USAGE_ACTION:
+        action = _PRIMARY_USAGE_ACTION[usage_stage_id]
+        stage_defaults = policy["stage_defaults"]
+        if usage_stage_id not in stage_defaults:
+            raise ModelResolveError(
+                f"primary usage stage {usage_stage_id!r} missing from stage_defaults"
+            )
+        role = stage_defaults[usage_stage_id]
+        if not isinstance(role, str) or not role.strip():
+            raise ModelResolveError(f"empty stage_defaults[{usage_stage_id!r}]")
+        role = role.strip()
+        expected = policy["action_overrides"].get(action)
+        if expected != role:
+            raise ModelResolveError(
+                f"stage_defaults[{usage_stage_id!r}] → {role!r} "
+                f"does not match action_overrides[{action!r}]"
+            )
+        profile = _role_to_profile(policy, role)
+        return ("stage", role, profile, action)
+
+    if IMPLEMENTATION_PHASE_STAGE_RE.match(usage_stage_id):
+        source, role, profile = _resolve_action(policy, "implement")
+        return source, role, profile, "implement"
+
+    raise ModelResolveError(
+        f"unknown usage stage id {usage_stage_id!r} "
+        "(expected stage_actions key, primary stage_defaults key "
+        "spec|plan|test, or implementation_phase_NN)"
+    )
+
+
 def _resolve_stage_key(policy: dict[str, Any], stage_key: str) -> tuple[str, str, str]:
     stage_defaults = policy["stage_defaults"]
     if stage_key not in stage_defaults:
@@ -230,21 +289,9 @@ def resolve_model(
         resolution_source, role, hermes_profile = _resolve_action(policy, action_arg)
         resolved_action = action_arg
     elif stage_id_norm:
-        stage_actions = policy["stage_actions"]
-        if stage_id_norm not in stage_actions:
-            raise ModelResolveError(
-                f"unknown usage stage id {stage_id_norm!r} (expected stage_actions key)"
-            )
-        mapped = stage_actions[stage_id_norm]
-        if not isinstance(mapped, str) or not mapped.strip():
-            raise ModelResolveError(f"empty stage_actions[{stage_id_norm!r}]")
-        mapped = mapped.strip()
-        if mapped not in policy["action_overrides"]:
-            raise ModelResolveError(
-                f"stage_actions[{stage_id_norm!r}] → {mapped!r} is not an action_overrides key"
-            )
-        resolution_source, role, hermes_profile = _resolve_action(policy, mapped)
-        resolved_action = mapped
+        resolution_source, role, hermes_profile, resolved_action = (
+            _resolve_usage_stage_id(policy, stage_id_norm)
+        )
     else:
         if not stage_display:
             raise ModelResolveError(

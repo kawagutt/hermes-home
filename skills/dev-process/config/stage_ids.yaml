@@ -1,4 +1,16 @@
 # Canonical stage id lists for drift tests (see tests/test_stage_id_drift.py).
+#
+# usage_stage_ids: stage_actions keys (boundary rows, gates, implementation checkpoint).
+# primary_usage_stage_ids: primary-loop model_usage rows (governance via primary_segments.yaml).
+
+primary_usage_stage_ids:
+  - spec
+  - plan
+  - test
+  - implementation
+  - final_review
+  - final_summary
+
 usage_stage_ids:
   - spec_review
   - human_spec_gate

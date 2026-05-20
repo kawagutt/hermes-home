@@ -137,6 +137,32 @@ For consistent extraction from exported session JSONL, use:
 python3 skills/dev-process/scripts/session_usage.py /tmp/hermes_session.jsonl --format json
 ```
 
+### Primary segment handoff and governance
+
+**Enforcement model:** Hermes cannot be stopped mid-session by dev-process scripts. **Operational rule:** when `handoff_required=true` (or preset `standard`/`deep` major segment boundaries), end the current session and launch the next segment in a **new** session. **Detection:** run governance validation before final (and after major boundaries when practical):
+
+```bash
+python3 skills/dev-process/scripts/check_helper_env.py
+python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id>
+python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id> --strict
+```
+
+Use **`--strict`** before **`final_review`** / **`final_human_gate`** when preset is **`standard`** or **`deep`**.
+
+| Evidence | Canonical location |
+|----------|-------------------|
+| Primary segment Hermes sessions | `artifacts.model_usage` → **`Session`** column (session id only) |
+| Review worker sessions | `reviews/<stage>/round_NN/review_manifest.yaml` |
+| Last primary handoff profile | `state.yaml` → `last_hermes_profile` (supplemental) |
+
+**`model_usage_required` resolution:** `state.yaml` → `model_usage_required` if set; else plan table **Model usage record required?**; else `standard`/`deep` → yes, `light` → no unless plan says yes.
+
+**Required primary usage rows** come from [`config/primary_segments.yaml`](../config/primary_segments.yaml): primary draft segments (`spec`, `plan`, `test`), `implementation` or `implementation_phase_NN` (not both), plus `final_review` / `final_summary`. Do **not** put review-worker stages (`spec_review`, …) in `model_usage` — those sessions live in `review_manifest.yaml`. **`--strict`** fails on missing/invalid `Session` cells, duplicate session ids across required rows (no waiver), and latest-round manifest gaps.
+
+**Helper preflight:** run `check_helper_env.py` at task start or before first governance helper. Use the same Python environment that has **PyYAML**; do not silently switch to a bare `uv run python` without dependencies.
+
+**Waivers:** unresolved `unknown` session/model values require a short waiver in **`artifacts.timeline`** or **`artifacts.plan`** (e.g. gateway did not expose model, PyYAML missing on helper host).
+
 or generate a complete row:
 
 ```bash
@@ -153,6 +179,8 @@ When already covered by the approved plan or dev-process helper policy, safe det
 Examples:
 
 - `validate_state.py`
+- `validate_model_governance.py` (default; `--strict` before final on standard/deep)
+- `check_helper_env.py`
 - `review_round.py --dry-run`
 - `review_round.py --create` only for the **current approved review stage** (stage and next round already implied by the approved plan or the active review step; do not spin arbitrary extra rounds)
 - `hermes sessions list` / `hermes sessions export` for stage-boundary usage recording
@@ -178,6 +206,8 @@ Small deterministic helpers live under [`scripts/`](../scripts/) and are documen
 Current helpers:
 
 - `validate_state.py` — task state/artifact/review/branch consistency checks; warns on missing `last_hermes_profile`; errors when `current_stage` is a usage-only `stage_actions` id (e.g. `spec_review`). Pass the task directory (`.hermes/tasks/<task-id>`), not the `state.yaml` file path. Use `--strict` to fail on warnings.
+- `validate_model_governance.py` — primary `model_usage` session evidence + latest `review_manifest.yaml` checks; `--strict` before final on standard/deep.
+- `check_helper_env.py` — PyYAML + bundled policy + helper `--help` preflight.
 - `dp_hermes.py` — supports `--handoff-only` (resolve JSON only, no Hermes launch) when inspecting profile handoffs.
 - `review_round.py` — create a review round directory, then finish it only after real synthesis exists.
 - `branch_precondition.py` — verify/record task branch precondition evidence and append a timeline row.

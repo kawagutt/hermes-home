@@ -1,0 +1,61 @@
+# Required primary-loop usage stage ids for artifacts.model_usage (Session column).
+# Primary draft segments: orchestrator stage names (spec, plan, test) resolved via stage_defaults.
+# implementation_phase_{NN}: dynamic per-phase rows (resolved as implement → code_main).
+# Review worker / synthesis sessions: reviews/.../review_manifest.yaml only — not listed here.
+
+segments:
+  standard:
+    static:
+      - usage_stage_id: spec
+        action: spec
+        profile_role: strong_reasoning
+      - usage_stage_id: plan
+        action: plan
+        profile_role: strong_reasoning
+      - usage_stage_id: test
+        action: write_tests
+        profile_role: code_main
+      - usage_stage_id: final_review
+        action: final_review
+        profile_role: strong_reasoning
+      - usage_stage_id: final_summary
+        action: final_summary
+        profile_role: cheap_aux
+    dynamic:
+      implementation_phases:
+        required: true
+        usage_stage_id_pattern: "implementation_phase_{phase}"
+        action: implement
+        profile_role: code_main
+        resolve_from:
+          - state.review_rounds
+          - state.current_phase
+          - artifacts.phase_checklists
+
+  deep:
+    static:
+      - usage_stage_id: spec
+        action: spec
+        profile_role: strong_reasoning
+      - usage_stage_id: plan
+        action: plan
+        profile_role: strong_reasoning
+      - usage_stage_id: test
+        action: write_tests
+        profile_role: code_main
+      - usage_stage_id: final_review
+        action: final_review
+        profile_role: strong_reasoning
+      - usage_stage_id: final_summary
+        action: final_summary
+        profile_role: cheap_aux
+    dynamic:
+      implementation_phases:
+        required: true
+        usage_stage_id_pattern: "implementation_phase_{phase}"
+        action: implement
+        profile_role: code_main
+        resolve_from:
+          - state.review_rounds
+          - state.current_phase
+          - artifacts.phase_checklists

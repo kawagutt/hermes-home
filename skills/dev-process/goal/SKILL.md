@@ -34,13 +34,9 @@ When the approved plan is written, set **`state.yaml` → `review_depth_preset`*
 
 **Deep preset checkpoint review:** keep `--stage-id implementation_review` for usage rows; launch with **`--action review_deep`** when the approved plan requires `dp-strong` for that checkpoint (action overrides `stage_actions` mapping). Final review uses `--stage-id final_review` (maps to `final_review` → `dp-strong`).
 
-At major stage boundaries:
+At **primary segment boundaries**, follow the stage-boundary / governance procedure in [validation/SKILL.md § Primary segment handoff and governance](../validation/SKILL.md#primary-segment-handoff-and-governance). If the next segment needs a different Hermes profile (`handoff_required=true`), **do not** continue in the current session—STOP, report the launch command, and start a new session with `dp_hermes.py --stage-id <next> --record-state -- chat`. Real-time session enforcement is not automatic; **`validate_model_governance.py --strict`** before final detects missing handoffs, duplicate primary session ids, and manifest gaps.
 
-1. Resolve the **next** stage profile with `dp_stage_boundary.py --stage-id <next> --print-json` (see [scripts/README.md](../scripts/README.md)). If `handoff_required`, you **MUST** end the current Hermes session—do not continue in the same session after a profile change. Launch the next segment with `dp_hermes.py --stage-id <next> --record-state -- chat` so `last_hermes_profile` updates after Hermes exits 0. Profiles do not switch mid-session.
-2. When **`Model usage record required?`** is **yes** in the approved plan, append **one** usage row for the **completed** boundary (not multiple rounds in one row) via [validation/SKILL.md § Default stage-boundary usage recording](../validation/SKILL.md#default-stage-boundary-usage-recording).
-3. **SHOULD** start a new Hermes session when beginning a new review round even if the profile is unchanged (especially after long `dp-strong` chains such as spec → plan).
-
-Safe deterministic helpers — no human confirmation. On helper failure, record `unknown` and continue.
+Safe deterministic helpers — no human confirmation. On helper failure, record `unknown` with reason and continue only until the next governance checkpoint; **`standard`** / **`deep`** tasks require **`validate_model_governance.py --strict`** before final.
 
 ## Legal continuation vs required stops
 

@@ -47,6 +47,23 @@ class TestModelResolve(unittest.TestCase):
         with self.assertRaises(ModelResolveError):
             validate_policy(bad)
 
+    def test_primary_usage_stage_spec_plan_test_resolve(self) -> None:
+        task = self._write_state("t_primary", review_depth_preset="standard")
+        for stage_id, profile in (
+            ("spec", "dp-strong"),
+            ("plan", "dp-strong"),
+            ("test", "dp-code"),
+        ):
+            r = resolve_for_task(task, stage_id=stage_id)
+            self.assertEqual(r["hermes_profile"], profile, stage_id)
+            self.assertEqual(r["resolution_source"], "stage")
+
+    def test_implementation_phase_stage_id_resolves_as_implement(self) -> None:
+        task = self._write_state("t_phase", review_depth_preset="standard")
+        r = resolve_for_task(task, stage_id="implementation_phase_01")
+        self.assertEqual(r["hermes_profile"], "dp-code")
+        self.assertEqual(r["action"], "implement")
+
     def test_stage_id_spec_review_dp_strong(self) -> None:
         task = self._write_state("t1", review_depth_preset="deep")
         r = resolve_for_task(task, stage_id="spec_review")

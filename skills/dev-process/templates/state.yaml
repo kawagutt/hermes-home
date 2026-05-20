@@ -10,6 +10,9 @@ current_phase: ""      # e.g. 01 or null when N/A
 # Set when plan is approved (light | standard | deep). Leave empty until then; helpers may infer from artifacts.plan.
 review_depth_preset: ""
 
+# Set from approved plan when known (true | false). null = infer (validate_model_governance.py).
+model_usage_required: null
+
 # Optional: last Hermes profile resolution from dp_hermes.py / dp_stage_boundary.py (--record-state on dp_hermes).
 # last_hermes_profile: ""
 # last_dev_process_action: ""

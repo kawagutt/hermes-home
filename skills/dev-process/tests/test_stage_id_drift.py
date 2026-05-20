@@ -41,19 +41,31 @@ def test_usage_stage_ids_match_policy_and_templates() -> None:
         or sid in ("implementation", "final_summary")
     }
 
-    usage_table_ids = {
-        sid
-        for sid in _backtick_ids(model_usage)
-        if sid in canonical or sid.endswith("_review") or sid.endswith("_gate")
-    }
-    usage_table_ids &= canonical
-
     assert (
         policy_ids == canonical
     ), f"model_policy stage_actions drift: {policy_ids ^ canonical}"
     assert (
         plan_ids == canonical
     ), f"plan.md optional table drift: {plan_ids ^ canonical}"
-    assert (
-        usage_table_ids == canonical
-    ), f"model_usage.md table drift: {usage_table_ids ^ canonical}"
+
+
+def test_model_usage_primary_examples_match_primary_usage_stage_ids() -> None:
+    stage_ids = _load_stage_ids()
+    primary = set(stage_ids["primary_usage_stage_ids"])
+    model_usage = (ROOT / "templates" / "model_usage.md").read_text(encoding="utf-8")
+    # Example rows between header and cumulative-values note.
+    section = model_usage.split("**Cumulative values:**", 1)[0]
+    table_lines = [
+        ln for ln in section.splitlines() if ln.strip().startswith("|") and "`" in ln
+    ]
+    example_ids = set()
+    for ln in table_lines:
+        for sid in _backtick_ids(ln):
+            if sid.endswith("_review") or sid.endswith("_gate"):
+                continue
+            example_ids.add(sid)
+    # implementation_phase_01 is illustrative; primary list uses implementation fallback.
+    example_ids.discard("implementation_phase_01")
+    assert example_ids <= primary | {"implementation_phase_01"}, (
+        f"model_usage primary examples drift: {example_ids - primary}"
+    )
