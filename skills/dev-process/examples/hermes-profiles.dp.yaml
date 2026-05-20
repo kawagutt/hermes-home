@@ -1,4 +1,6 @@
-# Example Hermes profile tiers for dev-process (NOT loaded automatically).
+# Example Hermes profile config snippets for dev-process (NOT loaded by helpers).
+# Runtime tier expectations: config/hermes_profile_expectations.yaml
+# (read by check_hermes_profiles.py). Provider/model IDs below are examples only.
 #
 #   hermes profile create dp-strong --clone
 #   hermes profile create dp-review --clone

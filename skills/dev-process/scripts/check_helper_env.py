@@ -16,6 +16,7 @@ except ImportError:
     )
     raise SystemExit(2) from None
 
+from check_hermes_profiles import resolve_hermes_home, run_check
 from model_resolve import default_policy_path, load_yaml, validate_policy
 
 
@@ -42,6 +43,21 @@ def main() -> int:
         default=None,
         help="Path to model_policy.yaml (default: bundled)",
     )
+    parser.add_argument(
+        "--check-profiles",
+        action="store_true",
+        help="Also verify Hermes profile config.yaml reasoning_effort tiers",
+    )
+    parser.add_argument(
+        "--hermes-home",
+        default=None,
+        help="Hermes home for --check-profiles (default: $HERMES_HOME or ~/.hermes)",
+    )
+    parser.add_argument(
+        "--strict-profiles",
+        action="store_true",
+        help="With --check-profiles, exit non-zero on profile config errors",
+    )
     args = parser.parse_args()
 
     scripts = _script_dir()
@@ -56,8 +72,19 @@ def main() -> int:
             "session_usage.py",
             "validate_state.py",
             "validate_model_governance.py",
+            "check_hermes_profiles.py",
         ):
             _run_help(scripts / name)
+        if args.check_profiles:
+            home = resolve_hermes_home(args.hermes_home)
+            policy_path_resolved = policy_path
+            profile_code, _ = run_check(
+                hermes_home=home,
+                policy_path=policy_path_resolved,
+                strict=args.strict_profiles,
+            )
+            if profile_code != 0:
+                return profile_code
     except Exception as exc:
         print(f"check_helper_env.py: {exc}", file=sys.stderr)
         return 2

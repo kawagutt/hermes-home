@@ -12,6 +12,8 @@ The Python helpers require `PyYAML` (`import yaml`). Use the repository environm
 
 ```bash
 python3 skills/dev-process/scripts/check_helper_env.py
+# optional: verify ~/.hermes/profiles/*/config.yaml reasoning_effort tiers
+python3 skills/dev-process/scripts/check_helper_env.py --check-profiles
 ```
 
 Example install:
@@ -251,9 +253,38 @@ Checks primary-loop `artifacts.model_usage` **`Session`** column (required rows 
 
 Synthesis `session_id` must differ from reviewer sessions in each manifest.
 
+## `check_hermes_profiles.py`
+
+Compares each Hermes profile referenced in [`config/model_policy.yaml`](../config/model_policy.yaml) against expected `agent.reasoning_effort` in [`config/hermes_profile_expectations.yaml`](../config/hermes_profile_expectations.yaml) (example snippets: [`examples/hermes-profiles.dp.yaml`](../examples/hermes-profiles.dp.yaml)):
+
+| Profile | Expected `agent.reasoning_effort` |
+|---------|-----------------------------------|
+| `dp-strong` | `high` |
+| `dp-review` | `medium` |
+| `dp-code` | `medium` |
+| `dp-cheap` | `low` |
+
+```bash
+python3 skills/dev-process/scripts/check_hermes_profiles.py
+python3 skills/dev-process/scripts/check_hermes_profiles.py --hermes-home ~/.hermes --strict
+```
+
+- **`--hermes-home`:** Hermes install root (profiles live under `<home>/profiles/<name>/config.yaml`). Default: `$HERMES_HOME` or `~/.hermes`.
+- **Default (no `--strict`):** missing `profiles/` directory, missing expectations, and mismatches are **warnings** (exit 0) so CI without local profiles still passes.
+- **`--strict`:** missing `profiles/` directory, missing expectation for a policy profile, or `reasoning_effort` mismatch → exit 1. Use before **`final_review`** on **`standard`** / **`deep`** when profiles are installed.
+- **`--no-skip-missing`:** in **non-strict** mode, treat a missing `profiles/` directory as an error instead of a skip warning (`--strict` already errors).
+
+`reasoning_expected` in `artifacts.model_usage` remains policy-only; this script checks **runtime** profile configs.
+
 ## `check_helper_env.py`
 
-Verifies PyYAML, bundled `model_policy.yaml`, and `--help` for core helpers. CI runs this first.
+Verifies PyYAML, bundled `model_policy.yaml`, and `--help` for core helpers. CI runs this first (without `--check-profiles`, since runners typically have no Hermes profiles).
+
+```bash
+python3 skills/dev-process/scripts/check_helper_env.py --check-profiles --strict-profiles
+```
+
+Passes **`--hermes-home`** through to `check_hermes_profiles.py`.
 
 ## Helper responsibilities
 
@@ -264,10 +295,11 @@ Verifies PyYAML, bundled `model_policy.yaml`, and `--help` for core helpers. CI 
 | `session_usage.py` | Parse exported session JSONL; `load_session_export` / `build_summary` for other scripts |
 | `dp_review_job.py` | Review worker resolve + `review_manifest.yaml` |
 | `validate_model_governance.py` | Final-pre governance validation (`--strict`) |
-| `check_helper_env.py` | Helper environment preflight |
+| `check_hermes_profiles.py` | Hermes profile `reasoning_effort` vs dev-process tiers |
+| `check_helper_env.py` | Helper environment preflight (`--check-profiles` optional) |
 
 ## `session_usage.py`
 
 Parses one `hermes sessions export` JSONL line (`--format json` or manual `--format markdown`). For dev-process rows, use **`dp_stage_boundary.py --print-markdown-row`** instead. Other scripts import **`load_session_export`** and **`build_summary`** from this module.
 
-**Tests:** `test_session_usage.py`, `test_model_resolve.py`, `test_dp_hermes.py`, `test_dp_review_job.py`, `test_dp_stage_boundary.py`, `test_check_helper_env.py`, `test_review_targets_drift.py`, `tests/test_validate_model_governance.py`, `tests/test_primary_segments.py`
+**Tests:** `test_session_usage.py`, `test_model_resolve.py`, `test_dp_hermes.py`, `test_dp_review_job.py`, `test_dp_stage_boundary.py`, `test_check_helper_env.py`, `test_check_hermes_profiles_integration.py`, `test_review_targets_drift.py`, `tests/test_validate_model_governance.py`, `tests/test_primary_segments.py`, `tests/test_check_hermes_profiles.py`

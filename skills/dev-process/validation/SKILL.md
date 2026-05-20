@@ -18,7 +18,7 @@ dev-process **does not** bind concrete provider or model IDs. **Logical roles an
 
 Launch profiles with [`scripts/dp_hermes.py`](../scripts/dp_hermes.py) / [`scripts/dp_stage_boundary.py`](../scripts/dp_stage_boundary.py) ([`scripts/README.md`](../scripts/README.md)). Resolution: [`config/model_policy.yaml`](../config/model_policy.yaml) (`stage_actions` = usage `--stage-id`; `stage_defaults` = `state.yaml` → `current_stage`). Profiles apply at **process start** only.
 
-**`reasoning_expected`** is policy-only for `artifacts.model_usage`; actual effort is each profile’s `config.yaml` ([`examples/hermes-profiles.dp.yaml`](../examples/hermes-profiles.dp.yaml)).
+**`reasoning_expected`** is policy-only for `artifacts.model_usage`; actual effort is each profile’s `config.yaml` ([`examples/hermes-profiles.dp.yaml`](../examples/hermes-profiles.dp.yaml)). Before **`final_review`** on **`standard`** / **`deep`**, run [`check_hermes_profiles.py`](../scripts/check_hermes_profiles.py) (or `check_helper_env.py --check-profiles --strict-profiles`) so `dp-strong`/`dp-review`/`dp-code`/`dp-cheap` match expected `agent.reasoning_effort` tiers.
 
 **Review worker sessions:** `dp_review_job.py` + `reviews/.../review_manifest.yaml` only — not `artifacts.model_usage`; no `--record-state` on `review_*` actions.
 
@@ -107,7 +107,8 @@ Examples:
 
 - `validate_state.py`
 - `validate_model_governance.py` (default; `--strict` before final on standard/deep)
-- `check_helper_env.py`
+- `check_helper_env.py` (optional `--check-profiles --strict-profiles` when Hermes profiles are installed)
+- `check_hermes_profiles.py` (or via `check_helper_env --check-profiles`)
 - `review_round.py --dry-run`
 - `review_round.py --create` only for the **current approved review stage** (stage and next round already implied by the approved plan or the active review step; do not spin arbitrary extra rounds)
 - `hermes sessions list` / `hermes sessions export` for stage-boundary usage recording
@@ -134,7 +135,8 @@ Current helpers:
 
 - `validate_state.py` — task state/artifact/review/branch consistency checks; warns on missing `last_hermes_profile`; errors when `current_stage` is a usage-only `stage_actions` id (e.g. `spec_review`). Pass the task directory (`.hermes/tasks/<task-id>`), not the `state.yaml` file path. Use `--strict` to fail on warnings.
 - `validate_model_governance.py` — primary `model_usage` session evidence + latest `review_manifest.yaml` checks; `--strict` before final on standard/deep.
-- `check_helper_env.py` — PyYAML + bundled policy + helper `--help` preflight.
+- `check_helper_env.py` — PyYAML + bundled policy + helper `--help` preflight; optional `--check-profiles`.
+- `check_hermes_profiles.py` — `agent.reasoning_effort` in `~/.hermes/profiles/*/config.yaml` vs [`config/hermes_profile_expectations.yaml`](../config/hermes_profile_expectations.yaml).
 - `dp_hermes.py` — supports `--handoff-only` (resolve JSON only, no Hermes launch) when inspecting profile handoffs.
 - `review_round.py` — create a review round directory, then finish it only after real synthesis exists.
 - `branch_precondition.py` — verify/record task branch precondition evidence and append a timeline row.

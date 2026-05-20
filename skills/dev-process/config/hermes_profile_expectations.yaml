@@ -1,0 +1,13 @@
+# Default dev-process Hermes profile reasoning_effort tiers.
+# check_hermes_profiles.py reads this file (not provider/model IDs).
+# Example config snippets: examples/hermes-profiles.dp.yaml
+
+profiles:
+  dp-strong:
+    reasoning_effort: high
+  dp-review:
+    reasoning_effort: medium
+  dp-code:
+    reasoning_effort: medium
+  dp-cheap:
+    reasoning_effort: low
