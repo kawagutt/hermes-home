@@ -1,5 +1,7 @@
 # Review-depth preset selection
 
+**Source of truth:** This file is the human-readable source of truth for preset reviewer requirements and synthesis rules. [`config/review_targets.yaml`](../config/review_targets.yaml) is the machine-readable mirror used by helpers and tests. If they disagree, **this file wins** and drift tests must fail.
+
 Review depth is selected by **remaining uncertainty** and **impact if broken**, not by diff size alone.
 
 First run deterministic checks where possible. Do not spend high-reasoning review budget on facts that commands can verify. Then choose the smallest preset that still covers the remaining risk.

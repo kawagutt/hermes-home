@@ -10,12 +10,10 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 try:
     import yaml
@@ -172,6 +170,14 @@ def main() -> None:
     stage_id_arg = args.stage_id.strip() if args.stage_id else None
     if stage_id_arg == "":
         print("dp_hermes.py: empty --stage-id is invalid", file=sys.stderr)
+        raise SystemExit(2)
+
+    if args.record_state and action_arg and action_arg.startswith("review_"):
+        print(
+            "dp_hermes.py: --record-state must not be used with review worker actions "
+            f"({action_arg!r}); review sessions are recorded in review_manifest.yaml only",
+            file=sys.stderr,
+        )
         raise SystemExit(2)
 
     resolved = resolve_task_boundary(

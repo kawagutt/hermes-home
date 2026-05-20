@@ -26,6 +26,8 @@ To start Hermes with the correct profile for a dev-process **action** or **stage
 
 **`reasoning_expected` is not runtime control:** Values from `reasoning_by_preset` in `model_policy.yaml` are **policy expectations for `artifacts.model_usage` only**. `dp_hermes.py` sets **`--profile=<name>` only**; it does **not** change Hermes `agent.reasoning_effort`. Actual effort comes from the launched profile’s `config.yaml` (e.g. set `dp-strong` → `high`, `dp-cheap` → `low` per [examples/hermes-profiles.dp.yaml](../examples/hermes-profiles.dp.yaml)).
 
+**Review worker sessions** are resolved by `dp_review_job.py` and recorded only in `reviews/.../review_manifest.yaml`; do not use `--record-state` for `review_*` actions.
+
 Typical Hermes layout (adjust to team defaults):
 
 | Role | Tier | Reasoning effort |

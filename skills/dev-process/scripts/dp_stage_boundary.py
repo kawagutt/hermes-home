@@ -74,7 +74,9 @@ def main() -> int:
         try:
             summary = build_summary(_load_session(Path(args.session_export)))
         except (OSError, ValueError) as exc:
-            print(f"dp_stage_boundary.py: invalid session export: {exc}", file=sys.stderr)
+            print(
+                f"dp_stage_boundary.py: invalid session export: {exc}", file=sys.stderr
+            )
             return 2
         dev_action = args.dev_action.strip() or resolved.get("action") or stage_id
         reasoning = f"expected {resolved['reasoning_expected']} / observed unknown"

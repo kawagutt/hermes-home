@@ -18,6 +18,18 @@ Before starting a review round:
 - Confirm `state.yaml` / latest synthesis / gate approvals match the review target.
 - Launch Hermes with the correct usage **`--stage-id`** (or **`--action review_deep`** on deep checkpoint) per [goal/SKILL.md](../goal/SKILL.md)—not `current_stage` alone.
 
+## Review worker sessions (MUST)
+
+Each **required reviewer perspective** runs in a **separate Hermes session** unless the human explicitly waives this in the task record.
+
+- Do **not** run multiple reviewer perspectives in one shared session.
+- **Synthesis** runs in a **separate session** from every individual reviewer job.
+- Resolve each worker with [`dp_review_job.py`](../scripts/dp_review_job.py), then launch `dp_hermes.py --action review_<agent> -- chat` **without** `--record-state`. After each session, record evidence via `dp_review_job.py --record-session` (see [scripts/README.md](../scripts/README.md) § `dp_review_job.py`).
+- Review sessions live in **`reviews/<stage>/round_NN/review_manifest.yaml`** only.
+- **`artifacts.model_usage`** records **primary** loop boundaries only—do **not** duplicate reviewer worker rows there.
+
+Preset reviewer lists: [presets.md](presets.md) (source of truth); machine mirror: [`config/review_targets.yaml`](../config/review_targets.yaml).
+
 Reviews combine:
 
 1. A **target** from [`targets/`](targets/) — defines *what* is in scope.  

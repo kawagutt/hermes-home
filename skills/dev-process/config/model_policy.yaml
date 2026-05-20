@@ -50,6 +50,16 @@ action_overrides:
   review_light: cheap_aux
   review_standard: review_main
   review_deep: strong_reasoning
+  review_requirements: review_main
+  review_architecture: review_main
+  review_impact: review_main
+  review_diff_detail: review_main
+  review_test_quality: review_main
+  review_checklist_compliance: review_main
+  review_naming_doc: review_main
+  review_synthesis_standard: review_main
+  review_synthesis_deep: strong_reasoning
+  review_synthesis_final: strong_reasoning
   final_review: strong_reasoning
   final_summary: cheap_aux
   record_gate: cheap_aux
@@ -72,8 +82,14 @@ reasoning_by_preset:
     cheap_aux: medium
 
 action_reasoning_overrides:
+  light:
+    review_synthesis_final: high
+  standard:
+    review_synthesis_final: high
   deep:
     record_gate: low
     run_tests: low
     summarize_test_logs: low
     final_summary: medium
+    review_synthesis_deep: high
+    review_synthesis_final: high

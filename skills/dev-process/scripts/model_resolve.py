@@ -67,15 +67,21 @@ def validate_policy(policy: Any) -> dict[str, Any]:
         if not isinstance(role_key, str) or not role_key.strip():
             raise ModelResolveError("profiles keys must be non-empty strings")
         if not isinstance(hp_name, str) or not hp_name.strip():
-            raise ModelResolveError(f"profiles[{role_key!r}] must be a non-empty string")
+            raise ModelResolveError(
+                f"profiles[{role_key!r}] must be a non-empty string"
+            )
 
     for section_name in ("stage_defaults", "action_overrides"):
         section = policy[section_name]
         for entry_key, role in section.items():
             if not isinstance(entry_key, str) or not entry_key.strip():
-                raise ModelResolveError(f"{section_name} keys must be non-empty strings")
+                raise ModelResolveError(
+                    f"{section_name} keys must be non-empty strings"
+                )
             if not isinstance(role, str) or not role.strip():
-                raise ModelResolveError(f"{section_name}[{entry_key!r}] must be a non-empty role")
+                raise ModelResolveError(
+                    f"{section_name}[{entry_key!r}] must be a non-empty role"
+                )
             if role.strip() not in profiles:
                 raise ModelResolveError(
                     f"{section_name}[{entry_key!r}] → role {role.strip()!r} not in profiles"
@@ -83,7 +89,9 @@ def validate_policy(policy: Any) -> dict[str, Any]:
 
     overrides = policy.get("action_reasoning_overrides")
     if overrides is not None and not isinstance(overrides, dict):
-        raise ModelResolveError("action_reasoning_overrides must be a mapping when present")
+        raise ModelResolveError(
+            "action_reasoning_overrides must be a mapping when present"
+        )
 
     stage_actions = policy.get("stage_actions")
     if isinstance(stage_actions, dict):
@@ -247,7 +255,9 @@ def resolve_model(
                 f"unknown current_stage for stage_defaults: {stage_display!r}"
             )
         resolved_stage_key = stage_display
-        resolution_source, role, hermes_profile = _resolve_stage_key(policy, stage_display)
+        resolution_source, role, hermes_profile = _resolve_stage_key(
+            policy, stage_display
+        )
 
     reasoning_expected = get_reasoning_effort(
         policy, preset=preset, role=role, action=resolved_action

@@ -48,8 +48,12 @@ def test_usage_stage_ids_match_policy_and_templates() -> None:
     }
     usage_table_ids &= canonical
 
-    assert policy_ids == canonical, f"model_policy stage_actions drift: {policy_ids ^ canonical}"
-    assert plan_ids == canonical, f"plan.md optional table drift: {plan_ids ^ canonical}"
-    assert usage_table_ids == canonical, (
-        f"model_usage.md table drift: {usage_table_ids ^ canonical}"
-    )
+    assert (
+        policy_ids == canonical
+    ), f"model_policy stage_actions drift: {policy_ids ^ canonical}"
+    assert (
+        plan_ids == canonical
+    ), f"plan.md optional table drift: {plan_ids ^ canonical}"
+    assert (
+        usage_table_ids == canonical
+    ), f"model_usage.md table drift: {usage_table_ids ^ canonical}"

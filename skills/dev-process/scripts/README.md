@@ -175,8 +175,42 @@ Use different `--stage-id` values for (A) vs (B). `--print-markdown-row` never p
 
 Resolves `model_policy.yaml` for a `stage_actions` id; prints JSON and/or a compact `artifacts.model_usage` row.
 
+## `dp_review_job.py`
+
+Resolves **review worker** jobs (`review_<agent>`, `review_synthesis_*`); maintains **`reviews/<stage>/round_NN/review_manifest.yaml`**. Does **not** update `state.yaml` `last_*` fields.
+
+```bash
+review_round.py .hermes/tasks/<task-id> plan --create
+
+python3 skills/dev-process/scripts/dp_review_job.py \
+  --task-dir .hermes/tasks/<task-id> \
+  --review-stage plan --round 1 --init-manifest
+# Requires reviews/plan/round_01/ from review_round.py --create.
+# Refuses to overwrite an existing manifest unless --force.
+
+python3 skills/dev-process/scripts/dp_review_job.py \
+  --task-dir .hermes/tasks/<task-id> \
+  --review-stage plan --round 1 --agent architecture --print-json
+
+python3 skills/dev-process/scripts/dp_hermes.py \
+  --task-dir .hermes/tasks/<task-id> \
+  --action review_architecture -- chat
+# Do not use --record-state on review_* actions.
+```
+
+**`review_synthesis_final`** is a review-worker synthesis action (`record-state` forbidden). **`final_review`** is a primary usage stage (`--stage-id final_review`; `record-state` allowed on `dp_hermes`).
+
+## Helper responsibilities
+
+| Script | Role |
+|--------|------|
+| `dp_hermes.py` | Launch Hermes for primary loop (`--record-state` when appropriate) |
+| `dp_stage_boundary.py` | Completed primary usage stage row / next profile JSON |
+| `session_usage.py` | Parse exported session JSONL; `load_session_export` / `build_summary` for other scripts |
+| `dp_review_job.py` | Review worker resolve + `review_manifest.yaml` |
+
 ## `session_usage.py`
 
-Parses one `hermes sessions export` JSONL line (`--format json` or manual `--format markdown`). For dev-process rows, use **`dp_stage_boundary.py --print-markdown-row`** instead.
+Parses one `hermes sessions export` JSONL line (`--format json` or manual `--format markdown`). For dev-process rows, use **`dp_stage_boundary.py --print-markdown-row`** instead. Other scripts import **`load_session_export`** and **`build_summary`** from this module.
 
-**Tests:** `test_session_usage.py`, `test_model_resolve.py`, `test_dp_hermes.py`
+**Tests:** `test_session_usage.py`, `test_model_resolve.py`, `test_dp_hermes.py`, `test_dp_review_job.py`, `test_review_targets_drift.py`

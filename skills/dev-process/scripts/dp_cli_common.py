@@ -63,7 +63,9 @@ def print_resolution_json(resolved: dict[str, Any]) -> None:
     print(json.dumps(resolved, ensure_ascii=False, indent=2), end="\n", flush=True)
 
 
-def print_handoff_notes(prog: str, resolved: dict[str, Any], *, handoff_only: bool = False) -> None:
+def print_handoff_notes(
+    prog: str, resolved: dict[str, Any], *, handoff_only: bool = False
+) -> None:
     if resolved.get("handoff_required"):
         profile = resolved["hermes_profile"]
         if handoff_only:

@@ -113,12 +113,15 @@ Use **two‑digit** `NN` (`round_01`, `round_02`, …); extend width if rounds e
 
 Within each `round_NN/`, use **unprefixed** conventional filenames (e.g. `requirements.md`, `architecture.md`, `synthesis.md`) per [review/SKILL.md](../review/SKILL.md) and the standard recipes—**not** `NNNN_` prefixes (those apply only to **task-root** artifacts).
 
+**`review_manifest.yaml`** (one per `round_NN/`): canonical record of **review worker** Hermes sessions (`session_id`, token summary, evidence pointer). Template: [review/templates/review_manifest.yaml](../review/templates/review_manifest.yaml). Initialize with `dp_review_job.py --init-manifest`. Do **not** duplicate reviewer worker sessions in **`artifacts.model_usage`**—that file is for **primary** loop usage stages only.
+
 Example layout:
 
 ```text
 reviews/
   spec/
     round_01/
+      review_manifest.yaml
       requirements.md
       architecture.md
       synthesis.md

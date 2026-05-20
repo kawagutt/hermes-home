@@ -9,7 +9,6 @@ from pathlib import Path
 
 from model_resolve import (
     ModelResolveError,
-    get_review_depth_preset,
     load_task_state,
     resolve_for_task,
     resolve_model,
@@ -63,6 +62,25 @@ class TestModelResolve(unittest.TestCase):
         self.assertEqual(r["hermes_profile"], "dp-review")
         self.assertEqual(r["action"], "review_standard")
         self.assertEqual(r["reasoning_expected"], "medium")
+
+    def test_action_review_architecture_dp_review(self) -> None:
+        task = self._write_state("t_rev", review_depth_preset="deep")
+        r = resolve_for_task(task, action="review_architecture")
+        self.assertEqual(r["hermes_profile"], "dp-review")
+        self.assertEqual(r["role"], "review_main")
+        self.assertEqual(r["action"], "review_architecture")
+
+    def test_action_review_synthesis_deep_dp_strong(self) -> None:
+        task = self._write_state("t_syn", review_depth_preset="deep")
+        r = resolve_for_task(task, action="review_synthesis_deep")
+        self.assertEqual(r["hermes_profile"], "dp-strong")
+        self.assertEqual(r["reasoning_expected"], "high")
+
+    def test_action_review_synthesis_final_dp_strong_high(self) -> None:
+        task = self._write_state("t_syn_f", review_depth_preset="standard")
+        r = resolve_for_task(task, action="review_synthesis_final")
+        self.assertEqual(r["hermes_profile"], "dp-strong")
+        self.assertEqual(r["reasoning_expected"], "high")
 
     def test_stage_id_implementation_dp_code(self) -> None:
         task = self._write_state("t_impl")

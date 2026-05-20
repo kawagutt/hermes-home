@@ -1,0 +1,32 @@
+# Machine-readable mirror of review/presets.md (agents + preset reviewer lists).
+# Human source of truth: review/presets.md — if this file disagrees, presets.md wins; drift tests fail.
+
+agents:
+  - requirements
+  - architecture
+  - diff_detail
+  - impact
+  - test_quality
+  - checklist_compliance
+  - naming_doc
+
+presets:
+  light:
+    required_reviewers:
+      - checklist_compliance
+    synthesis_action: review_synthesis_standard
+  standard:
+    # Plan 1 default: standard manifests include checklist_compliance, requirements, and diff_detail.
+    required_reviewers:
+      - checklist_compliance
+      - requirements
+      - diff_detail
+    synthesis_action: review_synthesis_standard
+  deep:
+    required_reviewers:
+      - requirements
+      - architecture
+      - diff_detail
+      - impact
+      - test_quality
+    synthesis_action: review_synthesis_deep

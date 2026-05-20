@@ -237,6 +237,32 @@ class TestDpHermesResolve(unittest.TestCase):
         self.assertIn("last_dev_process_action: write_tests", state)
         self.assertIn("last_resolution_source: action", state)
 
+    def test_review_worker_action_rejects_record_state(self) -> None:
+        task = self.tmp_path / "t_rev_guard"
+        _write_state(task, "t_rev_guard", "plan")
+        r = _run(
+            task_dir=task,
+            action="review_architecture",
+            record_state=True,
+            print_json=True,
+        )
+        self.assertEqual(r.returncode, 2, r.stderr)
+        self.assertIn("review worker", r.stderr.lower())
+
+    def test_final_review_action_allows_record_state_flag(self) -> None:
+        task = self.tmp_path / "t_final_rev"
+        _write_state(task, "t_final_rev", "final", last_hermes_profile="dp-code")
+        r = _run(
+            task_dir=task,
+            action="final_review",
+            record_state=True,
+            print_json=True,
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        obj = json.loads(r.stdout)
+        self.assertEqual(obj["action"], "final_review")
+        self.assertEqual(obj["hermes_profile"], "dp-strong")
+
     def test_record_state_not_updated_on_failure(self) -> None:
         task = self.tmp_path / "t12"
         _write_state(task, "t12", "implementation")

@@ -18,6 +18,11 @@ from pathlib import Path
 from typing import Any
 
 
+def load_session_export(path: Path) -> dict[str, Any]:
+    """Load one Hermes session object from exported JSONL (single non-empty line)."""
+    return _load_session(path)
+
+
 def _load_session(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"session export not found: {path}")
