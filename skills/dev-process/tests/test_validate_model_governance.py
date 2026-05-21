@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -18,6 +19,7 @@ from validate_model_governance import (  # noqa: E402
     parse_hermes_profile_from_cell,
     parse_session_id,
     parse_model_usage_table,
+    validate_task,
 )
 
 
@@ -217,13 +219,65 @@ def test_validate_strict_duplicate_session(tmp_path: Path) -> None:
     assert "duplicate primary session_id" in r.stdout
 
 
-def test_validate_strict_unknown_with_waiver_still_fails_standard(
-    tmp_path: Path,
-) -> None:
+def test_strict_exit_zero_when_only_warnings(tmp_path: Path) -> None:
+    """--strict fails on ERROR only; waiver-documented unknown is WARNING (exit 0)."""
+    task = make_governance_task(tmp_path, unknown_spec=True, timeline_waiver=True)
+    issues = validate_task(task, strict=True)
+    warnings = [i for i in issues if i.level == "warning"]
+    errors = [i for i in issues if i.level == "error"]
+    assert warnings
+    assert not errors
+    r = run_gov(task, "--strict")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_validate_strict_unknown_with_waiver_passes_standard(tmp_path: Path) -> None:
     task = make_governance_task(tmp_path, unknown_spec=True, timeline_waiver=True)
     r = run_gov(task, "--strict")
-    assert r.returncode == 1
+    assert r.returncode == 0, r.stdout + r.stderr
     assert "unresolved unknown Session for stage spec" in r.stdout
+    assert "waiver documented" in r.stdout
+
+
+def test_validate_strict_blank_session_with_waiver_still_fails(tmp_path: Path) -> None:
+    task = make_governance_task(tmp_path, timeline_waiver=True)
+    path = task / "0010_model_usage.md"
+    old = path.read_text(encoding="utf-8")
+    needle = _model_usage_row("spec", _session(1))
+    assert needle in old
+    text = old.replace(needle, _model_usage_row("spec", ""))
+    assert text != old
+    path.write_text(text, encoding="utf-8")
+    r = run_gov(task, "--strict")
+    assert r.returncode == 1
+    assert "required primary usage row missing/invalid: spec" in r.stdout
+
+
+def test_validate_strict_manifest_empty_session_id(tmp_path: Path) -> None:
+    task = make_governance_task(tmp_path)
+    manifest = task / "reviews" / "spec" / "round_01" / "review_manifest.yaml"
+    old = manifest.read_text(encoding="utf-8")
+    needle = f'session_id: "{_session(10)}"'
+    assert needle in old, f"fixture missing expected session line: {needle!r}"
+    text = old.replace(needle, 'session_id: ""', 1)
+    assert text != old
+    manifest.write_text(text, encoding="utf-8")
+    r = run_gov(task, "--strict")
+    assert r.returncode == 1
+    assert "missing session_id" in r.stdout
+
+
+def test_validate_strict_last_hermes_profile_missing(tmp_path: Path) -> None:
+    task = make_governance_task(tmp_path)
+    path = task / "state.yaml"
+    old = path.read_text(encoding="utf-8")
+    assert "last_hermes_profile" in old
+    state = re.sub(r"\nlast_hermes_profile:.*\n", "\n", old, count=1)
+    assert state != old
+    path.write_text(state, encoding="utf-8")
+    r = run_gov(task, "--strict")
+    assert r.returncode == 1
+    assert "last_hermes_profile unset" in r.stdout
 
 
 def test_validate_strict_unknown_light_waiver_warning_only(tmp_path: Path) -> None:

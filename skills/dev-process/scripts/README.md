@@ -48,6 +48,10 @@ Checks:
 
 When a human rejects a gate or requests rework, the orchestrator must clear `pending_human_gate` and reset the matching `reviewed.*` marker to `false` before routing rework. Otherwise the gate consistency ERRORs above indicate state update omissions.
 
+- **Governance preflight** (separate from gate consistency; `check_governance_preflight`):
+  - **`standard`** / **`deep`** + **`model_usage_required`** + final review/gate vicinity (`pending_human_gate: final_human_gate`, `reviewed.final`, `artifacts.final_human_gate` set, or `review_rounds.final > 0`) + missing **`last_hermes_profile`** → ERROR
+  - **`current_stage: final` alone** does not trigger this ERROR (early final prep may still only get the global WARNING)
+
 State comment policy: helpers that write `state.yaml` use PyYAML and may drop YAML comments. Dev-process state comments are template guidance, not persistent task data. Preserve durable process notes in task Markdown artifacts (`timeline`, gates, review synthesis), not as YAML comments in `state.yaml`.
 
 ## `review_round.py`
@@ -258,7 +262,9 @@ python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<t
 
 Checks primary-loop `artifacts.model_usage` **`Session`** column (required rows from [`config/primary_segments.yaml`](../config/primary_segments.yaml)), latest-round [`review_manifest.yaml`](../review/templates/review_manifest.yaml), and `model_usage_required` inference.
 
-**`--strict` on `standard` / `deep`:** missing/invalid `Session` cells; **duplicate primary session ids** (waiver does not pass strict); **same session crossing different `dp-*` profiles**; missing latest-round manifests (including `reviews/implementation_phase_NN/` when `review_rounds` shows a completed checkpoint round). **`light`:** optional rows; unknown `Session` with waiver → warning only under strict.
+**`--strict` on `standard` / `deep`:** missing/invalid `Session` cells (blank/placeholder/missing row → ERROR even with waiver text elsewhere); **`Session: unknown`** without a matching stage-id waiver → ERROR; **`Session: unknown`** with timeline/plan waiver (stage id + marker) → WARNING, **exit 0**; **duplicate primary session ids** (waiver does not pass strict); **same session crossing different `dp-*` profiles**; empty `review_manifest` `session_id`; missing **`last_hermes_profile`** when **`model_usage_required`** is true; missing latest-round manifests (including `reviews/implementation_phase_NN/` when `review_rounds` shows a completed checkpoint round). **`light`:** optional rows; unknown `Session` with waiver → warning under strict (exit 0).
+
+**Exit code:** `--strict` fails (exit 1) on **ERROR** issues only; WARNINGs do not fail the script.
 
 Synthesis `session_id` must differ from reviewer sessions in each manifest.
 

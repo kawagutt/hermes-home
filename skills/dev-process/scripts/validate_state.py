@@ -77,6 +77,57 @@ def _current_stage_past_gate_wait(
     return True
 
 
+def _model_usage_required(state: dict) -> bool:
+    raw = state.get("model_usage_required")
+    if raw is True:
+        return True
+    if raw is False:
+        return False
+    preset = _str_field(state, "review_depth_preset").lower()
+    return preset in ("standard", "deep")
+
+
+def _final_pre_governance_active(state: dict) -> bool:
+    """True when task is in final review / final gate vicinity (not final prep alone)."""
+    if _str_field(state, "pending_human_gate") == PENDING_FINAL:
+        return True
+    reviewed = state.get("reviewed")
+    if isinstance(reviewed, dict) and reviewed.get("final") is True:
+        return True
+    artifacts = state.get("artifacts")
+    if isinstance(artifacts, dict):
+        gate = artifacts.get("final_human_gate")
+        if isinstance(gate, str) and gate.strip():
+            return True
+    rounds = state.get("review_rounds")
+    if isinstance(rounds, dict):
+        try:
+            if int(rounds.get("final", 0) or 0) > 0:
+                return True
+        except (TypeError, ValueError):
+            pass
+    return False
+
+
+def check_governance_preflight(state: dict, errors: list[str]) -> None:
+    """Session/model governance near final (separate from gate consistency)."""
+    preset = _str_field(state, "review_depth_preset").lower()
+    if preset not in ("standard", "deep"):
+        return
+    if not _model_usage_required(state):
+        return
+    if not _final_pre_governance_active(state):
+        return
+    last_profile = state.get("last_hermes_profile")
+    if isinstance(last_profile, str) and last_profile.strip():
+        return
+    errors.append(
+        "governance preflight: missing last_hermes_profile before final review/gate "
+        "(run dp_hermes.py with --record-state; also run "
+        "validate_model_governance.py --strict)"
+    )
+
+
 def check_gate_consistency(state: dict, errors: list[str], warnings: list[str]) -> None:
     """Human gate state invariants (pending_human_gate is authoritative)."""
     pending = _str_field(state, "pending_human_gate")
@@ -279,6 +330,7 @@ def main() -> int:
             errors.append(f"missing branch field: {key}")
 
     check_gate_consistency(state, errors, warnings)
+    check_governance_preflight(state, errors)
 
     for warning in warnings:
         print(f"WARNING {warning}")

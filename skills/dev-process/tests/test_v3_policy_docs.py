@@ -219,7 +219,8 @@ def test_primary_segment_boundary_completion_in_validation() -> None:
     assert "Primary boundary row must exist" in validation
     assert "temporary unknown" in validation
     assert "before final" in plain
-    assert "does not by itself guarantee" in plain
+    assert "does not waive missing rows" in plain
+    assert "exit 0" in plain or "exit 0;" in plain
     assert "validate_model_governance.py --strict" in validation
 
 
@@ -231,6 +232,15 @@ def test_model_usage_template_boundary_completion_and_dp_stage_boundary() -> Non
     assert "not complete until" in model_usage
     assert "review_manifest.yaml" in model_usage
     assert "final_human_gate" in plain and "final_review" in plain
+    assert "does not waive missing rows" in plain
+
+
+def test_governance_waiver_scope_in_validation_and_model_usage() -> None:
+    validation = strip_md_emphasis(read_rel("validation/SKILL.md"))
+    model_usage = read_rel("templates/model_usage.md")
+    for text in (validation, model_usage):
+        assert "governance waiver marker" in text
+        assert "does not waive missing rows" in text
 
 
 def test_review_round_session_evidence_completion_checklist() -> None:

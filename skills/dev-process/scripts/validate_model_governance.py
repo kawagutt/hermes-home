@@ -451,12 +451,22 @@ def validate_task(
                     if sid:
                         pass
                     elif is_unknown:
-                        issues.append(
-                            Issue(
-                                "error",
-                                f"unresolved unknown Session for stage {uid}",
+                        # Waiver applies only to Session: unknown (not blank/missing rows).
+                        if _has_model_governance_waiver(task_dir, state, uid):
+                            issues.append(
+                                Issue(
+                                    "warning",
+                                    f"unresolved unknown Session for stage {uid} "
+                                    "(waiver documented)",
+                                )
                             )
-                        )
+                        else:
+                            issues.append(
+                                Issue(
+                                    "error",
+                                    f"unresolved unknown Session for stage {uid}",
+                                )
+                            )
                     else:
                         issues.append(
                             Issue(
@@ -526,7 +536,17 @@ def validate_task(
                 elif not waiver:
                     issues.append(Issue("warning", msg))
 
-    if strict and not state.get("last_hermes_profile"):
+    last_profile = state.get("last_hermes_profile")
+    last_missing = not (isinstance(last_profile, str) and last_profile.strip())
+    if strict and usage_required and preset in ("standard", "deep") and last_missing:
+        issues.append(
+            Issue(
+                "error",
+                "last_hermes_profile unset (run dp_hermes.py with --record-state after "
+                "each profile boundary)",
+            )
+        )
+    elif strict and last_missing:
         issues.append(
             Issue(
                 "warning",
@@ -600,6 +620,7 @@ def main() -> int:
         prefix = "ERROR" if i.level == "error" else "WARNING"
         print(f"{prefix}: {i.message}")
 
+    # --strict adds ERROR-level checks; WARNINGs alone still exit 0 (e.g. waiver-documented unknown).
     if errors:
         return 1
     if warnings:
