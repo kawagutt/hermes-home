@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import re
 from pathlib import Path
 from typing import Any
@@ -11,11 +12,135 @@ from typing import Any
 import yaml
 
 POLICY_PATH = Path(__file__).resolve().parent.parent / "config" / "model_policy.yaml"
+STAGE_IDS_PATH = Path(__file__).resolve().parent.parent / "config" / "stage_ids.yaml"
 
 LATEST_RE = re.compile(
     r"^reviews/(?P<stage>[^/]+)/round_(?P<num>\d{2,})/synthesis\.md$"
 )
 NUMBERED_TASK_ROOT_MD_RE = re.compile(r"^\d{4}_[^/]+\.md$")
+
+PENDING_SPEC = "human_spec_gate"
+PENDING_FINAL = "final_human_gate"
+VALID_PENDING = frozenset({"", PENDING_SPEC, PENDING_FINAL})
+
+# Normal current_stage while waiting at each gate (Task 1: pending is authoritative).
+SPEC_PENDING_OK_STAGES = frozenset({"spec", "human_spec_gate"})
+FINAL_PENDING_OK_STAGES = frozenset({"final", "final_human_gate"})
+
+
+@functools.lru_cache(maxsize=1)
+def load_state_stage_ids() -> frozenset[str]:
+    if not STAGE_IDS_PATH.is_file():
+        raise SystemExit(f"ERROR stage ids file not found: {STAGE_IDS_PATH}")
+    with STAGE_IDS_PATH.open(encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+    stages = data.get("state_stages") or []
+    if not isinstance(stages, list):
+        raise SystemExit(f"ERROR state_stages must be a list: {STAGE_IDS_PATH}")
+    return frozenset(str(s).strip() for s in stages if str(s).strip())
+
+
+def gate_pending_advanced_stages() -> tuple[frozenset[str], frozenset[str]]:
+    """Stages in stage_ids.yaml that warrant a WARNING while at each human gate wait."""
+    all_stages = load_state_stage_ids()
+    return (
+        all_stages - SPEC_PENDING_OK_STAGES,
+        all_stages - FINAL_PENDING_OK_STAGES,
+    )
+
+
+def _str_field(state: dict, key: str) -> str:
+    value = state.get(key)
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        return str(value).strip()
+    return value.strip()
+
+
+def _bool_field(mapping: dict, key: str) -> bool:
+    return mapping.get(key) is True
+
+
+def _current_stage_past_gate_wait(
+    current_stage: str,
+    ok_stages: frozenset[str],
+    advanced_stages: frozenset[str],
+) -> bool:
+    if not current_stage:
+        return False
+    if current_stage in ok_stages:
+        return False
+    if current_stage in advanced_stages:
+        return True
+    # Legacy or future stage ids not yet listed in stage_ids.yaml.
+    return True
+
+
+def check_gate_consistency(state: dict, errors: list[str], warnings: list[str]) -> None:
+    """Human gate state invariants (pending_human_gate is authoritative)."""
+    pending = _str_field(state, "pending_human_gate")
+    if pending not in VALID_PENDING:
+        errors.append(
+            f"pending_human_gate {pending!r} is invalid "
+            f"(expected '', {PENDING_SPEC!r}, or {PENDING_FINAL!r})"
+        )
+
+    approved = state.get("approved") or {}
+    reviewed = state.get("reviewed") or {}
+    if not isinstance(approved, dict):
+        approved = {}
+    if not isinstance(reviewed, dict):
+        reviewed = {}
+
+    final_reviewed = _bool_field(reviewed, "final")
+    spec_reviewed = _bool_field(reviewed, "spec")
+    final_approved = _bool_field(approved, "final_human_gate")
+    spec_approved = _bool_field(approved, "human_spec_gate")
+
+    if final_reviewed and not final_approved and pending != PENDING_FINAL:
+        errors.append(
+            "reviewed.final is true but pending_human_gate is not "
+            f"{PENDING_FINAL!r} (got {pending!r})"
+        )
+    if spec_reviewed and not spec_approved and pending != PENDING_SPEC:
+        errors.append(
+            "reviewed.spec is true but pending_human_gate is not "
+            f"{PENDING_SPEC!r} (got {pending!r})"
+        )
+    if pending == PENDING_FINAL and final_approved:
+        errors.append(
+            f"pending_human_gate is {PENDING_FINAL!r} but "
+            "approved.final_human_gate is already true"
+        )
+    if pending == PENDING_SPEC and spec_approved:
+        errors.append(
+            f"pending_human_gate is {PENDING_SPEC!r} but "
+            "approved.human_spec_gate is already true"
+        )
+
+    if pending and not _str_field(state, "gate_prompted_at"):
+        warnings.append(
+            "pending_human_gate is set but gate_prompted_at is empty "
+            "(gate presenter should set both before chat STOP)"
+        )
+
+    spec_advanced, final_advanced = gate_pending_advanced_stages()
+    current_stage = _str_field(state, "current_stage")
+    if pending == PENDING_SPEC and _current_stage_past_gate_wait(
+        current_stage, SPEC_PENDING_OK_STAGES, spec_advanced
+    ):
+        warnings.append(
+            f"pending_human_gate is {PENDING_SPEC!r} but current_stage is "
+            f"{current_stage!r} (orchestrator may have advanced past spec gate wait)"
+        )
+    if pending == PENDING_FINAL and _current_stage_past_gate_wait(
+        current_stage, FINAL_PENDING_OK_STAGES, final_advanced
+    ):
+        warnings.append(
+            f"pending_human_gate is {PENDING_FINAL!r} but current_stage is "
+            f"{current_stage!r} (orchestrator may have advanced past final gate wait)"
+        )
 
 
 def load_state(task: Path) -> dict:
@@ -152,6 +277,8 @@ def main() -> int:
     for key in required_branch:
         if key not in branch:
             errors.append(f"missing branch field: {key}")
+
+    check_gate_consistency(state, errors, warnings)
 
     for warning in warnings:
         print(f"WARNING {warning}")

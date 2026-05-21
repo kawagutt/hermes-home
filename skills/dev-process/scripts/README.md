@@ -38,6 +38,15 @@ Checks:
 - `review_rounds.<stage>` matches the `round_NN` in `latest_reviews.<stage>`.
 - `review_rounds=0` does not have a misleading latest review pointer.
 - required branch fields exist.
+- **Human gate consistency** (`pending_human_gate` is authoritative; `reviewed.*` means review passed, not human approval):
+  - invalid `pending_human_gate` value → ERROR
+  - `reviewed.final` true, `approved.final_human_gate` false, and `pending_human_gate` not `final_human_gate` → ERROR
+  - `reviewed.spec` true, `approved.human_spec_gate` false, and `pending_human_gate` not `human_spec_gate` → ERROR
+  - matching `pending_human_gate` set while the corresponding `approved.*` is already true → ERROR
+  - `pending_human_gate` set but `gate_prompted_at` empty → WARNING
+  - `current_stage` clearly past the gate wait → WARNING: derived from [`config/stage_ids.yaml`](../config/stage_ids.yaml) `state_stages` minus normal gate-wait stages (`spec`/`human_spec_gate` or `final`/`final_human_gate`); unknown `current_stage` values also warn while a gate wait is active (covers legacy ids such as `merged_no_push`); **not** warned for normal pairs such as `current_stage: final` + `pending_human_gate: final_human_gate`
+
+When a human rejects a gate or requests rework, the orchestrator must clear `pending_human_gate` and reset the matching `reviewed.*` marker to `false` before routing rework. Otherwise the gate consistency ERRORs above indicate state update omissions.
 
 State comment policy: helpers that write `state.yaml` use PyYAML and may drop YAML comments. Dev-process state comments are template guidance, not persistent task data. Preserve durable process notes in task Markdown artifacts (`timeline`, gates, review synthesis), not as YAML comments in `state.yaml`.
 

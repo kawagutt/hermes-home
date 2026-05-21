@@ -133,7 +133,7 @@ Small deterministic helpers live under [`scripts/`](../scripts/) and are documen
 
 Current helpers:
 
-- `validate_state.py` — task state/artifact/review/branch consistency checks; warns on missing `last_hermes_profile`; errors when `current_stage` is a usage-only `stage_actions` id (e.g. `spec_review`). Pass the task directory (`.hermes/tasks/<task-id>`), not the `state.yaml` file path. Use `--strict` to fail on warnings.
+- `validate_state.py` — task state/artifact/review/branch consistency checks; **human gate consistency** on `pending_human_gate` vs `reviewed.*` / `approved.*` (see [`scripts/README.md`](../scripts/README.md)); warns on missing `last_hermes_profile` and on `current_stage` clearly past a gate wait; errors when `current_stage` is a usage-only `stage_actions` id (e.g. `spec_review`). Pass the task directory (`.hermes/tasks/<task-id>`), not the `state.yaml` file path. Use `--strict` to fail on warnings. When a human rejects a gate or requests rework, the orchestrator must clear `pending_human_gate` and reset the matching `reviewed.*` marker to `false` before routing rework.
 - `validate_model_governance.py` — primary `model_usage` session evidence + latest `review_manifest.yaml` checks; `--strict` before final on standard/deep.
 - `check_helper_env.py` — PyYAML + bundled policy + helper `--help` preflight; optional `--check-profiles`.
 - `check_hermes_profiles.py` — `agent.reasoning_effort` in `~/.hermes/profiles/*/config.yaml` vs [`config/hermes_profile_expectations.yaml`](../config/hermes_profile_expectations.yaml).
