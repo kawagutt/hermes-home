@@ -59,7 +59,12 @@ spec
 ## Hard ordering
 
 ```text
-Do not start plan before human_spec_gate is complete.
+Plan may start only when:
+  reviewed.spec == true
+  approved.human_spec_gate == true
+  pending_human_gate == ""
+
+Do not start plan before human_spec_gate is complete (same conditions as above).
 Do not start test implementation before plan review is complete.
 Do not edit project files for the task before the task branch precondition is satisfied.
 Do not skip final_human_gate before completion / merge decision.
@@ -80,10 +85,62 @@ Use [goal/SKILL.md](goal/SKILL.md) for task id format, `state.yaml` creation, re
 
 ## Human gates
 
+### State fields: reviewed, approved, pending_human_gate
+
+```text
+reviewed.<key> is a review-pass marker, where <key> is one of the reviewed.* keys defined in templates/state.yaml.
+Synthesis may set reviewed.<key>: true only when the review recommendation accepts the stage, such as Proceed.
+Synthesis must not set approved.*, pending_human_gate, or gate_prompted_at.
+
+pending_human_gate is the authoritative signal for a human gate wait.
+Before presenting numbered gate choices in chat, the gate presenter must update pending_human_gate and gate_prompted_at.
+After any explicit human gate decision, pending_human_gate must be cleared.
+If approved, set the matching canonical gate key: approved.human_spec_gate or approved.final_human_gate.
+If not approved, keep the matching canonical gate key false and route the task to the appropriate rework stage.
+```
+
+**Invariants (verbatim):**
+
+```text
+reviewed.final == true does not imply approved.final_human_gate == true.
+
+pending_human_gate != "" means the orchestrator must stop,
+even if latest review recommendation is Proceed.
+```
+
+```text
+reviewed.spec == true does not imply approved.human_spec_gate == true.
+```
+
+| Field | Meaning |
+| --- | --- |
+| `reviewed.*` | Stage review **passed** (Proceed). Synthesis sets on accept only. Not human gate approval. |
+| `approved.human_spec_gate` / `approved.final_human_gate` | Human **approved** a hard gate. Only these keys are canonical in [templates/state.yaml](templates/state.yaml). |
+| `approved.spec` (legacy) | **Non-canonical.** Older tasks may have it; ignore for legality. Use `approved.human_spec_gate` for spec gate. |
+| `pending_human_gate` | Authoritative gate wait: `human_spec_gate` or `final_human_gate`. Empty when no wait or after any explicit gate decision. |
+| `gate_prompted_at` | ISO timestamp when gate choices were prepared (before chat prompt). |
+
+**`reviewed.*` keys** are only those in [templates/state.yaml](templates/state.yaml): `spec`, `plan`, `tests`, `final`. Do not add keys from review target names (`final_diff`, `implementation_phase`, …). Mapping: `spec` → `reviewed.spec`; `plan` → `reviewed.plan`; `test` → `reviewed.tests`; `final` / `final_diff` → `reviewed.final`; `implementation_phase` checkpoint → update `review_rounds` / `latest_reviews` only, not `reviewed.*`.
+
+**Gate presenter order (before STOP):** (1) prepare gate artifact, (2) set `pending_human_gate` and `gate_prompted_at`, (3) append timeline `gate_prompted`, (4) present numbered choices in chat, (5) STOP. Do not update `pending_human_gate` after chat prompt as a backfill.
+
+**After human gate decision (approve or reject/rework):** clear `pending_human_gate`. If approved, set matching **`approved.human_spec_gate`** or **`approved.final_human_gate`** to `true`. If not approved, keep that flag `false`, record decision in gate artifact / timeline, move `current_stage` to the rework route.
+
+**Plan start (spec gate):**
+
+```text
+Plan may start only when:
+  reviewed.spec == true
+  approved.human_spec_gate == true
+  pending_human_gate == ""
+```
+
+Do not use `approved.spec`; it is not part of the canonical state model.
+
 Standing human gates:
 
-1. **`human_spec_gate`** — after spec review, before plan; recorded at `state.yaml` → `artifacts.human_spec_gate`. If human comments cause material changes to **`artifacts.spec`**, update it, rerun required spec review if material, refresh the Japanese summary, and ask again before planning. Plan uses **agent review + conditional human escalation** ([plan/SKILL.md](plan/SKILL.md)).
-2. **`final_human_gate`** — after final review synthesis and final validation evidence; recorded at `artifacts.final_human_gate`, before merge/completion.
+1. **`human_spec_gate`** — after spec review Proceed (`reviewed.spec: true`), before plan; recorded at `state.yaml` → `artifacts.human_spec_gate`. Spec gate uses `reviewed.spec`, `pending_human_gate`, and `approved.human_spec_gate` only (see Plan start above). If human comments cause material changes to **`artifacts.spec`**, update it, rerun required spec review if material, refresh the Japanese summary, and ask again before planning. Plan uses **agent review + conditional human escalation** ([plan/SKILL.md](plan/SKILL.md)).
+2. **`final_human_gate`** — after final review Proceed (`reviewed.final: true`) and final validation evidence; recorded at `artifacts.final_human_gate`, before merge/completion. Final synthesis Proceed does not imply `approved.final_human_gate: true`.
 
 Before approval, give a concise **Japanese** summary:
 

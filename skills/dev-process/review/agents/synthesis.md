@@ -33,6 +33,14 @@ In the **same turn / session** as finishing `synthesis.md`, update the task’s 
 
 1. Set **`review_rounds.<stage>`** to **`NN`** (the integer encoded in `round_NN`, e.g. `round_02` → `2`).  
 2. Set **`latest_reviews.<stage>`** to the path **`reviews/<stage>/round_NN/synthesis.md`** (relative to `.hermes/tasks/<task-id>/`).  
+3. If and only if the recommendation **accepts** the stage (e.g. **Proceed**), set the matching **`reviewed.<key>: true`** per [templates/state.yaml](../../templates/state.yaml) mapping (`spec` / `plan` / `tests` / `final` only). Do **not** set `reviewed.*` on rework or blocking synthesis. **`implementation_phase`** reviews do not update `reviewed.*`.  
+4. Do **not** set **`approved.*`**, **`pending_human_gate`**, or **`gate_prompted_at`**.
+
+```text
+reviewed.<key> is a review-pass marker, where <key> is one of the reviewed.* keys defined in templates/state.yaml.
+Synthesis may set reviewed.<key>: true only when the review recommendation accepts the stage, such as Proceed.
+Synthesis must not set approved.*, pending_human_gate, or gate_prompted_at.
+```
 
 Humans normally **do nothing** here. If synthesis was intentionally skipped this round per policy, **`state.yaml` is updated by the Orchestrator**, not skipped silently—see [review/SKILL.md § Who updates state.yaml](../SKILL.md#who-updates-stateyaml).
 

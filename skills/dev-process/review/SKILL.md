@@ -120,12 +120,18 @@ Same pattern applies whether the finding came from checkpoint review or final re
 
 - **`review_rounds.<stage>`** and **`latest_reviews.<stage>`** are maintained by whichever agent/session performs the **synthesis** step for that review round—that is the **synthesis role** described in [`agents/synthesis.md`](agents/synthesis.md).
 - Timing: **immediately after** successfully writing **`reviews/<stage>/round_NN/synthesis.md`**, bump the counter for `<stage>` to `NN` (integer matching the round suffix) and set `latest_reviews.<stage>` to that file’s repo-relative task path.
+- **`reviewed.*` (review-pass only):** synthesis sets the matching **`reviewed.<key>: true`** only when the recommendation **accepts** the stage (e.g. **Proceed**). Rework or blocking synthesis must **not** set `reviewed.*` to `true`. Use only keys defined in [templates/state.yaml](../templates/state.yaml): `spec`, `plan`, `tests`, `final` — mapping: `spec` → `reviewed.spec`; `plan` → `reviewed.plan`; `test` → `reviewed.tests`; `final` / `final_diff` → `reviewed.final`; **`implementation_phase`** checkpoints → do **not** update `reviewed.*` (only `review_rounds` / `latest_reviews` for that phase key).
+- Synthesis must **not** set **`approved.*`**, **`pending_human_gate`**, or **`gate_prompted_at`**.
 
-**Humans:** not required for these fields in normal agent workflows. Humans may patch `state.yaml` only when recovering from tooling failure or operating **without** a synthesis agent—in that case, treat it as orchestration hygiene with a note in **`artifacts.timeline`**.
+**Gate presenter (Orchestrator or coordinating agent):** after a human gate stage is ready (e.g. spec/final review Proceed), before numbered gate choices in chat: (1) gate artifact ready, (2) `pending_human_gate` + `gate_prompted_at`, (3) timeline `gate_prompted`, (4) chat prompt, (5) STOP. See [../SKILL.md § Human gates](../SKILL.md#human-gates).
+
+**Humans (or orchestrator recording human choice):** after **any** explicit gate decision (approve or not approved / rework), clear **`pending_human_gate`**. If approved, set the matching canonical gate key: **`approved.human_spec_gate`** or **`approved.final_human_gate`**. If not approved, keep the matching canonical gate key **false**, record in gate artifact / timeline, set **`current_stage`** to the rework route.
+
+**Humans:** not required for `review_rounds` / `latest_reviews` / `reviewed.*` in normal agent workflows. Humans may patch `state.yaml` only when recovering from tooling failure or operating **without** a synthesis agent—in that case, treat it as orchestration hygiene with a note in **`artifacts.timeline`**.
 
 **If synthesis was skipped** for that round (allowed only where the router marks synthesis **optional**):
 
-- The **Orchestrator** (coordinating agent/session) MUST still update `review_rounds` / `latest_reviews` consistently with where reviewer outputs landed, OR delegate an explicit follower step to combine reviewers first.
+- The **Orchestrator** (coordinating agent/session) MUST still update `review_rounds` / `latest_reviews` consistently with where reviewer outputs landed, OR delegate an explicit follower step to combine reviewers first. Apply the same **Proceed-only** rule if setting `reviewed.*`.
 
 **Independent reviewers must not each bump `review_rounds`**—only synthesis (or orchestrator fallback) avoids races and partial rounds.
 
@@ -166,7 +172,7 @@ Recipes name **targets** and common standard **review agents** only. **Synthesis
 - **target:** `final_diff` (`targets/final_diff.md`)  
 - **review agents:** `architecture`, `diff_detail`, `impact`, `naming_doc`, `test_quality`  
 - **synthesis:** required  
-- **after synthesis:** write/refresh **`artifacts.final_summary_ja`**, then stop at `final_human_gate` for human merge/completion decision  
+- **after synthesis (Proceed):** set **`reviewed.final: true`**, write/refresh **`artifacts.final_summary_ja`**, then gate presenter runs final gate order (pending state → timeline → chat → STOP) at **`final_human_gate`**  
 
 ---
 
@@ -180,4 +186,4 @@ Use **conventional unprefixed names** (e.g. `requirements.md`, `architecture.md`
 
 ## Task completion tail
 
-After implementation validation: run checkpoint + **final** review (`reviews/final/round_NN/`), materialize **`artifacts.final_summary_ja`** and **`artifacts.final_human_gate`**, present numbered final-gate options, then on approval set `approved.final_human_gate: true` and re-run `validate_state.py`. **Do not** auto-commit, merge, or push; final gate approval is not a git operation.
+After implementation validation: run checkpoint + **final** review (`reviews/final/round_NN/`). On **Proceed**, synthesis sets **`reviewed.final: true`**. Materialize **`artifacts.final_summary_ja`** and **`artifacts.final_human_gate`**. Gate presenter: set **`pending_human_gate: final_human_gate`** and **`gate_prompted_at`** (and timeline) **before** numbered final-gate options in chat, then STOP. After explicit human decision: clear **`pending_human_gate`**; on approval set **`approved.final_human_gate: true`**, on reject/rework keep it `false` and route rework; re-run `validate_state.py` when appropriate. **Do not** auto-commit, merge, or push; final gate approval is not a git operation.

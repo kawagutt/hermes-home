@@ -5,7 +5,12 @@
 
 task_id: ""
 current_stage: ""      # e.g. spec | plan | test | implementation | final | final_human_gate
+                       # Gate wait is authoritative in pending_human_gate (not current_stage alone).
 current_phase: ""      # e.g. 01 or null when N/A
+
+# Human gate wait (authoritative). Set by gate presenter before numbered choices in chat; cleared after any explicit human gate decision.
+pending_human_gate: ""      # "" | human_spec_gate | final_human_gate
+gate_prompted_at: ""        # ISO-8601 timestamp when gate choices were prepared
 
 # Set when plan is approved (light | standard | deep). Leave empty until then; helpers may infer from artifacts.plan.
 review_depth_preset: ""
@@ -19,13 +24,17 @@ model_usage_required: null
 # last_resolution_source: ""   # action | stage
 # last_model_stage_id: ""      # usage stage id (stage_actions key) used at last handoff
 
-# Human / process gates: spec text ready and human read-back done. No default human plan gate.
+# Hard human gates only (human_spec_gate, final_human_gate). Gate decisions use these keys — not approved.spec.
+# Legacy: approved.spec in older task state.yaml is non-canonical; ignore for plan legality; use approved.human_spec_gate.
 approved:
-  spec: false
   human_spec_gate: false
   final_human_gate: false
 
-# Review completion (e.g. plan review synthesis cleared, test review cleared). Tracks agent review, not “approved.plan”.
+# Review-pass markers (Proceed / stage accepted only). Not synthesis-executed markers.
+# Synthesis sets reviewed.*: true only on Proceed; rework/blocking rounds must not set true.
+# Keys are only those below — do not invent reviewed.* from review target names (e.g. final_diff, implementation_phase).
+# Mapping: spec review -> reviewed.spec; plan -> reviewed.plan; test -> reviewed.tests;
+#   final or final_diff review -> reviewed.final; implementation_phase checkpoint -> no reviewed.* (review_rounds only).
 reviewed:
   spec: false
   plan: false

@@ -206,6 +206,121 @@ def test_model_usage_warns_not_to_paste_raw_logs_and_is_stage_attribution_aid() 
     assert "insights" in model_usage.casefold() or "Hermes" in model_usage
 
 
+INVARIANT_REVIEWED_FINAL = (
+    "reviewed.final == true does not imply approved.final_human_gate == true."
+)
+INVARIANT_PENDING_STOP = (
+    'pending_human_gate != "" means the orchestrator must stop,\n'
+    "even if latest review recommendation is Proceed."
+)
+INVARIANT_REVIEWED_SPEC = (
+    "reviewed.spec == true does not imply approved.human_spec_gate == true."
+)
+
+
+def test_human_gate_invariants_verbatim_in_goal_and_orchestrator() -> None:
+    goal = read_rel("goal/SKILL.md")
+    skill = read_rel("SKILL.md")
+    for doc in (goal, skill):
+        assert INVARIANT_REVIEWED_FINAL in doc
+        assert INVARIANT_PENDING_STOP in doc
+        assert INVARIANT_REVIEWED_SPEC in doc
+
+
+def test_goal_stops_when_pending_human_gate_nonempty() -> None:
+    goal = read_rel("goal/SKILL.md")
+    assert INVARIANT_PENDING_STOP in goal
+    assert "If **`pending_human_gate`** is non-empty, **STOP** immediately" in goal
+    assert "even when the latest review synthesis recommends **Proceed**" in goal
+
+
+def test_orchestrator_canonical_human_gate_state_block() -> None:
+    skill = read_rel("SKILL.md")
+    hg = section_after_heading("## Human gates", skill)
+    assert "review-pass marker" in hg
+    assert "Synthesis may set reviewed.<key>: true only when" in hg
+    assert "pending_human_gate is the authoritative signal" in hg
+    assert "After any explicit human gate decision" in hg
+    assert "If not approved" in hg and "rework stage" in hg
+
+
+def test_orchestrator_gate_presenter_order_before_stop() -> None:
+    skill = read_rel("SKILL.md")
+    hg = section_after_heading("## Human gates", skill)
+    assert "gate artifact" in hg.casefold()
+    assert "pending_human_gate" in hg
+    assert "gate_prompted" in hg
+    assert "numbered" in hg.casefold()
+    assert "STOP" in hg
+
+
+def test_reviewed_keys_only_template_defined() -> None:
+    state = read_rel("templates/state.yaml")
+    skill = read_rel("SKILL.md")
+    review = read_rel("review/SKILL.md")
+    assert "reviewed.spec" in state
+    assert "reviewed.plan" in state
+    assert "reviewed.tests" in state
+    assert "reviewed.final" in state
+    assert "Do not invent" in state or "do not invent" in state.lower()
+    combined = skill + review
+    assert "implementation_phase" in combined
+    assert "do not" in combined.lower() and "reviewed.*" in combined
+
+
+def test_synthesis_proceed_only_sets_reviewed() -> None:
+    synthesis = read_rel("review/agents/synthesis.md")
+    lower = synthesis.lower()
+    assert "review-pass marker" in synthesis
+    assert "accepts the stage" in lower
+    assert "Do **not** set **`approved.*`**" in synthesis
+    assert "pending_human_gate" in synthesis
+    assert "gate_prompted_at" in synthesis
+    assert "Do **not** set `reviewed.*` on rework" in synthesis
+    assert "synthesis must not set approved" in lower
+    assert "may set approved" not in lower
+
+
+def test_human_rejection_clears_pending_human_gate() -> None:
+    skill = read_rel("SKILL.md")
+    spec = read_rel("spec/SKILL.md")
+    review = read_rel("review/SKILL.md")
+    combined = skill + spec + review
+    assert "clear" in combined.lower() and "pending_human_gate" in combined
+    assert "not approved" in combined.lower() or "reject" in combined.lower()
+
+
+def test_state_template_pending_human_gate_fields() -> None:
+    state = read_rel("templates/state.yaml")
+    assert "pending_human_gate:" in state
+    assert "gate_prompted_at:" in state
+    assert "human_spec_gate" in state
+    assert "final_human_gate" in state
+
+
+def test_approved_spec_not_in_canonical_state_template() -> None:
+    state = read_rel("templates/state.yaml")
+    approved_block = state.split("approved:", 1)[1].split("\nreviewed:", 1)[0]
+    assert "human_spec_gate:" in approved_block
+    assert "final_human_gate:" in approved_block
+    assert "\n  spec:" not in approved_block and "  spec: false" not in approved_block
+
+
+def test_plan_start_rule_uses_human_spec_gate_not_approved_spec() -> None:
+    skill = read_rel("SKILL.md")
+    goal = read_rel("goal/SKILL.md")
+    spec = read_rel("spec/SKILL.md")
+    combined = skill + goal + spec
+    assert (
+        "Plan may start only when:" in combined
+        or "Plan must not start until:" in combined
+    )
+    assert "approved.human_spec_gate == true" in combined
+    assert 'pending_human_gate == ""' in combined
+    assert "reviewed.spec == true" in combined
+    assert "Do not use `approved.spec`" in combined or "not `approved.spec`" in combined
+
+
 def test_markdown_relative_links_resolve_under_dev_process_skill() -> None:
     """Fail if Markdown points to missing paths (catches ../../ typos vs skill layout)."""
 

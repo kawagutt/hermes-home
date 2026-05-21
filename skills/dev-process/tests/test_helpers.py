@@ -39,8 +39,9 @@ def make_task(tmp_path: Path) -> Path:
 task_id: "20260510_example"
 current_stage: "plan"
 current_phase: ""
+pending_human_gate: ""
+gate_prompted_at: ""
 approved:
-  spec: true
   human_spec_gate: true
   final_human_gate: false
 reviewed:
