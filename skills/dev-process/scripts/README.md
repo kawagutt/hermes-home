@@ -6,7 +6,9 @@ Helpers may update task-local artifacts only. They must not push, merge, commit,
 
 ## Dependencies
 
-The Python helpers require `PyYAML` (`import yaml`). Use the repository environment if available; otherwise install it in the active environment before running helpers.
+The Python helpers require `PyYAML` (`import yaml`). Use the repository environment if available; otherwise install it in the active environment before running helpers. This is a **dev-process helper environment dependency**: do not add `PyYAML` to a project's `pyproject.toml`/runtime dependencies solely because these Hermes helpers need it, unless that project intentionally vendors or depends on the helper scripts.
+
+If helpers fail with `ModuleNotFoundError: No module named 'yaml'`, record it as a dev-process helper-environment issue in the task timeline/gate artifact, run the preflight below, and fix the Hermes/helper environment rather than changing product dependencies.
 
 **Preflight (recommended at task start):**
 
