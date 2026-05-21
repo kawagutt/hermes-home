@@ -6,6 +6,7 @@
 task_id: ""
 current_stage: ""      # e.g. spec | plan | test | implementation | final | final_human_gate
                        # Gate wait is authoritative in pending_human_gate (not current_stage alone).
+current_job: ""        # v4: open job id from jobs.yaml (cleared on job close)
 current_phase: ""      # e.g. 01 or null when N/A
 
 # Human gate wait (authoritative). Set by gate presenter before numbered choices in chat; cleared after any explicit human gate decision.
@@ -15,14 +16,11 @@ gate_prompted_at: ""        # ISO-8601 timestamp when gate choices were prepared
 # Set when plan is approved (light | standard | deep). Leave empty until then; helpers may infer from artifacts.plan.
 review_depth_preset: ""
 
-# Set from approved plan when known (true | false). null = infer (validate_model_governance.py).
+# Pre-v4: set from approved plan (true | false). null = infer (legacy validators).
+# v4: session/model evidence is always via jobs.yaml; this field is optional / ignored.
 model_usage_required: null
 
-# Optional: last Hermes profile resolution from dp_hermes.py / dp_stage_boundary.py (--record-state on dp_hermes).
-# last_hermes_profile: ""
-# last_dev_process_action: ""
-# last_resolution_source: ""   # action | stage
-# last_model_stage_id: ""      # usage stage id (stage_actions key) used at last handoff
+# v4: session/model/profile evidence lives in jobs.yaml only (not last_* fields here).
 
 # Hard human gates only (human_spec_gate, final_human_gate). Gate decisions use these keys — not approved.spec.
 # Legacy: approved.spec in older task state.yaml is non-canonical; ignore for plan legality; use approved.human_spec_gate.

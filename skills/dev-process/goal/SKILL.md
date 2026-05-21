@@ -20,24 +20,34 @@ When continuing an existing task, read `.hermes/tasks/<task-id>/state.yaml` firs
 
 When the approved plan is written, set **`state.yaml` → `review_depth_preset`** to `light`, `standard`, or `deep` (must match the plan). If omitted, helpers infer it from **`artifacts.plan`** when possible.
 
-## Stage-boundary model profile and usage (default)
+## v4 (new tasks)
 
-**`current_stage` vs `--stage-id`:** `state.yaml` → `current_stage` is the orchestrator stage (`spec`, `plan`, `test`, `implementation`, `final`, …). **`--stage-id`** is the **usage stage id** (`stage_actions` key) for `artifacts.model_usage` rows and profile resolution when review, gates, or boundary recording need a different profile than `stage_defaults[current_stage]`. **Do not launch `dp_hermes.py` for review, gates, or boundary recording using only `current_stage`**—always pass the usage **`--stage-id`** (or the matching **`--action`**). With `current_stage=implementation` and no `--stage-id`, resolution uses `stage_defaults` → `dp-code`, which is wrong for checkpoint review.
+**`1 /goal = 1 job` only** — then STOP. Full contract: [validation/SKILL.md § v4 Job Contract](../validation/SKILL.md#v4-job-contract-canonical--new-tasks-only).
 
-| Work | `current_stage` | `--stage-id` at launch |
-|------|-----------------|------------------------|
-| spec draft | `spec` | omit → `dp-strong` via `stage_defaults` |
-| spec review | `spec` | `spec_review` |
-| implementation | `implementation` | `implementation` |
-| checkpoint review (workers) | `implementation` | `--action review_*` (sessions in `review_manifest.yaml` only) |
-| implementation phase (primary) | `implementation` | `implementation_phase_NN` |
-| final review | `final` | `final_review` |
+```text
+run-dp job start --role <role> [--handoff-in path ...]
+  → new Hermes session
+  → work
+  → write handoff_out
+run-dp job close --session-export ...
+run-dp validate --strict   # before final_human_gate numbered approval
+```
 
-**Checkpoint reviews:** Review worker and synthesis sessions are recorded only in `reviews/implementation_phase_NN/round_MM/review_manifest.yaml`; do **not** add them to `artifacts.model_usage`. Primary implementation phase rows use `--stage-id implementation_phase_NN`. Final review uses `--stage-id final_review`. Reviewer launch details: [review/SKILL.md](../review/SKILL.md), [scripts/README.md](../scripts/README.md). With `current_stage=implementation`, **`dp_hermes.py` exits by default** if neither `--stage-id` nor `--action` is set (avoids silent `dp-code` resolution); use `--relaxed-launch` only when a warning is enough.
+Session/model evidence: `jobs.yaml` only. Display: `run-dp render model-usage|review-summary`.
 
-At **primary segment boundaries**, follow [validation/SKILL.md § Primary segment boundary completion](../validation/SKILL.md#primary-segment-boundary-completion) (canonical checklist). For **`standard`** / **`deep`**, a bounded `/goal` chain **must not** cross a primary segment boundary in one Hermes session (even when the profile is unchanged). **STOP** and restart with `dp_hermes.py --stage-id <next> --record-state -- chat`. When **`model_usage_required`** is **true** (or plan **`Model usage record required?`** is **yes**), do **not** advance the task/orchestrator to the **next primary segment** until the completed segment’s **`model_usage`** boundary row is recorded per that checklist (when the boundary maps to **`current_stage`**, do not update **`current_stage`** before the row exists—e.g. **`implementation_phase_NN`** usage rows while **`current_stage`** stays **`implementation`**). Role boundaries alone are not stops; primary segment boundaries are session stops. `handoff_required` / `session_reset_required` violations are caught by **`validate_model_governance.py --strict`** before final.
+## Pre-v4 only (tasks without jobs.yaml)
 
-Safe deterministic helpers — no human confirmation. On helper failure, record `unknown` with reason and continue only until the next governance checkpoint; **`standard`** / **`deep`** tasks require **`validate_model_governance.py --strict`** before final.
+**`current_stage` vs `--stage-id`:** orchestrator stage vs usage stage id for `model_usage` / `dp_hermes.py`. Do not launch review using only `current_stage=implementation` (resolves to `dp-code`).
+
+| Work | `current_stage` | Launch |
+|------|-----------------|--------|
+| spec draft | `spec` | `dp_hermes.py` (stage default) |
+| spec review | `spec` | `--stage-id spec_review` or `review_*` |
+| implementation phase | `implementation` | `--stage-id implementation_phase_NN` |
+| checkpoint review | `implementation` | `--action review_*` → `review_manifest.yaml` |
+| final review | `final` | `--stage-id final_review` |
+
+Primary boundaries: [validation/SKILL.md](../validation/SKILL.md) (legacy sections) + `dp_stage_boundary.py`. Governance: `validate_model_governance.py --strict`. **Do not mix** with v4 `run-dp` on the same task.
 
 ## Human gate invariants (/goal STOP)
 

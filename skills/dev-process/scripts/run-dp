@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Wrapper for run-dp public API (v4 Job Contract).
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -x "${SCRIPT_DIR}/../../../.venv-dp/bin/python" ]]; then
+  exec "${SCRIPT_DIR}/../../../.venv-dp/bin/python" "${SCRIPT_DIR}/run_dp.py" "$@"
+fi
+exec python3 "${SCRIPT_DIR}/run_dp.py" "$@"

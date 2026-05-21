@@ -1,0 +1,15 @@
+# v4 Job Contract — session/model/job evidence (SOT). Helpers only.
+schema_version: 4
+task_id: ""
+jobs: []
+# Example closed job:
+#   - id: job_0000
+#     role: spec
+#     session_id: "20260521_120000_abcdef"
+#     profile: dp-strong
+#     status: closed
+#     handoff_in: []
+#     handoff_out: handoffs/0000_spec.md
+#     artifacts_out:
+#       spec: 0001_spec.md
+#     closed_at: "2026-05-21T12:00:00+00:00"

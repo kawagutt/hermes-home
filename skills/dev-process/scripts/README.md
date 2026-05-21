@@ -1,5 +1,24 @@
 # dev-process helper scripts
 
+## v4 public API (`run-dp`)
+
+New tasks use the **Job Contract** ([`validation/SKILL.md`](../validation/SKILL.md)). Prefer:
+
+```bash
+skills/dev-process/scripts/run-dp task start --task-dir .hermes/tasks/<task-id>
+skills/dev-process/scripts/run-dp job start --task-dir ... --role spec
+skills/dev-process/scripts/run-dp job close --task-dir ... --session-export /tmp/s.jsonl
+skills/dev-process/scripts/run-dp render model-usage --task-dir ...    # → generated/model_usage.md
+skills/dev-process/scripts/run-dp render review-summary --task-dir ... # → generated/review_summary.md
+skills/dev-process/scripts/run-dp validate --task-dir ... --strict
+```
+
+Use `.venv-dp` when present: `/data/github/hermes-home/.venv-dp/bin/python skills/dev-process/scripts/run_dp.py …`
+
+Pre-v4 tasks without `jobs.yaml`: legacy validators below still apply; v4 validation prints *not applicable*.
+
+---
+
 These helpers are small, deterministic, local tools for reducing mechanical process mistakes. They are **not** a workflow engine and do not replace role judgment, reviewer synthesis, human gates, or approved plans.
 
 Helpers may update task-local artifacts only. They must not push, merge, commit, or edit product code.
@@ -10,7 +29,7 @@ The Python helpers require `PyYAML` (`import yaml`). Use the repository environm
 
 If helpers fail with `ModuleNotFoundError: No module named 'yaml'`, record it as a dev-process helper-environment issue in the task timeline/gate artifact, run the preflight below, and fix the Hermes/helper environment rather than changing product dependencies.
 
-**Preflight (recommended at task start):**
+**Preflight:** `run-dp task start` runs `check_helper_env.py` automatically. Manual:
 
 ```bash
 python3 skills/dev-process/scripts/check_helper_env.py
@@ -26,7 +45,7 @@ python3 -m pip install PyYAML
 
 ## `validate_state.py`
 
-**Role:** state consistency and **governance preflight** (early stop). **Not** the canonical session/model governance audit—that is [`validate_model_governance.py`](#validate_model_governancepy) with `--strict`.
+**Role:** state consistency (all tasks) and **governance preflight** (pre-v4 only). v4 tasks (`jobs.yaml` present): skips `last_hermes_profile` preflight; use `run-dp validate --strict` for session/model audit.
 
 ```bash
 python3 skills/dev-process/scripts/validate_state.py .hermes/tasks/<task-id>
@@ -94,6 +113,10 @@ Behavior:
 - Appends a 4-column timeline row: `Time | Stage | Action | Output`.
 - Use `--dry-run` before `--apply`.
 - `--skip-git-check` exists only for isolated tests and unusual manual recovery cases; routine use should verify the current git branch.
+
+## Legacy helpers (pre-v4)
+
+**Do not use on v4 tasks** (those with `jobs.yaml`). Use [`run-dp`](#v4-public-api-run-dp) instead.
 
 ## `dp_hermes.py`
 
@@ -226,7 +249,7 @@ python3 skills/dev-process/scripts/session_usage.py /tmp/hermes_session.jsonl --
 
 Log grep is last resort only; do not paste raw log output into task artifacts (secrets, prompts, tokens). See [validation/SKILL.md](../validation/SKILL.md) evidence preference order.
 
-`dp_hermes.py` **exits with code 2 by default** when `current_stage=implementation` without `--stage-id` / `--action`. Opt out with `--relaxed-launch` or `DEV_PROCESS_RELAX_LAUNCH=1` (warning only). `--strict-launch` / `DEV_PROCESS_STRICT_LAUNCH=1` force strict even when relaxed is set.
+`dp_hermes.py` **exits with code 2** when `current_stage=implementation` without `--stage-id` / `--action` (legacy pre-v4 launcher). v4 tasks use `run-dp job start` / `job close` instead.
 
 ## `dp_stage_boundary.py`
 

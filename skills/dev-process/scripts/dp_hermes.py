@@ -147,13 +147,7 @@ def main() -> None:
     parser.add_argument(
         "--strict-launch",
         action="store_true",
-        help="Fail when current_stage=implementation and neither --stage-id nor --action is set "
-        "(default unless --relaxed-launch or DEV_PROCESS_RELAX_LAUNCH=1).",
-    )
-    parser.add_argument(
-        "--relaxed-launch",
-        action="store_true",
-        help="Warn only (do not exit) when current_stage=implementation without --stage-id/--action.",
+        help="Fail when current_stage=implementation and neither --stage-id nor --action is set (default).",
     )
 
     args = parser.parse_args(wrapper_argv)
@@ -194,9 +188,7 @@ def main() -> None:
     def _env_truthy(name: str) -> bool:
         return os.environ.get(name, "").strip().lower() in ("1", "true", "yes")
 
-    relaxed_launch = args.relaxed_launch or _env_truthy("DEV_PROCESS_RELAX_LAUNCH")
-    strict_launch = args.strict_launch or _env_truthy("DEV_PROCESS_STRICT_LAUNCH")
-    enforce_strict_launch = strict_launch or not relaxed_launch
+    enforce_strict_launch = True
     if not action_arg and not stage_id_arg:
         try:
             state = load_task_state(task_dir)

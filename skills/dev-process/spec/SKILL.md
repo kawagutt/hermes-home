@@ -8,6 +8,9 @@ description: >-
 
 # Spec stage
 
+**v4:** `run-dp job start --role spec` → work → `handoff_out` → `run-dp job close`. See [validation/SKILL.md § v4 Job Contract](../validation/SKILL.md#v4-job-contract-canonical--new-tasks-only).
+
+
 Produce and stabilize **what** to build before any implementation or test code work.
 
 ## Outputs
@@ -47,7 +50,7 @@ After **`artifacts.spec`** is drafted, route reviews via [review/SKILL.md](../re
 
 Detailed checklists live in `review/targets/spec.md` and `review/agents/*.md`; do not duplicate them here.
 
-**Session evidence:** Spec review rounds → [review/SKILL.md § Review round session evidence](../review/SKILL.md#review-round-session-evidence-completion). When **`model_usage_required`** is true, after the spec **primary** draft segment completes, record its boundary row in **`artifacts.model_usage`** per [validation/SKILL.md § Primary segment boundary completion](../validation/SKILL.md#primary-segment-boundary-completion) before treating spec work as governance-complete for that segment.
+**Session evidence (v4):** `run-dp job start --role spec` / `review_worker` / `review_synthesis` — [validation/SKILL.md § v4 Job Contract](../validation/SKILL.md#v4-job-contract-canonical--new-tasks-only), [review/SKILL.md § v4 review jobs](../review/SKILL.md#v4-review-jobs). **Pre-v4:** [review/SKILL.md § Pre-v4](../review/SKILL.md#pre-v4-review-round-session-evidence).
 
 ## Human spec gate
 

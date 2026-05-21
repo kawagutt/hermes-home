@@ -16,30 +16,37 @@ Before starting a review round:
 - Use approved artifacts, concise diffs, test outputs, and prior review summaries only.
 - Do **not** pass ImplementationAgent chat logs or rationale unless the human explicitly requests them.
 - Confirm `state.yaml` / latest synthesis / gate approvals match the review target.
-- Launch Hermes with the correct usage **`--stage-id`** (or **`--action review_*`**) per [goal/SKILL.md](../goal/SKILL.md)—**never** rely on `current_stage=implementation` alone (that resolves to `dp-code`). **`dp_hermes.py` fails by default** when `current_stage=implementation` and neither is set; use `--relaxed-launch` or `DEV_PROCESS_RELAX_LAUNCH=1` only if a warning is acceptable.
+- **v4:** Each reviewer/synthesis run is a separate `run-dp job start --role review_worker|review_synthesis` with its own session; close with `run-dp job close` + export. See [validation/SKILL.md § v4 Job Contract](../validation/SKILL.md#v4-job-contract-canonical--new-tasks-only).
+- **Pre-v4:** Launch with **`--stage-id`** or **`--action review_*`** per [goal/SKILL.md](../goal/SKILL.md); record sessions in `review_manifest.yaml`.
 
-## Review round session evidence (completion)
+## v4 review jobs
 
-**Governance invariant:** A stage is not complete for governance purposes until its required session evidence is recorded.
+**Governance invariant:** A review round is not complete until every required reviewer and synthesis are **closed jobs** in `jobs.yaml` with distinct session ids.
 
-**Review invariant:** A reviewer or synthesis worker is not complete until its session is recorded in **`review_manifest.yaml`**.
+**Per required reviewer** (preset list in [presets.md](presets.md)):
 
-**State update responsibility:**
+1. `run-dp job start --role review_worker --reviewer <agent> --review-target <stage> --review-round N --handoff-in <paths…>` (list target artifact handoff + any prior reviewer handoffs as needed)
+2. New Hermes session → write `reviews/<target>/round_NN/<agent>.md` and fill **`handoff_out`**
+3. `run-dp job close --session-export …` with `artifacts_out review=reviews/.../<agent>.md`
 
-- **Reviewer sessions do not update `state.yaml`.**
-- **Synthesis session owns** the review state update (`review_rounds`, `latest_reviews`, and **Proceed-only** `reviewed.*` per [Who updates `state.yaml`](#who-updates-stateyaml)). Synthesis must **not** set `approved.*`, `pending_human_gate`, or `gate_prompted_at`.
+**Synthesis** (separate session from all reviewers):
 
-Each **required reviewer perspective** runs in a **separate Hermes session** unless the human explicitly waives this in the task record. Do **not** run multiple reviewer perspectives in one shared session.
+1. `run-dp job start --role review_synthesis --review-target <stage> --review-round N --handoff-in <all reviewer handoff_out paths…>`
+2. Write **`synthesis.md`**; update **`state.yaml`** (`review_rounds`, `latest_reviews`, Proceed-only **`reviewed.*`**) — synthesis must **not** set `approved.*`, `pending_human_gate`, or `gate_prompted_at`
+3. `run-dp job close` with export
 
-**Completion checklist** (each review round):
+Create `reviews/<stage>/round_NN/` when missing (mkdir as part of review_worker job setup). **`review_round.py` is internal/deprecated for v4** — not a public API. Session evidence is **not** in `review_manifest.yaml` on v4 tasks.
 
-1. `review_round.py <task-dir> <stage> --create` → `reviews/<stage>/round_NN/`
-2. `dp_review_job.py … --review-stage <stage> --round NN --init-manifest`
-3. For **each required reviewer**: resolve with `dp_review_job.py --print-json` → `dp_hermes.py --action review_<agent> -- chat` (**no** `--record-state`) → **`dp_review_job.py --record-session`** before starting the next reviewer
-4. **Synthesis** in a **separate session** from all reviewers: write **`synthesis.md`**, update **`state.yaml`** (`review_rounds` / `latest_reviews` / Proceed-only `reviewed.*`), then **`dp_review_job.py --record-session`** for the synthesis worker
-5. A manifest entry with **`session_id: ""`** means that worker is **not complete**—do not treat the round as finished for governance
+## Pre-v4: Review round session evidence
 
-Review sessions live in **`reviews/<stage>/round_NN/review_manifest.yaml`** only. **`artifacts.model_usage`** records **primary** loop boundaries only—do **not** duplicate reviewer or synthesis worker rows there. Commands: [scripts/README.md § `dp_review_job.py`](../scripts/README.md#dpreview_jobpy).
+**Pre-v4 only** (tasks without `jobs.yaml`). Review invariant: each worker session recorded in **`review_manifest.yaml`**.
+
+1. `review_round.py <task-dir> <stage> --create`
+2. `dp_review_job.py … --init-manifest`
+3. Per reviewer: `dp_hermes.py --action review_<agent>` → `dp_review_job.py --record-session`
+4. Synthesis: separate session → `synthesis.md` → state update → `dp_review_job.py --record-session`
+
+Commands: [scripts/README.md § Legacy `dp_review_job.py`](../scripts/README.md#legacy-helpers-pre-v4).
 
 Preset reviewer lists: [presets.md](presets.md) (source of truth); machine mirror: [`config/review_targets.yaml`](../config/review_targets.yaml).
 

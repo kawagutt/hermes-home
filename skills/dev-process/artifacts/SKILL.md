@@ -130,7 +130,7 @@ Append-only history (task root):
 
 - [templates/timeline.md](../templates/timeline.md) → `artifacts.timeline` (filename follows § **Numbered task-root artifacts** on first materialization) — chronological log of stages and artifacts.  
 - [templates/rework_log.md](../templates/rework_log.md) → `artifacts.rework_log` (same) — each blocking rework: source synthesis, owner, artifacts changed, rerun rounds.
-- [templates/model_usage.md](../templates/model_usage.md) → `artifacts.model_usage` — stage / preset / reasoning effort / session evidence for recording model cost attribution vs dev-process lifecycle ([validation/SKILL.md — Model usage](../validation/SKILL.md#model-usage)).
+- **v4:** `generated/model_usage.md` from `run-dp render model-usage` (template [templates/model_usage.md](../templates/model_usage.md) is header-only). **Pre-v4:** `artifacts.model_usage` numbered task-root file + `dp_stage_boundary.py` rows.
 
 ## Review outputs by stage
 
@@ -146,7 +146,7 @@ Use **two‑digit** `NN` (`round_01`, `round_02`, …); extend width if rounds e
 
 Within each `round_NN/`, use **unprefixed** conventional filenames (e.g. `requirements.md`, `architecture.md`, `synthesis.md`) per [review/SKILL.md](../review/SKILL.md) and the standard recipes—**not** `NNNN_` prefixes (those apply only to **task-root** artifacts).
 
-**`review_manifest.yaml`** (one per `round_NN/`): canonical record of **review worker** Hermes sessions (`session_id`, token summary, evidence pointer). Template: [review/templates/review_manifest.yaml](../review/templates/review_manifest.yaml). Initialize with `dp_review_job.py --init-manifest`. Do **not** duplicate reviewer worker sessions in **`artifacts.model_usage`**—that file is for **primary** loop usage stages only.
+**v4:** Review sessions are **closed jobs** in `jobs.yaml`; optional display in generated `review_summary.md`. **Pre-v4:** **`review_manifest.yaml`** per `round_NN/` ([review/templates/review_manifest.yaml](../review/templates/review_manifest.yaml), `dp_review_job.py`).
 
 Example layout:
 

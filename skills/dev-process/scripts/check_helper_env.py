@@ -66,6 +66,11 @@ def main() -> int:
     try:
         validate_policy(load_yaml(policy_path))
         for name in (
+            "run_dp.py",
+            "dp_job_start.py",
+            "dp_job_close.py",
+            "render_jobs.py",
+            "validate_jobs_v4.py",
             "dp_hermes.py",
             "dp_stage_boundary.py",
             "dp_review_job.py",

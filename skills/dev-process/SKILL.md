@@ -37,7 +37,8 @@ Load only what the current action needs; do **not** read every sub-skill by defa
 | Test stage | [test/SKILL.md](test/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md), [git/SKILL.md](git/SKILL.md) |
 | Implementation | [implementation/SKILL.md](implementation/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md) |
 | Review round | [review/SKILL.md](review/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md) |
-| Boundary / governance | [validation/SKILL.md § Minimal rules](validation/SKILL.md#minimal-rules-canonical-summary), [scripts/README.md](scripts/README.md) |
+| Boundary / governance (v4) | [validation/SKILL.md § v4 Job Contract](validation/SKILL.md#v4-job-contract-canonical--new-tasks-only), `run-dp` |
+| Boundary / governance (pre-v4) | [scripts/README.md](scripts/README.md) legacy section |
 | Human gate | [human-gates/SKILL.md](human-gates/SKILL.md), [templates/](templates/) |
 
 ## Canonical pipeline
@@ -77,7 +78,7 @@ Details:
 
 Parallel work is allowed only for **drafts outside the current stage** or **independent reviewer jobs**. Do not skip plan review to start tests.
 
-NodeFlow integration is **out of scope** for dev-process v3 unless a future approved task explicitly adds it.
+NodeFlow integration is **out of scope** unless a future approved task explicitly adds it.
 
 ## Starting or continuing a task
 
@@ -85,12 +86,9 @@ Use [goal/SKILL.md](goal/SKILL.md) for task id format, `state.yaml` creation, re
 
 ## Session and model evidence
 
-Primary segment boundaries and review worker sessions must leave **third-party-verifiable** session evidence. Canonical procedures (completion conditions, not optional tips):
+**v4 tasks** (`jobs.yaml` present): one Hermes session per job; evidence in **`jobs.yaml`**; display via `run-dp render`. Contract: [validation/SKILL.md § v4 Job Contract](validation/SKILL.md#v4-job-contract-canonical--new-tasks-only). Reviews: [review/SKILL.md § v4 review jobs](review/SKILL.md#v4-review-jobs).
 
-- **Primary loop** → [validation/SKILL.md § Primary segment boundary completion](validation/SKILL.md#primary-segment-boundary-completion) (`artifacts.model_usage` via `dp_stage_boundary.py`)
-- **Review rounds** → [review/SKILL.md § Review round session evidence](review/SKILL.md#review-round-session-evidence-completion) (`review_manifest.yaml` via `dp_review_job.py`)
-
-Do not duplicate reviewer sessions in **`artifacts.model_usage`**.
+**Pre-v4 tasks** (no `jobs.yaml`): legacy `model_usage` rows + `review_manifest.yaml` — [scripts/README.md § Legacy helpers](scripts/README.md#legacy-helpers-pre-v4).
 
 ## Human gates
 

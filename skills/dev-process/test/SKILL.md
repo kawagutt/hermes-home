@@ -65,7 +65,7 @@ Use [review/SKILL.md](../review/SKILL.md).
 
 **Standard recipe:** target `test` → review agents `requirements`, `test_quality`, `checklist_compliance` → **synthesis:** yes (see [review/SKILL.md](../review/SKILL.md)).
 
-**Session evidence:** Test review rounds → [review/SKILL.md § Review round session evidence](../review/SKILL.md#review-round-session-evidence-completion). When **`model_usage_required`** is true, after the test **primary** segment (test authoring) completes, record its boundary row in **`artifacts.model_usage`** with `--stage-id test` per [validation/SKILL.md § Primary segment boundary completion](../validation/SKILL.md#primary-segment-boundary-completion) before treating test work as governance-complete for that segment.
+**Session evidence (v4):** `run-dp job start --role test` then review jobs per [review/SKILL.md § v4 review jobs](../review/SKILL.md#v4-review-jobs). **Pre-v4:** [review/SKILL.md § Pre-v4](../review/SKILL.md#pre-v4-review-round-session-evidence) + `artifacts.model_usage` boundary rows.
 
 Blocking findings → **do not** start ImplementationAgent until resolved via test revisions or explicit spec/plan amendment loop.
 

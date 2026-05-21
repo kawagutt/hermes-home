@@ -156,8 +156,9 @@ def test_test_skill_matches_explicit_role_transition_policy() -> None:
 def test_safe_deterministic_helper_execution_documented() -> None:
     validation_skill = read_rel("validation/SKILL.md")
     assert "### Safe deterministic helper execution" in validation_skill
+    assert "run-dp" in validation_skill
     assert "validate_state.py" in validation_skill
-    assert "review_round.py --dry-run" in validation_skill
+    assert "review_round.py" in validation_skill
 
 
 def test_human_decision_prompt_template_exists_and_is_linked() -> None:
@@ -187,83 +188,66 @@ def test_japanese_summary_templates_require_individual_decisions_before_ok() -> 
         assert "最終承認" in text
 
 
-def test_model_usage_review_can_be_skipped_for_light_tasks() -> None:
+def test_model_usage_review_pre_v4_plan_field() -> None:
+    """Pre-v4 plan field; v4 uses jobs.yaml for all presets."""
     plan = read_rel("templates/plan.md")
     validation = read_rel("validation/SKILL.md")
     assert "Model usage record required?" in plan
-    assert "yes / no" in plan
-    assert "leave **`artifacts.model_usage`** empty" in validation
+    assert "jobs.yaml" in validation
 
 
 def test_model_usage_warns_not_to_paste_raw_logs_and_is_stage_attribution_aid() -> None:
     model_usage = read_rel("templates/model_usage.md")
     validation = read_rel("validation/SKILL.md")
-    text = strip_md_emphasis(model_usage + validation)
-    assert "Do not paste raw log" in text
-    assert "secrets" in text
-    assert "redacted" in text.casefold()
-    assert "does not replace" in model_usage.casefold()
-    assert "insights" in model_usage.casefold() or "Hermes" in model_usage
+    assert "jobs.yaml" in model_usage
+    assert "generated/" in model_usage
+    assert "run-dp render" in model_usage
+    assert "Do not edit by hand" in model_usage
+    assert "run-dp job close" in validation
 
 
 def test_primary_segment_boundary_completion_in_validation() -> None:
     validation = read_rel("validation/SKILL.md")
     plain = strip_md_emphasis(validation)
-    assert "### Primary segment boundary completion" in validation
+    assert "v4 Job Contract" in validation
     assert "hermes sessions export" in validation
-    assert "dp_stage_boundary.py" in validation
-    assert "--print-markdown-row" in validation
-    assert "--record-state" in validation
-    assert "only when needed" in validation
-    assert "not complete until" in validation
-    assert "Primary boundary row must exist" in validation
-    assert "temporary unknown" in validation
-    assert "before final" in plain
-    assert "does not waive missing rows" in plain
-    assert "exit 0" in plain or "exit 0;" in plain
-    assert "validate_model_governance.py --strict" in validation
+    assert "run-dp job close" in validation
+    assert "run-dp validate --strict" in validation
+    assert "No waiver" in validation
+    assert "before final" in plain or "final_human_gate" in plain
 
 
 def test_model_usage_template_boundary_completion_and_dp_stage_boundary() -> None:
     model_usage = read_rel("templates/model_usage.md")
-    plain = strip_md_emphasis(model_usage)
-    assert "## Segment boundary completion" in model_usage
-    assert "dp_stage_boundary.py" in model_usage
-    assert "not complete until" in model_usage
-    assert "review_manifest.yaml" in model_usage
-    assert "final_human_gate" in plain and "final_review" in plain
-    assert "does not waive missing rows" in plain
+    assert "Generated from jobs.yaml" in model_usage
+    assert "run-dp render model-usage" in model_usage
+    assert "review_summary.md" in model_usage
 
 
 def test_governance_waiver_scope_in_validation_and_model_usage() -> None:
     validation = strip_md_emphasis(read_rel("validation/SKILL.md"))
     model_usage = read_rel("templates/model_usage.md")
-    for text in (validation, model_usage):
-        assert "governance waiver marker" in text
-        assert "does not waive missing rows" in text
-    assert "missing last_hermes_profile" in model_usage
+    assert "No waiver" in validation
+    assert "review_manifest.yaml" not in model_usage or "review_summary" in model_usage
+    assert "unknown" not in validation.lower() or "does not" in validation
 
 
 def test_minimal_rules_preflight_vs_governance_canonical() -> None:
     validation = strip_md_emphasis(read_rel("validation/SKILL.md"))
     scripts_readme = read_rel("scripts/README.md")
-    assert "### Minimal rules (canonical summary)" in validation
-    assert "validate_state.py" in validation and "governance preflight" in validation
-    assert "validate_model_governance.py" in validation
-    assert "canonical session/model governance validator" in validation.lower()
-    assert "WARNING alone" in validation and "exit 0" in validation
-    assert "canonical session/model governance validator" in scripts_readme.lower()
-    assert "governance preflight" in scripts_readme
-    assert "not a substitute for" in scripts_readme
+    assert "### Minimal rules (orchestration)" in validation
+    assert "run-dp validate" in validation
+    assert "validate_state.py" in validation
+    assert "run-dp" in scripts_readme
+    assert "Job Contract" in scripts_readme
 
 
 def test_minimal_rules_human_gate_timeline_not_required_on_approval() -> None:
     validation = strip_md_emphasis(read_rel("validation/SKILL.md"))
     human_gates = read_rel("human-gates/SKILL.md")
-    assert "Human gate approval decisions" in validation
-    assert "timeline not required" in validation.lower()
-    assert "gate_prompted" in validation
-    assert "reject/rework" in validation
+    assert "pending_human_gate" in validation
+    assert "approved.*" in validation or "approved" in validation
+    assert "reject/rework" in validation.lower()
     # Approval path in companion skill does not require timeline append.
     assert "validate_state.py" in human_gates
     assert "timeline" in human_gates.lower()
@@ -275,49 +259,40 @@ def test_minimal_rules_human_gate_timeline_not_required_on_approval() -> None:
 
 def test_review_round_session_evidence_completion_checklist() -> None:
     review = read_rel("review/SKILL.md")
-    assert "## Review round session evidence (completion)" in review
-    assert "review_round.py" in review
-    assert "--init-manifest" in review
-    assert "--record-session" in review
-    assert "not complete until" in review
-    assert "Reviewer sessions do not update" in review
-    assert "state.yaml" in review
-    assert "Synthesis session owns" in review
+    assert "## v4 review jobs" in review
+    assert "run-dp job start" in review
+    assert "review_worker" in review
+    assert "Pre-v4" in review
     assert "review_manifest.yaml" in review
 
 
 def test_goal_links_primary_boundary_completion() -> None:
     goal = read_rel("goal/SKILL.md")
-    assert "Primary segment boundary completion" in goal
-    assert "model_usage_required" in goal
-    assert "do not advance" in goal.lower() or "Do **not** advance" in goal
+    assert "v4 Job Contract" in goal or "run-dp job" in goal
+    assert "1 /goal = 1 job" in goal
 
 
 def test_orchestrator_session_model_evidence_links() -> None:
     skill = read_rel("SKILL.md")
     assert "## Session and model evidence" in skill
-    assert "Primary segment boundary completion" in skill
-    assert "Review round session evidence" in skill
+    assert "v4 Job Contract" in skill or "jobs.yaml" in skill
+    assert "Pre-v4" in skill or "pre-v4" in skill
 
 
 def test_test_skill_links_session_evidence() -> None:
     test_skill = read_rel("test/SKILL.md")
-    assert "Review round session evidence" in test_skill
-    assert "Primary segment boundary completion" in test_skill
-    assert "--stage-id test" in test_skill
+    assert "v4" in test_skill
+    assert "run-dp" in test_skill or "review jobs" in test_skill
 
 
 def test_dp_hermes_strict_launch_default_documented() -> None:
     readme = read_rel("scripts/README.md")
     review = read_rel("review/SKILL.md")
     goal = read_rel("goal/SKILL.md")
-    assert (
-        "exit 2 by default" in readme.lower()
-        or "exits with code 2 by default" in readme
-    )
-    assert "DEV_PROCESS_RELAX_LAUNCH" in readme
-    assert "fails by default" in review
-    assert "exits by default" in goal.lower() or "exit by default" in goal.lower()
+    assert "run-dp" in readme
+    assert "exits with code 2" in readme.lower() or "job start" in readme
+    assert "run-dp job" in review or "v4" in review
+    assert "run-dp" in goal or "v4" in goal
 
 
 INVARIANT_REVIEWED_FINAL = (

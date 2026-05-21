@@ -128,18 +128,6 @@ class TestDpHermesResolve(unittest.TestCase):
         self.assertEqual(r.returncode, 2)
         self.assertIn("unknown action", r.stderr)
 
-    def test_stage_only_implementation_dp_code_when_relaxed(self) -> None:
-        task = self.tmp_path / "t5"
-        _write_state(task, "t5", "implementation")
-        r = _run(
-            task_dir=task,
-            action=None,
-            print_profile_only=True,
-            env_overrides={"DEV_PROCESS_RELAX_LAUNCH": "1"},
-        )
-        self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(r.stdout.strip(), "dp-code")
-
     def test_unknown_stage_exit_2(self) -> None:
         task = self.tmp_path / "t6"
         _write_state(task, "t6", "not_a_real_stage")
@@ -249,20 +237,6 @@ class TestDpHermesResolve(unittest.TestCase):
         self.assertEqual(r.returncode, 2, r.stderr)
         self.assertIn("current_stage=implementation", r.stderr)
         self.assertNotIn("WARNING:", r.stderr)
-
-    def test_implementation_without_stage_id_warns_when_relaxed(self) -> None:
-        task = self.tmp_path / "t_impl_relaxed"
-        _write_state(task, "t_impl_relaxed", "implementation")
-        r = _run(
-            task_dir=task,
-            print_json=True,
-            env_overrides={"DEV_PROCESS_RELAX_LAUNCH": "1"},
-        )
-        self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertIn("WARNING:", r.stderr)
-        self.assertIn("current_stage=implementation", r.stderr)
-        obj = json.loads(r.stdout)
-        self.assertEqual(obj["hermes_profile"], "dp-code")
 
     def test_review_worker_action_rejects_record_state(self) -> None:
         task = self.tmp_path / "t_rev_guard"

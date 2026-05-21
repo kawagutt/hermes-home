@@ -1,195 +1,146 @@
 ---
 name: dev-process-validation
 description: >-
-  Cost-aware validation, model/reasoning strength policy, Python/Ruff precedence,
-  safe deterministic helper execution, script helper listing, and model usage evidence hints.
-  Use when choosing checks for a phase or running helpers.
+  v4 Job Contract (J1–J7), run-dp helpers, cost-aware validation, model policy,
+  and safe deterministic helper execution. Use when starting/closing jobs or validating tasks.
 ---
 
 # Validation and helpers (`dev-process`)
 
+## v4 Job Contract (canonical — new tasks only)
+
+**One sentence:** Each new role work starts in a **new Hermes session** as a **job**; on finish, **close** records evidence in `jobs.yaml` and a **handoff** briefs the next job.
+
+| # | Rule | Summary |
+|---|------|---------|
+| J1 | OneSessionOneJob | 1 session = 1 job |
+| J2 | OneJobOneRole | 1 job = 1 role (no mixing) |
+| J3 | AlwaysNewSession | Continuation, rework, re-review → new session |
+| J4 | HandoffOnlyContext | Do not rely on prior chat. **`handoff_in` is the only cross-session briefing entry.** Authoritative content: spec/plan/reviews/state/repo |
+| J5 | HelperOnlyEvidence | `jobs.yaml` via helpers only. Helper **reserves** `handoff_out` paths; the **job agent writes** handoff content. `expected_profile` / `observed_profile` (from export) must match when observable. |
+| J6 | CloseBeforeNext | `job close` exit 0 before next `job start` |
+| J7 | StrictBeforeFinalGate | `run-dp validate --strict` exit 0 before numbered **final** approval. **No waiver.** |
+
+**Scope:** v4 applies only to **new** tasks with `jobs.yaml`. Completed or pre-v4 tasks are historical — do not repair them to satisfy v4.
+
+**Roles (fixed):** `spec` | `plan` | `test` | `implementation` | `review_worker` | `review_synthesis` | `final_review` | `final_summary`
+
+| role | Hermes profile |
+|------|----------------|
+| spec, plan, review_synthesis, final_review, final_summary | `dp-strong` |
+| test, implementation, review_worker | `dp-code` |
+
+`review_worker` also records `reviewer`, `review_target`, `review_round` on the job.
+
+**Preset** changes review depth only; J1–J7 apply to all presets.
+
+### Public API (`run-dp`)
+
+```bash
+run-dp task start --task-dir .hermes/tasks/<task-id>
+run-dp job start --task-dir ... --role <role> [--handoff-in PATH ...] [--reviewer ... --review-target ... --review-round N]
+run-dp job close --task-dir ... --session-export <path.jsonl> [--session-id <id>] [--artifacts-out key=path ...]
+run-dp render model-usage --task-dir ...
+run-dp render review-summary --task-dir ...
+run-dp validate --task-dir ... [--strict]
+```
+
+Use the dp venv when available: `/data/github/hermes-home/.venv-dp/bin/python` or `skills/dev-process/scripts/run-dp`.
+
+**Bounded `/goal`:** `1 /goal = 1 job` then STOP. Deep review: one `/goal` per reviewer job.
+
+### Data model
+
+| File | Role |
+|------|------|
+| `jobs.yaml` | **SOT** for session / model / job evidence |
+| `handoffs/*.md` | Cross-session briefing (navigation layer) |
+| `state.yaml` | Orchestration only (`current_stage`, `current_job`, gates, `reviewed.*`, `artifacts.*`) |
+| `generated/model_usage.md`, `generated/review_summary.md` | **Generated** display artifacts (`run-dp render`; not numbered task-root artifacts) |
+
+v4 **does not** use: `review_manifest.yaml`, `Session: unknown`, governance waivers, `last_hermes_profile` on new tasks.
+
+### Job lifecycle
+
+1. `run-dp task start` — `check_helper_env.py` first, then `jobs.yaml`, `state.yaml`, `handoffs/`, `generated/`.
+2. `run-dp job start --role …` — opens job, probes `hermes --profile=<expected> version`, prints `hermes_launch` (does not start interactive chat). **No session id yet.**
+3. Run `hermes_launch` in a **new** session; work only there (J4: read `handoff_in` list + artifacts).
+4. Agent writes substantive briefing to `handoff_out` (required sections; not empty).
+5. `hermes sessions export …` → `run-dp job close --session-export …` — attaches `session_id` and usage to the job.
+6. `run-dp render` refreshes `model_usage.md` / `review_summary.md`.
+7. Before **final_human_gate** numbered approval: `run-dp validate --strict` must exit 0 (J7).
+
+**handoff_in:** YAML list (even for one file). Required for every role except `spec`. For `review_synthesis`, list all reviewer `handoff_out` paths plus the review target handoff.
+
+**handoff_out:** Path reserved at `job start`; agent fills before `job close`. Close validates non-empty content. No auto-generated stubs.
+
+### Pre-v4 validation
+
+If `jobs.yaml` is missing:
+
+```text
+This task has no jobs.yaml and appears to be pre-v4.
+v4 validation is not applicable.
+```
+
+`run-dp validate` on pre-v4 tasks prints *not applicable* and exits 0. Use legacy `validate_model_governance.py --strict` for pre-v4 tasks. Do not run `run-dp validate --strict` expecting v4 job rules on old tasks.
+
+### Legacy scripts (pre-v4 / internal)
+
+`dp_stage_boundary.py`, `dp_review_job.py`, `validate_model_governance.py` remain for old tasks. **Do not** use them on new v4 tasks.
+
+---
+
 ### cost-aware validation and model use
 
-Prefer deterministic commands over LLM reasoning for mechanical checks: tests, linting, content searches, file existence, artifact paths, YAML/Markdown syntax, and simple validation that required files exist. Cheap/medium checker agents are appropriate for routine artifact completeness, checklist compliance, naming/doc consistency, and simple log summaries. Reserve higher-cost models for spec/plan reasoning, architecture/impact review, ambiguous failure diagnosis, final synthesis, and blocker triage. Cheap checkers may flag possible blockers, but final blocker decisions must escalate to synthesis or a higher-reasoning reviewer. This is process guidance, not runtime model-routing automation.
+Prefer deterministic commands over LLM reasoning for mechanical checks: tests, linting, content searches, file existence, artifact paths, YAML/Markdown syntax, and simple validation that required files exist. Cheap/medium checker agents are appropriate for routine artifact completeness, checklist compliance, naming/doc consistency, and simple log summaries. Reserve higher-cost models for spec/plan reasoning, architecture/impact review, ambiguous failure diagnosis, final synthesis, and blocker triage.
 
-### Minimal rules (canonical summary)
-
-Use this section as the **validation and evidence** single source; stage skills link here instead of redefining checks.
-
-**Shared vocabulary:**
+### Minimal rules (orchestration)
 
 | Term | Meaning |
 | --- | --- |
-| **evidence** | Machine-checkable trace (rows, manifests, gate artifacts) |
-| **record** | Persist in `state.yaml` / task artifacts |
-| **waiver** | Human-visible known deviation (timeline / plan); not a blanket pass |
-| **preflight** | Early stop before the formal governance validator |
-| **strict** | Formal session/model governance check before final (`validate_model_governance.py --strict`) |
+| **evidence** | Machine-checkable trace (`jobs.yaml`, rendered artifacts, gate artifacts) |
+| **record** | Persist in `state.yaml` / task artifacts / `jobs.yaml` (helpers only) |
+| **strict** | `run-dp validate --strict` before final gate (v4) |
 
-**State rules:** `reviewed.*` = agent review passed (Proceed). `pending_human_gate` = human gate wait (authoritative stop). `approved.*` = human gate approved.
+**State rules:** `reviewed.*` = agent review passed (Proceed). `pending_human_gate` = human gate wait. `approved.*` = human gate approved.
 
-**Gate rules:** If `pending_human_gate` is non-empty, stop. Proceed / `reviewed.*` does not imply `approved.*`. Reject/rework clears `pending_human_gate` and resets the matching `reviewed.*` to `false`.
+**Gate rules:** If `pending_human_gate` is non-empty, stop. Reject/rework clears `pending_human_gate` and resets matching `reviewed.*` to `false`.
 
-**Evidence rules:** Primary segment sessions → `artifacts.model_usage`. Review worker / synthesis sessions → `reviews/<stage>/round_NN/review_manifest.yaml` only. Do not duplicate review sessions in `model_usage`. Human gate **approval** decisions → gate artifact + `state.yaml` (timeline not required). Gate prompts (`gate_prompted`), reject/rework decisions, and exceptional process notes → `artifacts.timeline`.
+**Validation (v4 tasks):**
 
-**Validation rules:**
-
-| Script | Role |
+| Command | Role |
 | --- | --- |
-| `validate_state.py` | **State consistency** (gate `pending_human_gate` vs `reviewed.*` / `approved.*`, artifacts, reviews). **Governance preflight only** near final review/gate: early ERROR on obvious `last_hermes_profile` gaps—not the full session/model audit. |
-| `validate_model_governance.py` | **Canonical session/model governance validator** (`model_usage` Session, `review_manifest`, duplicates, profile crossing, `last_hermes_profile` under `--strict`). |
-| `validate_model_governance.py --strict` | Formal check before final on `standard` / `deep`. **ERROR → exit 1; WARNING alone → exit 0.** `Session: unknown` passes only with a matching stage waiver. |
+| `run-dp validate` | v4 job contract + `validate_state.py` |
+| `run-dp validate --strict` | J6/J7 + state consistency before final gate |
+| `validate_state.py` | Gate/review/artifact consistency (all tasks) |
 
 Details: [`scripts/README.md`](../scripts/README.md). Gate invariants: [../SKILL.md § Human gates](../SKILL.md#human-gates).
 
 ### Model strength policy
 
-dev-process **does not** bind concrete provider or model IDs. **Logical roles and Hermes profile *names*** (for example `dp-strong`, `dp-review`, `dp-code`, `dp-cheap`) **are** bound in [`config/model_policy.yaml`](../config/model_policy.yaml); those profiles must exist in your Hermes install (`hermes profile create …`). Actual API models and providers stay in each profile’s Hermes `config.yaml` / `.env` — not in dev-process skills.
+Logical roles → Hermes profile names in [`config/model_policy.yaml`](../config/model_policy.yaml). v4 maps **job roles** to profiles (table above). Launch: `hermes --profile=<profile>` after `run-dp job start` prints resolution JSON.
 
-Launch profiles with [`scripts/dp_hermes.py`](../scripts/dp_hermes.py) / [`scripts/dp_stage_boundary.py`](../scripts/dp_stage_boundary.py) ([`scripts/README.md`](../scripts/README.md)). Resolution: [`config/model_policy.yaml`](../config/model_policy.yaml) (`stage_actions` = usage `--stage-id`; `stage_defaults` = `state.yaml` → `current_stage`). Profiles apply at **process start** only.
-
-**`reasoning_expected`** is policy-only for `artifacts.model_usage`; actual effort is each profile’s `config.yaml` ([`examples/hermes-profiles.dp.yaml`](../examples/hermes-profiles.dp.yaml)). Before **`final_review`** on **`standard`** / **`deep`**, run [`check_hermes_profiles.py`](../scripts/check_hermes_profiles.py) (or `check_helper_env.py --check-profiles --strict-profiles`) so `dp-strong`/`dp-review`/`dp-code`/`dp-cheap` match expected `agent.reasoning_effort` tiers.
-
-**Review worker sessions:** `dp_review_job.py` + `reviews/.../review_manifest.yaml` only — not `artifacts.model_usage`; no `--record-state` on `review_*` actions.
-
-### Primary session governance
-
-- **`handoff_required=true`:** Hermes profile changes — **MUST** start a new session (`dp_hermes.py --stage-id <usage-stage> --record-state …`).
-- **`session_reset_required=true`:** `standard` / `deep` primary boundary — **MUST** start a new session even if the profile is unchanged (one `model_usage` row = one session).
-- **`process_violation_if_same_session`** = `handoff_required OR session_reset_required`.
-- **`light`:** profile handoff is MUST; other reuse may be documented in timeline/plan (waiver = deviation record, not strict pass on `standard`/`deep` rules).
-- **`context_reset_recommended`:** advisory (`light` only).
-- Run **`validate_model_governance.py --strict`** before final on **`standard`** / **`deep`**.
-
-Stage-boundary commands, Hermes CLI examples, and governance checks: [scripts/README.md § Stage boundaries](../scripts/README.md#stage-boundaries), [§ validate_model_governance.py](../scripts/README.md#validate_model_governancepy).
-
-### Primary segment boundary completion
-
-**Governance invariant:** A stage is not complete for governance purposes until its required session evidence is recorded.
-
-**Primary invariant:** A primary segment boundary is not complete until the completed segment has a `model_usage` row produced by `dp_stage_boundary.py --print-markdown-row`.
-
-When **`Model usage record required?`** is **yes** (default on **`standard`** / **`deep`**), at each **primary** segment boundary:
-
-1. **Identify** the completed Hermes session id. Use `hermes sessions list` **only when needed**.
-2. **Export** it: `hermes sessions export <path>.jsonl --session-id '<id>'`.
-3. **Append** a row: `dp_stage_boundary.py --task-dir … --stage-id '<completed-stage>' --dev-action '…' --session-export <path>.jsonl --print-markdown-row` → append to **`artifacts.model_usage`** (do **not** hand-write rows or use `session_usage.py` for dev-process table rows).
-4. **Start** the next primary segment: `dp_stage_boundary.py --task-dir … --stage-id '<next>' --print-json`, then `dp_hermes.py --task-dir … --stage-id '<next>' --record-state -- chat` (updates `last_hermes_profile` only after Hermes exits 0).
-
-**Boundary row completion (when `model_usage` is required):**
-
-```text
-Primary boundary row must exist.
-Session must be a real session id, unless the row explicitly records temporary unknown with a reason.
-For standard/deep, temporary unknown must be resolved or documented as a human-known waiver before final review / final gate.
-```
-
-- **Reasonless `unknown` or blank `Session` is not acceptable** as a completed boundary.
-- **`Session: unknown`** is allowed only as **temporary** observation failure with a **short reason** in the row or adjacent note.
-- Before **`final_review`** or **`final_human_gate`** on **`standard`** / **`deep`**: replace with a real session id, or record a **human-known waiver** in **`artifacts.timeline`** / plan **Reason** (e.g. `unknown waiver`, `session lost`, `cannot observe`).
-- A waiver is a **human-visible known deviation record**. A waiver can allow a temporary **`Session: unknown`** to pass **`validate_model_governance.py --strict`** (exit 0; may print WARNING) only when the waiver text matches the **stage id** and an accepted governance waiver marker (`unknown waiver`, `session lost`, `cannot observe`, etc.). It does **not** waive missing rows, blank sessions, `review_manifest` session gaps, duplicate sessions, profile/handoff violations, or missing **`last_hermes_profile`** on **`standard`** / **`deep`** when **`model_usage_required`** is true.
-
-Do **not** advance the orchestrator to the **next primary segment** until the completed segment’s boundary row is recorded. When the boundary is represented by **`current_stage`**, do **not** update **`current_stage`** before that row exists (orchestrator: [goal/SKILL.md](../goal/SKILL.md)).
-
-Typical Hermes layout (adjust to team defaults):
-
-| Role | Tier | Reasoning effort |
-|------|------|------------------|
-| Primary dev-process loop (spec / plan / tests / implementation / reviews) | Strongest configured **main model** (e.g. team default for coding agents) | Tied to **review-depth preset** — see § **Reasoning effort by review-depth preset** |
-| Deterministic helpers | No LLM | — |
-| Side tasks (auxiliary tier: approval, title, compression, session search, web extract, vision) | Cheapest **Codex-compatible** auxiliary tier acceptable for shallow work | none / lowest available |
-
-Higher reasoning effort is not automatically better—it is slower, costlier, and can overthink ([OpenAI reasoning guidance](https://developers.openai.com/api/docs/guides/reasoning)). **Preset** selects depth; reasoning effort follows the table below—not every stage at maximum.
-
-Preset selection rules: [review/presets.md](../review/presets.md).
-
-### Reasoning effort by review-depth preset
-
-When the **runtime** supports reasoning-effort selection (e.g. Hermes `/reasoning`), tie effort to the **selected review-depth preset** for the task. Do **not** use **high** on `light` by default—**escalate the preset** to `deep` instead of secretly cranking reasoning. Preset aliases (`fast`, `high-risk`) are defined only in [review/presets.md](../review/presets.md).
-
-| Preset | Typical main model policy | Reasoning effort policy |
-|--------|---------------------------|-------------------------|
-| `light` | **main model** | **Do not** use **high**. Use deterministic helpers first; **default/medium** reasoning effort (or runtime default) only. If risk rises, escalate **preset** to `standard` or `deep`. |
-| `standard` | **main model** | **default/medium** reasoning effort for spec, plan, implementation, and routine reviews. **Escalate to `deep` before adopting high reasoning**, except when a human explicitly requests high for a **narrow** decision. |
-| `deep` | **main model** | **high** reasoning effort for synthesis, blocker/rework-owner triage when ambiguous, architecture/impact judgment where consequences are unclear, human-gate prep with **required human decisions**, and **final completion / merge recommendation** when unresolved risk remains. |
-
-**`deep` is not “everything high”:** per [`model_policy.yaml`](../config/model_policy.yaml) → `reasoning_by_preset.deep`, **checkpoint reviews** (`implementation_review`, routine `review_main` work) stay at **medium** reasoning expectation; **final synthesis**, **`final_review`**, ambiguous blocker triage, and merge recommendations use **high**. Match Hermes profile `config.yaml` to that split (`dp-review` for checkpoint, `dp-strong` for final/deep synthesis).
-
-**Escalation and exclusions:** Preset **selection**, high-risk triggers, `standard` mid-task escalation, and what **`light`** must not spend high reasoning on are defined only in [review/presets.md](../review/presets.md) (Selection rule, Reasoning effort summary, Canonical preset definitions). Spend **high** reasoning on **remaining uncertainty and high impact**, not on mechanical validation.
-
-### Model usage
-
-Hermes can show **per-model tokens and estimated cost** (Hermes Dashboard Analytics, Models page); CLI: `hermes insights`. That does **not** attribute usage to dev-process **stages** or **preset**—record that on the task.
-
-**When to create `artifacts.model_usage`:** **Default yes** for preset **`standard`** or **`deep`**—materialize and append rows at major stage boundaries. Preset **`light`** or trivial docs-only / mechanical tasks **may** set **`Model usage record required?`** to **no** with reason `no need` (see [templates/plan.md](../templates/plan.md)) and leave **`artifacts.model_usage`** empty. Skipping on **`standard`**/**`deep`** requires **explicit human approval** in **`artifacts.plan` Reason**. Recording cost is negligible when enabled.
-
-**Evidence preference order** (cheap and low-risk first):
-
-1. **`hermes insights`** / Hermes Dashboard **per-model** summary  
-2. **`hermes sessions list`** / **`hermes sessions stats`**  
-3. **`hermes sessions export`** … with redaction as needed  
-4. **Redacted grep** of `~/.hermes/logs` **only** when the above is insufficient  
-
-**If `Model usage record required?` is yes** but model or reasoning **cannot** be observed: record **`unknown`** with a **short reason** (gateway did not expose setting, session lost, etc.) in **`artifacts.model_usage`** and/or **`artifacts.final_summary_ja`**—do **not** leave the field silently blank. Treat this as **temporary**; before **`final_review`** / **`final_human_gate`** on **`standard`** / **`deep`**, resolve to a real session id or document a human-known waiver (see § Primary segment boundary completion).
-
-**Materialize once:** copy [templates/model_usage.md](../templates/model_usage.md) to the task root with correct `NNNN_` numbering; set `state.yaml` → **`artifacts.model_usage`** in the **same session**. **Append rows** at major boundaries; see template for multi-session rules ([artifacts/SKILL.md](../artifacts/SKILL.md) — append-only `model_usage` under **append-only task artifacts**).
-
-The plan always includes the **compact** model usage block (`Model usage record required?`, `Reason`, `Artifact`); expand the **optional per-stage** table in the plan only when **`Model usage record required?`** is **yes**.
-
-**Recording:** default **yes** on `standard`/`deep`; one boundary → one row ([`templates/model_usage.md`](../templates/model_usage.md)). Procedure and Hermes CLI: [scripts/README.md § Stage boundaries](../scripts/README.md#stage-boundaries). Do **not** paste raw logs into artifacts — redacted session id / model / command only.
-
-**Governance (`--strict`):** required rows from [`config/primary_segments.yaml`](../config/primary_segments.yaml) (`spec`, `plan`, `test`, `implementation` or `implementation_phase_NN`, `final_*`). Review/checkpoint sessions → `review_manifest.yaml` only. Details: [scripts/README.md § validate_model_governance.py](../scripts/README.md#validate_model_governancepy).
-
-For Python validation on Python changes, precedence is: user-explicit command > project docs/config (`AGENTS.md`, README, Makefile, `pyproject.toml`, etc.) > dev-process default. If no project rule exists, plan Ruff checks per Python-changing phase, preferably `uv run ruff check <touched-python-paths>` or `.venv/bin/python -m ruff check <touched-python-paths>` when appropriate. Do not silently use unrelated system Python when the project appears to use `uv` / `.venv`; stop and report environment ambiguity.
+Preset selection: [review/presets.md](../review/presets.md).
 
 ### Safe deterministic helper execution
 
-When already covered by the approved plan or dev-process helper policy, safe deterministic commands may run **without asking the human each time**.
+v4 task helpers (no per-command human ask when plan-approved):
 
-Examples:
+- `run-dp task|job|render|validate`
+- `hermes sessions export` for `job close`
+- `grep` / `find` / lint / tests per plan
 
-- `validate_state.py`
-- `validate_model_governance.py` (default; `--strict` before final on standard/deep)
-- `check_helper_env.py` (optional `--check-profiles --strict-profiles` when Hermes profiles are installed)
-- `check_hermes_profiles.py` (or via `check_helper_env --check-profiles`)
-- `review_round.py --dry-run`
-- `review_round.py --create` only for the **current approved review stage** (stage and next round already implied by the approved plan or the active review step; do not spin arbitrary extra rounds)
-- `hermes sessions list` / `hermes sessions export` for stage-boundary usage recording
-- `dp_stage_boundary.py` / `dp_hermes.py` for per-stage Hermes profile resolution, handoff, and **`artifacts.model_usage`** row append (`--print-markdown-row`)
-- `session_usage.py` — parse `hermes sessions export` JSONL only (used by `dp_stage_boundary`; do **not** append dev-process table rows with `session_usage.py` alone)
-- `grep` / `find` / `ls` checks
-- Markdown / YAML validation
-- targeted lint/test commands listed in `phase_checklists`
+**Pre-v4 only (do not use on new v4 tasks):** `dp_stage_boundary.py`, `dp_review_job.py`, `review_round.py`, `validate_model_governance.py`, `dp_hermes.py --record-state`.
 
-Still stop or ask before commands that:
-
-- modify product files unexpectedly;
-- switch/create branches unless at the task branch precondition step;
-- commit, merge, push, or delete files;
-- access secrets;
-- use network or external services unexpectedly;
-- are outside the approved plan.
+Stop before: unexpected product edits, branch switch outside precondition, commit/push, secrets, unplanned network.
 
 ### Deterministic helper utilities
 
-Small deterministic helpers live under [`scripts/`](../scripts/) and are documented in [`scripts/README.md`](../scripts/README.md). They reduce mechanical process mistakes but are **not** a workflow engine and do not replace role judgment, reviewer synthesis, human gates, or approved plans.
+See [`scripts/README.md`](../scripts/README.md). **Public API:** `run-dp`. Internal: `dp_job_start.py`, `dp_job_close.py`, `render_jobs.py`, `validate_jobs_v4.py`.
 
-Current helpers:
-
-- `validate_state.py` — **state consistency** + **governance preflight** (early `last_hermes_profile` ERROR near final review/gate on `standard`/`deep` with `model_usage_required`—not on `current_stage: final` alone); human gate consistency on `pending_human_gate` vs `reviewed.*` / `approved.*`; warns elsewhere. Not the canonical session/model audit—use `validate_model_governance.py --strict` for that. Pass the task directory (`.hermes/tasks/<task-id>`), not the `state.yaml` file path. Use `--strict` to fail on warnings. On gate reject/rework, clear `pending_human_gate` and reset the matching `reviewed.*` to `false` before routing rework.
-- `validate_model_governance.py` — **canonical session/model governance validator**: `model_usage` Session, latest `review_manifest.yaml`, duplicates, profile crossing, `last_hermes_profile` under `--strict`. `--strict` before final on `standard`/`deep`; ERROR → exit 1, WARNING alone → exit 0.
-- `check_helper_env.py` — PyYAML + bundled policy + helper `--help` preflight; optional `--check-profiles`.
-- `check_hermes_profiles.py` — `agent.reasoning_effort` in `~/.hermes/profiles/*/config.yaml` vs [`config/hermes_profile_expectations.yaml`](../config/hermes_profile_expectations.yaml).
-- `dp_hermes.py` — supports `--handoff-only` (resolve JSON only, no Hermes launch) when inspecting profile handoffs.
-- `review_round.py` — create a review round directory, then finish it only after real synthesis exists.
-- `branch_precondition.py` — verify/record task branch precondition evidence and append a timeline row.
-- `dp_stage_boundary.py` — stage-boundary resolve + optional `artifacts.model_usage` Markdown row.
-- `session_usage.py` — parse `hermes sessions export` JSONL only (JSON or manual Markdown row).
-
-NodeFlow integration is out of scope for dev-process v3 unless a future approved task explicitly adds it.
+For Python validation on Python changes: user command > project docs > dev-process default (`uv run ruff` / `.venv` when appropriate).
 
 ### Review-depth preset selection
 
-Review depth is selected by **remaining uncertainty** and **impact if broken**, not by diff size alone. First run deterministic checks where possible, then choose the smallest preset that still covers the remaining risk. Human preference for a lighter preset does not override high-risk triggers.
-
-Canonical preset definitions live in [`review/presets.md`](../review/presets.md). Do not define competing reviewer lists or synthesis rules elsewhere.
+[review/presets.md](../review/presets.md) — canonical preset definitions.

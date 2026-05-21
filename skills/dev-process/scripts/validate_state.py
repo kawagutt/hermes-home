@@ -14,6 +14,13 @@ import yaml
 POLICY_PATH = Path(__file__).resolve().parent.parent / "config" / "model_policy.yaml"
 STAGE_IDS_PATH = Path(__file__).resolve().parent.parent / "config" / "stage_ids.yaml"
 
+try:
+    from jobs_store import is_v4_task
+except ImportError:  # pragma: no cover
+
+    def is_v4_task(task_dir: Path) -> bool:  # type: ignore[misc]
+        return (task_dir / "jobs.yaml").is_file()
+
 LATEST_RE = re.compile(
     r"^reviews/(?P<stage>[^/]+)/round_(?P<num>\d{2,})/synthesis\.md$"
 )
@@ -109,8 +116,12 @@ def _final_pre_governance_active(state: dict) -> bool:
     return False
 
 
-def check_governance_preflight(state: dict, errors: list[str]) -> None:
-    """Session/model governance near final (separate from gate consistency)."""
+def check_governance_preflight(
+    state: dict, errors: list[str], *, task_dir: Path | None = None
+) -> None:
+    """Session/model governance near final (pre-v4 only; v4 uses jobs.yaml)."""
+    if task_dir is not None and is_v4_task(task_dir):
+        return
     preset = _str_field(state, "review_depth_preset").lower()
     if preset not in ("standard", "deep"):
         return
@@ -251,12 +262,13 @@ def main() -> int:
                 f"in state.yaml; pass --stage-id {current_stage!r} to dp_hermes.py instead."
             )
 
-    last_profile = state.get("last_hermes_profile")
-    if not (isinstance(last_profile, str) and last_profile.strip()):
-        warnings.append(
-            "missing last_hermes_profile (run dp_hermes.py with --record-state after "
-            "each profile boundary so handoff_required works)"
-        )
+    if not is_v4_task(task):
+        last_profile = state.get("last_hermes_profile")
+        if not (isinstance(last_profile, str) and last_profile.strip()):
+            warnings.append(
+                "missing last_hermes_profile (pre-v4: run dp_hermes.py with --record-state "
+                "after each profile boundary)"
+            )
 
     if state.get("task_id") != task.name:
         errors.append(
@@ -330,7 +342,7 @@ def main() -> int:
             errors.append(f"missing branch field: {key}")
 
     check_gate_consistency(state, errors, warnings)
-    check_governance_preflight(state, errors)
+    check_governance_preflight(state, errors, task_dir=task)
 
     for warning in warnings:
         print(f"WARNING {warning}")
