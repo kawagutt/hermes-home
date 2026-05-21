@@ -6,6 +6,13 @@ Human: `[name or handle]`
 
 Before moving to **plan**, confirm understanding (not a quiz):
 
+## Gate status
+
+- `pending_human_gate`: `human_spec_gate` (set in `state.yaml` before gate choices in chat)
+- `gate_prompted_at`: `[ISO timestamp from state.yaml]`
+- `reviewed.spec: true` / spec synthesis **Proceed** does **not** mean spec gate approval (`approved.human_spec_gate` may still be `false`).
+- The agent must present **numbered approval choices in chat** before waiting for a human response.
+
 ## 1. Goal
 
 State the task’s purpose in **one sentence**:
@@ -32,9 +39,16 @@ What is the **highest-risk** failure mode, and where is it captured in **`artifa
 
 ## Required human decisions
 
+This section refers to **itemized decisions from upstream** (e.g. in **`artifacts.spec`**)—not to whether the human spec gate itself is required.
+
+**Do not** list `None` alone under **Required human decisions** (often read as “spec gate approval not needed”). When there are no upstream itemized decisions for this round, use:
+
+- **Itemized decisions from upstream:** none recorded in spec/summary for this gate round.
+- **Spec gate approval:** still required before **plan** (see § 5. Approval).
+
 Use the chat structure in [human_decision_prompt.md](human_decision_prompt.md) when presenting items (adapt the final approval line to “proceed to **plan**” for this gate). Follow **§ Visibility rule** there: each decision needs a **clear title** (what is being decided) and **numbered options repeated in plain chat text** in the same message—do not rely on UI-only choice lists.
 
-If **`artifacts.spec`** contains `Required human decisions`, present those items **one by one in chat** before asking for final approval. For each item, record the decision question, recommendation, practical consequences, whether it blocks plan, and the artifact section to update. The gate artifact records the discussion; it is not a substitute for the discussion.
+If **`artifacts.spec`** contains `Required human decisions`, present those items **one by one in chat** before asking for **approval to proceed to plan**. For each item, record the decision question, recommendation, practical consequences, whether it blocks plan, and the artifact section to update. The gate artifact records the discussion; it is not a substitute for the discussion.
 
 ## Short CUI approval
 

@@ -42,6 +42,39 @@ NNNN_<stem>.md
 - **`validate_state.py` passing does not prove hygiene** — manually check that task-root `NNNN_` gaps are not invented, `artifacts.*` pointers match files, and model_usage rows use the compact template columns.
 - **Do not renumber** or rename existing numbered task-root files to “fill gaps” or reorder history.
 
+### Human gate artifacts
+
+Keys: **`artifacts.human_spec_gate`**, **`artifacts.final_human_gate`**.
+
+**Authoritative current file:** always the filename in `state.yaml` → `artifacts.<key>`. Older task-root files with the same stem (e.g. `0002_final_human_gate.md` when the pointer is `0005_final_human_gate.md`) are **non-canonical history**. Do **not** use them for gate decisions, even if they still say “pending” or lack a superseded marker.
+
+**Re-prompt after rework or material gate change:**
+
+1. Create a **new** `NNNN_<stem>.md` (material revision per rules above) and update **`artifacts.<key>`** in the same session.
+2. Set **`pending_human_gate`** and present chat choices only **after** the new artifact exists and the pointer is updated ([../SKILL.md § Human gates](../SKILL.md#human-gates)).
+
+The **current bound** human gate artifact (`artifacts.<key>`) may be updated **in place** only for this gate round’s **Approval**, **Comments**, and **typo-only** fixes. Re-prompt after rework or material gate changes require a **new** numbered gate artifact and an updated pointer (unlike append-only timeline / model_usage, gate files are not general-purpose append logs).
+
+| Case | Treatment |
+|------|-----------|
+| Record human decision for **this gate round** (Approval, Comments) | **In-place** update the **current** bound file (`artifacts.<key>`) |
+| Re-prompt gate after rework | New `NNNN_<stem>.md`; update `artifacts.<key>` |
+| Gate meaning / reviewed inputs **materially** change | New `NNNN_<stem>.md`; update `artifacts.<key>` |
+| Typo-only fix | In-place on current bound file |
+| Older gate file not pointed to by `artifacts.<key>` | Non-canonical history—do not use for gate decisions |
+
+Do **not** create a new numbered gate file solely because Approval checkboxes or comments were filled in. Detail: [../human-gates/SKILL.md § Gate approval recording](../human-gates/SKILL.md).
+
+**`## Superseded` marking (optional):** the `artifacts.<key>` pointer is authoritative whether or not old files are edited. **Do not** edit old gate artifacts solely to add this marker. When practical, you may prepend before creating the replacement, or after replacement only when editing the old file is safe:
+
+```markdown
+## Superseded
+
+Superseded by: `[new filename]`
+Reason: `[re-prompt after rework | material spec change | …]`
+Do not use this file for gate decisions.
+```
+
 **Review artifacts** are separate: they live under **`reviews/<stage>/round_NN/`** and **do not** use `NNNN_` prefixes—use conventional names such as `requirements.md`, `architecture.md`, `synthesis.md` (see [review/SKILL.md](../review/SKILL.md)).
 
 Legacy tasks may still use older flat names (`spec.md`, etc.); migrate with human agreement and consistent `artifacts` pointers.

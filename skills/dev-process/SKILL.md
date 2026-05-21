@@ -124,7 +124,7 @@ reviewed.spec == true does not imply approved.human_spec_gate == true.
 
 **Gate presenter order (before STOP):** (1) prepare gate artifact, (2) set `pending_human_gate` and `gate_prompted_at`, (3) append timeline `gate_prompted`, (4) present numbered choices in chat, (5) STOP. Do not update `pending_human_gate` after chat prompt as a backfill.
 
-**After human gate decision (approve or reject/rework):** clear `pending_human_gate`. If approved, set matching **`approved.human_spec_gate`** or **`approved.final_human_gate`** to `true`. If not approved, keep that flag `false`, record decision in gate artifact / timeline, move `current_stage` to the rework route.
+**After human gate decision (approve or reject/rework):** clear `pending_human_gate`. If approved, set matching **`approved.human_spec_gate`** or **`approved.final_human_gate`** to `true`. If not approved or rework is requested, keep that flag `false`, reset the matching **`reviewed.*`** marker to `false` (`reviewed.spec` for `human_spec_gate`, `reviewed.final` for `final_human_gate`), record decision in gate artifact / timeline, then move `current_stage` to the rework route.
 
 **Plan start (spec gate):**
 

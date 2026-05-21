@@ -306,6 +306,59 @@ def test_approved_spec_not_in_canonical_state_template() -> None:
     assert "\n  spec:" not in approved_block and "  spec: false" not in approved_block
 
 
+def test_final_human_gate_template_gate_status_and_no_misleading_phrases() -> None:
+    text = read_rel("templates/final_human_gate.md")
+    plain = strip_md_emphasis(text)
+    assert "## Gate status" in text
+    assert "reviewed.final" in text and "not mean" in plain.lower()
+    assert "Final approval" in text and "pending" in text
+    assert "Itemized decisions from upstream" in text
+    assert "Final gate approval:" in text and "still required" in text
+    assert "Required human decisions: None" not in text
+    assert (
+        "The task is ready for the human-controlled commit / merge / completion decision."
+        not in text
+    )
+    assert "ready for the human-controlled" not in text
+
+
+def test_human_spec_gate_template_gate_status_and_no_none_phrase() -> None:
+    text = read_rel("templates/human_spec_gate.md")
+    plain = strip_md_emphasis(text)
+    assert "## Gate status" in text
+    assert "reviewed.spec" in text and "not mean" in plain.lower()
+    assert "Itemized decisions from upstream" in text
+    assert "Spec gate approval:" in text and "still required" in text
+    assert "Required human decisions: None" not in text
+    assert "approval to proceed to plan" in text
+    assert "before asking for final approval" not in text
+
+
+def test_human_gates_companion_task3_pitfalls_and_approval_recording() -> None:
+    hg = read_rel("human-gates/SKILL.md")
+    assert "## Gate approval recording" in hg
+    assert "pending_human_gate" in hg
+    assert "Required human decisions: None" in hg
+    assert "authoritative" in hg.lower() or "artifacts.human_spec_gate" in hg
+    assert "Superseded" in hg or "superseded" in hg
+
+
+def test_artifacts_skill_human_gate_authoritative_pointer() -> None:
+    art = read_rel("artifacts/SKILL.md")
+    assert "### Human gate artifacts" in art
+    assert "artifacts.human_spec_gate" in art
+    assert "artifacts.final_human_gate" in art
+    assert "Authoritative" in art or "authoritative" in art
+    assert "non-canonical history" in art.lower() or "history" in art.lower()
+    assert "Superseded" in art
+    assert "optional" in art.lower()
+    assert "current bound" in art.lower()
+    assert "in place" in art.lower()
+    assert "solely because Approval checkboxes" in art
+    assert "solely to add this marker" in art
+    assert "Human gate files are not append-only" not in art
+
+
 def test_plan_start_rule_uses_human_spec_gate_not_approved_spec() -> None:
     skill = read_rel("SKILL.md")
     goal = read_rel("goal/SKILL.md")

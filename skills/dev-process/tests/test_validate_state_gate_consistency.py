@@ -96,7 +96,7 @@ def test_spec_reviewed_wrong_pending_gate_error(tmp_path: Path) -> None:
     assert "reviewed.spec is true but pending_human_gate is not" in r.stdout
 
 
-def test_approved_spec_with_pending_spec_error(tmp_path: Path) -> None:
+def test_approved_human_spec_gate_with_pending_spec_error(tmp_path: Path) -> None:
     task = make_task(tmp_path)
     _patch_state(
         task,

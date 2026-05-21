@@ -55,6 +55,25 @@ At a spec gate, consider prompting separately for:
 - branch or task-scope decisions;
 - any explicit human decisions listed in the spec summary.
 
+## Gate approval recording
+
+After the human gives an explicit gate decision, record it in **one coordinated pass** (procedural—validators do not parse gate artifacts).
+
+**Approval decision** — update **both** in the same pass:
+
+1. This gate’s **Approval** (and **Comments**, if any) in the gate artifact bound at `artifacts.human_spec_gate` or `artifacts.final_human_gate` (in-place on the current bound file; see [../artifacts/SKILL.md § Human gate artifacts](../artifacts/SKILL.md)).
+2. Set the matching **`approved.human_spec_gate`** or **`approved.final_human_gate`** to `true` in `state.yaml`.
+3. Clear **`pending_human_gate`** to `""`.
+4. Run **`validate_state.py`** when appropriate.
+
+**Reject / rework decision** — in the same pass:
+
+1. Record the decision in the gate artifact **Approval** / **Comments** (in-place on the current bound file).
+2. Keep the matching **`approved.*`** gate key **`false`**.
+3. Clear **`pending_human_gate`** to `""`.
+4. Reset the matching **`reviewed.*`** marker (`reviewed.spec` or `reviewed.final`) to **`false`**, record in timeline, and route rework per [../SKILL.md § Human gates](../SKILL.md#human-gates) (Task 1/2 rules—do not redefine here).
+5. Run **`validate_state.py`** when appropriate.
+
 ## Pitfalls
 
 - Do not collapse several required decisions into a single generic approval prompt.
@@ -62,6 +81,9 @@ At a spec gate, consider prompting separately for:
 - Do not record approval before the human had a reasonable chance to respond to the individual items.
 - Do not mix approval of implementation with approval to commit/push/merge unless the human explicitly confirms those actions.
 - Do not switch from numbered choices to free-form-only prompts mid-sequence unless you first explain why.
+- **`Required human decisions: None`:** means “no upstream itemized decisions,” **not** “human gate approval unnecessary.” Human gate approval is always required at spec/final gates.
+- **Misleading “ready” phrasing:** e.g. `ready for the human-controlled` in a gate checklist implies work is done; **Proceed** / **`reviewed.*: true`** only means review passed—not gate approval.
+- **Stale gate artifact:** the **current** gate file is only the one named in `state.yaml` → `artifacts.human_spec_gate` or `artifacts.final_human_gate`. Older `NNNN_*` files with the same stem are **history**—do not use them for gate decisions. On re-prompt, create a new numbered file, update the pointer, then set `pending_human_gate` (see [../artifacts/SKILL.md § Human gate artifacts](../artifacts/SKILL.md)). `## Superseded` on old files is optional; do not edit history files solely to add it—the pointer is authoritative either way.
 - **Invisible choices:** Some UIs show “pick from the options above” without rendering options (e.g. narrow terminals). Always repeat **numbered options and decision titles in plain chat text** in the same message; duplicate AskQuestion options in the body ([`human_decision_prompt.md`](../templates/human_decision_prompt.md) § Visibility rule).
 
 ## References

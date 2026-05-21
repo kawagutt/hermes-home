@@ -6,6 +6,13 @@ Human: `[name or handle]`
 
 Before merge/completion, review the final synthesis, validation evidence, and Japanese final summary.
 
+## Gate status
+
+- `pending_human_gate`: `final_human_gate` (set in `state.yaml` before gate choices in chat)
+- `gate_prompted_at`: `[ISO timestamp from state.yaml]`
+- `reviewed.final: true` / final synthesis **Proceed** does **not** mean final human approval (`approved.final_human_gate` may still be `false`).
+- The agent must present **numbered approval choices in chat** before waiting for a human response.
+
 ## Inputs
 
 - Final summary (Japanese): **`artifacts.final_summary_ja`** (path from `state.yaml`)
@@ -26,9 +33,16 @@ Before merge/completion, review the final synthesis, validation evidence, and Ja
 - [ ] Required tests / validations passed, or accepted exceptions are documented.
 - [ ] Blocking review findings are resolved.
 - [ ] Remaining non-blocking findings are accepted or assigned as follow-up.
-- [ ] The task is ready for the human-controlled commit / merge / completion decision.
+- [ ] Final approval for human-controlled commit / merge / completion — **pending** (human gate not satisfied until § Approval is recorded and `approved.final_human_gate` is `true` in `state.yaml`).
 
 ## Required human decisions
+
+This section refers to **itemized decisions from upstream** artifacts (spec, summary, or prior gate rounds)—not to whether the human gate itself is required.
+
+**Do not** list `None` alone under **Required human decisions** (often read as “final approval not needed”). When there are no upstream itemized decisions for this round, use:
+
+- **Itemized decisions from upstream:** none recorded in spec/summary for this gate round.
+- **Final gate approval:** still required before commit/merge/completion.
 
 Use the chat structure in [human_decision_prompt.md](human_decision_prompt.md) when presenting items (adapt the final approval line to merge/completion for this gate). Follow **§ Visibility rule** there: each decision needs a **clear title** (what is being decided) and **numbered options repeated in plain chat text** in the same message—do not rely on UI-only choice lists.
 

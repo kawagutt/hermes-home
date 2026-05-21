@@ -58,7 +58,7 @@ Before **plan**, the human completes understanding confirmation—not a trivia q
 - **Gate presenter (orchestrator):** before numbered choices in chat: (1) gate artifact ready, (2) `pending_human_gate: human_spec_gate` and `gate_prompted_at`, (3) timeline `gate_prompted`, (4) chat prompt, (5) STOP. See [../SKILL.md § Human gates](../SKILL.md#human-gates).
 - A short CUI approval such as `OK` is valid only after the Japanese summary at **`artifacts.spec_summary_ja`** and after any `Required human decisions` have been presented **one by one in chat** (see [../SKILL.md](../SKILL.md#human-gates)); record the response and comments in **`artifacts.human_spec_gate`**.
 
-**After explicit human gate decision:** clear **`pending_human_gate`**. If approved: **`approved.human_spec_gate: true`**. If not approved / rework: keep **`approved.human_spec_gate: false`**, record decision in gate artifact / timeline, route to spec rework (do not enter plan).
+**After explicit human gate decision:** clear **`pending_human_gate`**. If approved: **`approved.human_spec_gate: true`**. If not approved / rework: keep **`approved.human_spec_gate: false`**, set **`reviewed.spec: false`**, record decision in gate artifact / timeline, route to spec rework (do not enter plan).
 
 Full gate text and rationale: [human_gate.md](human_gate.md). Shared gate/summary rules: [../SKILL.md](../SKILL.md#human-gates).
 
