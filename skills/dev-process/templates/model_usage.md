@@ -40,3 +40,18 @@ Row examples omit **human gates** (`human_spec_gate`, `final_human_gate`) unless
 **Token values:** `hermes sessions export` reports cumulative tokens per session. Each row should use a **distinct** session id for its boundary; do not rely on deltas from a shared session id on `standard`/`deep` tasks.
 
 **Preset / reasoning column:** `expected …` is policy-only; actual reasoning comes from the Hermes profile `config.yaml` at launch (see [validation/SKILL.md](../validation/SKILL.md)).
+
+## Segment boundary completion
+
+Canonical procedure: [validation/SKILL.md § Primary segment boundary completion](../validation/SKILL.md#primary-segment-boundary-completion).
+
+**Invariant:** A primary segment boundary is not complete until the completed segment has a row here produced by `dp_stage_boundary.py --print-markdown-row` (not a hand-written or `session_usage.py`-only row).
+
+1. Identify the completed Hermes session id (`hermes sessions list` only when needed).
+2. `hermes sessions export … --session-id '<id>'`
+3. `dp_stage_boundary.py … --print-markdown-row` → append to this file
+4. Next segment: `dp_stage_boundary.py --task-dir … --stage-id '<next>' --print-json`, then `dp_hermes.py --task-dir … --stage-id '<next>' --record-state -- chat`
+
+**`Session` column:** Prefer a real session id. Temporary **`unknown`** is allowed only with an explicit reason in the row; before **`final_review`** / **`final_human_gate`** on **`standard`** / **`deep`**, resolve to a real id or record a human-known waiver in **`artifacts.timeline`** / plan **Reason**. A waiver is a visible deviation record—it does not by itself guarantee `validate_model_governance.py --strict` passes.
+
+**Review workers:** Record sessions in `reviews/<stage>/round_NN/review_manifest.yaml` only—do not duplicate reviewer or synthesis sessions in this table.

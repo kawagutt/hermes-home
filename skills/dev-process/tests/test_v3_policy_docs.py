@@ -206,6 +206,60 @@ def test_model_usage_warns_not_to_paste_raw_logs_and_is_stage_attribution_aid() 
     assert "insights" in model_usage.casefold() or "Hermes" in model_usage
 
 
+def test_primary_segment_boundary_completion_in_validation() -> None:
+    validation = read_rel("validation/SKILL.md")
+    plain = strip_md_emphasis(validation)
+    assert "### Primary segment boundary completion" in validation
+    assert "hermes sessions export" in validation
+    assert "dp_stage_boundary.py" in validation
+    assert "--print-markdown-row" in validation
+    assert "--record-state" in validation
+    assert "only when needed" in validation
+    assert "not complete until" in validation
+    assert "Primary boundary row must exist" in validation
+    assert "temporary unknown" in validation
+    assert "before final" in plain
+    assert "does not by itself guarantee" in plain
+    assert "validate_model_governance.py --strict" in validation
+
+
+def test_model_usage_template_boundary_completion_and_dp_stage_boundary() -> None:
+    model_usage = read_rel("templates/model_usage.md")
+    plain = strip_md_emphasis(model_usage)
+    assert "## Segment boundary completion" in model_usage
+    assert "dp_stage_boundary.py" in model_usage
+    assert "not complete until" in model_usage
+    assert "review_manifest.yaml" in model_usage
+    assert "final_human_gate" in plain and "final_review" in plain
+
+
+def test_review_round_session_evidence_completion_checklist() -> None:
+    review = read_rel("review/SKILL.md")
+    assert "## Review round session evidence (completion)" in review
+    assert "review_round.py" in review
+    assert "--init-manifest" in review
+    assert "--record-session" in review
+    assert "not complete until" in review
+    assert "Reviewer sessions do not update" in review
+    assert "state.yaml" in review
+    assert "Synthesis session owns" in review
+    assert "review_manifest.yaml" in review
+
+
+def test_goal_links_primary_boundary_completion() -> None:
+    goal = read_rel("goal/SKILL.md")
+    assert "Primary segment boundary completion" in goal
+    assert "model_usage_required" in goal
+    assert "do not advance" in goal.lower() or "Do **not** advance" in goal
+
+
+def test_orchestrator_session_model_evidence_links() -> None:
+    skill = read_rel("SKILL.md")
+    assert "## Session and model evidence" in skill
+    assert "Primary segment boundary completion" in skill
+    assert "Review round session evidence" in skill
+
+
 INVARIANT_REVIEWED_FINAL = (
     "reviewed.final == true does not imply approved.final_human_gate == true."
 )

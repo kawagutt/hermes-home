@@ -47,6 +47,8 @@ After **`artifacts.spec`** is drafted, route reviews via [review/SKILL.md](../re
 
 Detailed checklists live in `review/targets/spec.md` and `review/agents/*.md`; do not duplicate them here.
 
+**Session evidence:** Spec review rounds → [review/SKILL.md § Review round session evidence](../review/SKILL.md#review-round-session-evidence-completion). When **`model_usage_required`** is true, after the spec **primary** draft segment completes, record its boundary row in **`artifacts.model_usage`** per [validation/SKILL.md § Primary segment boundary completion](../validation/SKILL.md#primary-segment-boundary-completion) before treating spec work as governance-complete for that segment.
+
 ## Human spec gate
 
 After spec review synthesis recommends **Proceed**, synthesis sets **`reviewed.spec: true`** (see [review/SKILL.md § Who updates state.yaml](../review/SKILL.md#who-updates-stateyaml)). That is **not** spec gate approval.

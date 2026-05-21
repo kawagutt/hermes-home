@@ -33,6 +33,34 @@ Launch profiles with [`scripts/dp_hermes.py`](../scripts/dp_hermes.py) / [`scrip
 
 Stage-boundary commands, Hermes CLI examples, and governance checks: [scripts/README.md § Stage boundaries](../scripts/README.md#stage-boundaries), [§ validate_model_governance.py](../scripts/README.md#validate_model_governancepy).
 
+### Primary segment boundary completion
+
+**Governance invariant:** A stage is not complete for governance purposes until its required session evidence is recorded.
+
+**Primary invariant:** A primary segment boundary is not complete until the completed segment has a `model_usage` row produced by `dp_stage_boundary.py --print-markdown-row`.
+
+When **`Model usage record required?`** is **yes** (default on **`standard`** / **`deep`**), at each **primary** segment boundary:
+
+1. **Identify** the completed Hermes session id. Use `hermes sessions list` **only when needed**.
+2. **Export** it: `hermes sessions export <path>.jsonl --session-id '<id>'`.
+3. **Append** a row: `dp_stage_boundary.py --task-dir … --stage-id '<completed-stage>' --dev-action '…' --session-export <path>.jsonl --print-markdown-row` → append to **`artifacts.model_usage`** (do **not** hand-write rows or use `session_usage.py` for dev-process table rows).
+4. **Start** the next primary segment: `dp_stage_boundary.py --task-dir … --stage-id '<next>' --print-json`, then `dp_hermes.py --task-dir … --stage-id '<next>' --record-state -- chat` (updates `last_hermes_profile` only after Hermes exits 0).
+
+**Boundary row completion (when `model_usage` is required):**
+
+```text
+Primary boundary row must exist.
+Session must be a real session id, unless the row explicitly records temporary unknown with a reason.
+For standard/deep, temporary unknown must be resolved or documented as a human-known waiver before final review / final gate.
+```
+
+- **Reasonless `unknown` or blank `Session` is not acceptable** as a completed boundary.
+- **`Session: unknown`** is allowed only as **temporary** observation failure with a **short reason** in the row or adjacent note.
+- Before **`final_review`** or **`final_human_gate`** on **`standard`** / **`deep`**: replace with a real session id, or record a **human-known waiver** in **`artifacts.timeline`** / plan **Reason** (e.g. `unknown waiver`, `session lost`, `cannot observe`).
+- A waiver is a **human-visible known deviation record**. It does **not** by itself guarantee `validate_model_governance.py --strict` passes until Task 5 defines validator behavior.
+
+Do **not** advance the orchestrator to the **next primary segment** until the completed segment’s boundary row is recorded. When the boundary is represented by **`current_stage`**, do **not** update **`current_stage`** before that row exists (orchestrator: [goal/SKILL.md](../goal/SKILL.md)).
+
 Typical Hermes layout (adjust to team defaults):
 
 | Role | Tier | Reasoning effort |
@@ -87,7 +115,7 @@ Hermes can show **per-model tokens and estimated cost** (Hermes Dashboard Analyt
 3. **`hermes sessions export`** … with redaction as needed  
 4. **Redacted grep** of `~/.hermes/logs` **only** when the above is insufficient  
 
-**If `Model usage record required?` is yes** but model or reasoning **cannot** be observed: record **`unknown`** and a **short reason** (gateway did not expose setting, session lost, etc.) in **`artifacts.model_usage`** and/or **`artifacts.final_summary_ja`**—do **not** leave the field silently blank.
+**If `Model usage record required?` is yes** but model or reasoning **cannot** be observed: record **`unknown`** with a **short reason** (gateway did not expose setting, session lost, etc.) in **`artifacts.model_usage`** and/or **`artifacts.final_summary_ja`**—do **not** leave the field silently blank. Treat this as **temporary**; before **`final_review`** / **`final_human_gate`** on **`standard`** / **`deep`**, resolve to a real session id or document a human-known waiver (see § Primary segment boundary completion).
 
 **Materialize once:** copy [templates/model_usage.md](../templates/model_usage.md) to the task root with correct `NNNN_` numbering; set `state.yaml` → **`artifacts.model_usage`** in the **same session**. **Append rows** at major boundaries; see template for multi-session rules ([artifacts/SKILL.md](../artifacts/SKILL.md) — append-only `model_usage` under **append-only task artifacts**).
 
@@ -112,8 +140,8 @@ Examples:
 - `review_round.py --dry-run`
 - `review_round.py --create` only for the **current approved review stage** (stage and next round already implied by the approved plan or the active review step; do not spin arbitrary extra rounds)
 - `hermes sessions list` / `hermes sessions export` for stage-boundary usage recording
-- `dp_stage_boundary.py` / `dp_hermes.py` for per-stage Hermes profile resolution and handoff
-- `session_usage.py` to generate `artifacts.model_usage` rows from exported session JSONL
+- `dp_stage_boundary.py` / `dp_hermes.py` for per-stage Hermes profile resolution, handoff, and **`artifacts.model_usage`** row append (`--print-markdown-row`)
+- `session_usage.py` — parse `hermes sessions export` JSONL only (used by `dp_stage_boundary`; do **not** append dev-process table rows with `session_usage.py` alone)
 - `grep` / `find` / `ls` checks
 - Markdown / YAML validation
 - targeted lint/test commands listed in `phase_checklists`

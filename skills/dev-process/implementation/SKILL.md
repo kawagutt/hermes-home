@@ -45,6 +45,8 @@ Route via [review/SKILL.md](../review/SKILL.md).
 
 Write under `.hermes/tasks/<task-id>/reviews/implementation_phase_NN/round_MM/` (new `round_MM` per checkpoint review run).
 
+**Session evidence:** Checkpoint review workers and synthesis → [review/SKILL.md § Review round session evidence](../review/SKILL.md#review-round-session-evidence-completion) (`review_manifest.yaml` only). After each implementation **phase** primary work segment, append an **`implementation_phase_NN`** row to **`artifacts.model_usage`** per [validation/SKILL.md § Primary segment boundary completion](../validation/SKILL.md#primary-segment-boundary-completion) when **`model_usage_required`** is true. Do not advance to the next phase until required evidence for the completed segment is recorded.
+
 ## Rework after review
 
 When review produces **blocking** findings, **do not** continue blindly. First **triage** (classification) happens in the round’s **`synthesis.md`** ([rework routing](../review/SKILL.md#rework-routing)); align with it here.

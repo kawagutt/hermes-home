@@ -18,15 +18,28 @@ Before starting a review round:
 - Confirm `state.yaml` / latest synthesis / gate approvals match the review target.
 - Launch Hermes with the correct usage **`--stage-id`** (or **`--action review_*`**) per [goal/SKILL.md](../goal/SKILL.md)—**never** rely on `current_stage=implementation` alone (that resolves to `dp-code`). Use `dp_hermes.py --strict-launch` or `DEV_PROCESS_STRICT_LAUNCH=1` to fail fast when `--stage-id` is omitted.
 
-## Review worker sessions (MUST)
+## Review round session evidence (completion)
 
-Each **required reviewer perspective** runs in a **separate Hermes session** unless the human explicitly waives this in the task record.
+**Governance invariant:** A stage is not complete for governance purposes until its required session evidence is recorded.
 
-- Do **not** run multiple reviewer perspectives in one shared session.
-- **Synthesis** runs in a **separate session** from every individual reviewer job.
-- Resolve each worker with [`dp_review_job.py`](../scripts/dp_review_job.py), then launch `dp_hermes.py --action review_<agent> -- chat` **without** `--record-state`. After each session, record evidence via `dp_review_job.py --record-session` (see [scripts/README.md](../scripts/README.md) § `dp_review_job.py`).
-- Review sessions live in **`reviews/<stage>/round_NN/review_manifest.yaml`** only.
-- **`artifacts.model_usage`** records **primary** loop boundaries only—do **not** duplicate reviewer worker rows there.
+**Review invariant:** A reviewer or synthesis worker is not complete until its session is recorded in **`review_manifest.yaml`**.
+
+**State update responsibility:**
+
+- **Reviewer sessions do not update `state.yaml`.**
+- **Synthesis session owns** the review state update (`review_rounds`, `latest_reviews`, and **Proceed-only** `reviewed.*` per [Who updates `state.yaml`](#who-updates-stateyaml)). Synthesis must **not** set `approved.*`, `pending_human_gate`, or `gate_prompted_at`.
+
+Each **required reviewer perspective** runs in a **separate Hermes session** unless the human explicitly waives this in the task record. Do **not** run multiple reviewer perspectives in one shared session.
+
+**Completion checklist** (each review round):
+
+1. `review_round.py <task-dir> <stage> --create` → `reviews/<stage>/round_NN/`
+2. `dp_review_job.py … --review-stage <stage> --round NN --init-manifest`
+3. For **each required reviewer**: resolve with `dp_review_job.py --print-json` → `dp_hermes.py --action review_<agent> -- chat` (**no** `--record-state`) → **`dp_review_job.py --record-session`** before starting the next reviewer
+4. **Synthesis** in a **separate session** from all reviewers: write **`synthesis.md`**, update **`state.yaml`** (`review_rounds` / `latest_reviews` / Proceed-only `reviewed.*`), then **`dp_review_job.py --record-session`** for the synthesis worker
+5. A manifest entry with **`session_id: ""`** means that worker is **not complete**—do not treat the round as finished for governance
+
+Review sessions live in **`reviews/<stage>/round_NN/review_manifest.yaml`** only. **`artifacts.model_usage`** records **primary** loop boundaries only—do **not** duplicate reviewer or synthesis worker rows there. Commands: [scripts/README.md § `dp_review_job.py`](../scripts/README.md#dpreview_jobpy).
 
 Preset reviewer lists: [presets.md](presets.md) (source of truth); machine mirror: [`config/review_targets.yaml`](../config/review_targets.yaml).
 

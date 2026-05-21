@@ -83,6 +83,15 @@ NodeFlow integration is **out of scope** for dev-process v3 unless a future appr
 
 Use [goal/SKILL.md](goal/SKILL.md) for task id format, `state.yaml` creation, resuming from `current_stage`, `/goal` continuation, explicit role transitions, and stop reports. Task artifacts are task-local; defaults and numbering: [artifacts/SKILL.md](artifacts/SKILL.md).
 
+## Session and model evidence
+
+Primary segment boundaries and review worker sessions must leave **third-party-verifiable** session evidence. Canonical procedures (completion conditions, not optional tips):
+
+- **Primary loop** → [validation/SKILL.md § Primary segment boundary completion](validation/SKILL.md#primary-segment-boundary-completion) (`artifacts.model_usage` via `dp_stage_boundary.py`)
+- **Review rounds** → [review/SKILL.md § Review round session evidence](review/SKILL.md#review-round-session-evidence-completion) (`review_manifest.yaml` via `dp_review_job.py`)
+
+Do not duplicate reviewer sessions in **`artifacts.model_usage`**.
+
 ## Human gates
 
 ### State fields: reviewed, approved, pending_human_gate
