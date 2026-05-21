@@ -24,6 +24,8 @@ python3 -m pip install PyYAML
 
 ## `validate_state.py`
 
+**Role:** state consistency and **governance preflight** (early stop). **Not** the canonical session/model governance audit—that is [`validate_model_governance.py`](#validate_model_governancepy) with `--strict`.
+
 ```bash
 python3 skills/dev-process/scripts/validate_state.py .hermes/tasks/<task-id>
 ```
@@ -48,7 +50,7 @@ Checks:
 
 When a human rejects a gate or requests rework, the orchestrator must clear `pending_human_gate` and reset the matching `reviewed.*` marker to `false` before routing rework. Otherwise the gate consistency ERRORs above indicate state update omissions.
 
-- **Governance preflight** (separate from gate consistency; `check_governance_preflight`):
+- **Governance preflight** (early detection only—not a substitute for `validate_model_governance.py --strict`; `check_governance_preflight`):
   - **`standard`** / **`deep`** + **`model_usage_required`** + final review/gate vicinity (`pending_human_gate: final_human_gate`, `reviewed.final`, `artifacts.final_human_gate` set, or `review_rounds.final > 0`) + missing **`last_hermes_profile`** → ERROR
   - **`current_stage: final` alone** does not trigger this ERROR (early final prep may still only get the global WARNING)
 
@@ -222,7 +224,7 @@ python3 skills/dev-process/scripts/session_usage.py /tmp/hermes_session.jsonl --
 
 Log grep is last resort only; do not paste raw log output into task artifacts (secrets, prompts, tokens). See [validation/SKILL.md](../validation/SKILL.md) evidence preference order.
 
-`dp_hermes.py` supports `--strict-launch` or `DEV_PROCESS_STRICT_LAUNCH=1` when `current_stage=implementation` without `--stage-id` / `--action` (warns or exits).
+`dp_hermes.py` **exits with code 2 by default** when `current_stage=implementation` without `--stage-id` / `--action`. Opt out with `--relaxed-launch` or `DEV_PROCESS_RELAX_LAUNCH=1` (warning only). `--strict-launch` / `DEV_PROCESS_STRICT_LAUNCH=1` force strict even when relaxed is set.
 
 ## `dp_stage_boundary.py`
 
@@ -254,6 +256,8 @@ python3 skills/dev-process/scripts/dp_hermes.py \
 **`review_synthesis_final`** is a review-worker synthesis action (`record-state` forbidden). **`final_review`** is a primary usage stage (`--stage-id final_review`; `record-state` allowed on `dp_hermes`).
 
 ## `validate_model_governance.py`
+
+**Role:** **canonical session/model governance validator.** Run with `--strict` before `final_review` / `final_human_gate` on `standard` / `deep`. [`validate_state.py`](#validate_statepy) may preflight `last_hermes_profile` near final, but this script is the formal audit.
 
 ```bash
 python3 skills/dev-process/scripts/validate_model_governance.py .hermes/tasks/<task-id>

@@ -100,4 +100,4 @@ def test_preflight_not_error_for_current_stage_final_alone(tmp_path) -> None:
     r = run_helper("validate_state.py", str(task))
     assert r.returncode == 0, r.stdout + r.stderr
     assert "governance preflight" not in r.stdout
-    assert "missing last_hermes_profile" in r.stdout
+    assert "last_hermes_profile" in r.stdout

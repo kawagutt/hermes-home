@@ -41,7 +41,11 @@ deep    → high reasoning effort for synthesis, ambiguous blocker triage, archi
 
 The **`deep`** preset aligns with **high** reasoning effort and with **this file’s selection rule**: externally observable behavior/API/CLI/contracts, architecture, migration/schema, security/privacy, unresolved human decisions, hard rollback, low test confidence. See the `deep` row below.
 
-Ordinary **`standard`** work stays medium until escalation; **preset upgrade precedes flipping reasoning to high**.
+Ordinary **`standard`** work stays **medium** for local/non-blocking work; escalate to **`deep`** (then high reasoning) when blocker ambiguity, architecture/API risk, high-risk triggers from the selection rule, or reviewer disagreement appears.
+
+Under **`light`**, do **not** use **high** reasoning for mechanical checks that deterministic helpers cover: artifact/path conventions, **grep** / **find** / **ls**, Markdown/YAML sanity, **`review_round.py`** / **`validate_state.py`**, trivial naming/doc lint, or docs-only edits with clear command validation.
+
+The **`deep`** preset is not “everything high”: checkpoint **`implementation_review`** and routine **`review_main`** work stay **medium** per [`model_policy.yaml`](../config/model_policy.yaml); final synthesis, **`final_review`**, ambiguous blocker triage, and merge recommendations use **high** ([validation/SKILL.md](../validation/SKILL.md#reasoning-effort-by-review-depth-preset)).
 
 ## Canonical preset definitions
 

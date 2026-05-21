@@ -12,6 +12,36 @@ description: >-
 
 Prefer deterministic commands over LLM reasoning for mechanical checks: tests, linting, content searches, file existence, artifact paths, YAML/Markdown syntax, and simple validation that required files exist. Cheap/medium checker agents are appropriate for routine artifact completeness, checklist compliance, naming/doc consistency, and simple log summaries. Reserve higher-cost models for spec/plan reasoning, architecture/impact review, ambiguous failure diagnosis, final synthesis, and blocker triage. Cheap checkers may flag possible blockers, but final blocker decisions must escalate to synthesis or a higher-reasoning reviewer. This is process guidance, not runtime model-routing automation.
 
+### Minimal rules (canonical summary)
+
+Use this section as the **validation and evidence** single source; stage skills link here instead of redefining checks.
+
+**Shared vocabulary:**
+
+| Term | Meaning |
+| --- | --- |
+| **evidence** | Machine-checkable trace (rows, manifests, gate artifacts) |
+| **record** | Persist in `state.yaml` / task artifacts |
+| **waiver** | Human-visible known deviation (timeline / plan); not a blanket pass |
+| **preflight** | Early stop before the formal governance validator |
+| **strict** | Formal session/model governance check before final (`validate_model_governance.py --strict`) |
+
+**State rules:** `reviewed.*` = agent review passed (Proceed). `pending_human_gate` = human gate wait (authoritative stop). `approved.*` = human gate approved.
+
+**Gate rules:** If `pending_human_gate` is non-empty, stop. Proceed / `reviewed.*` does not imply `approved.*`. Reject/rework clears `pending_human_gate` and resets the matching `reviewed.*` to `false`.
+
+**Evidence rules:** Primary segment sessions → `artifacts.model_usage`. Review worker / synthesis sessions → `reviews/<stage>/round_NN/review_manifest.yaml` only. Do not duplicate review sessions in `model_usage`. Human gate **approval** decisions → gate artifact + `state.yaml` (timeline not required). Gate prompts (`gate_prompted`), reject/rework decisions, and exceptional process notes → `artifacts.timeline`.
+
+**Validation rules:**
+
+| Script | Role |
+| --- | --- |
+| `validate_state.py` | **State consistency** (gate `pending_human_gate` vs `reviewed.*` / `approved.*`, artifacts, reviews). **Governance preflight only** near final review/gate: early ERROR on obvious `last_hermes_profile` gaps—not the full session/model audit. |
+| `validate_model_governance.py` | **Canonical session/model governance validator** (`model_usage` Session, `review_manifest`, duplicates, profile crossing, `last_hermes_profile` under `--strict`). |
+| `validate_model_governance.py --strict` | Formal check before final on `standard` / `deep`. **ERROR → exit 1; WARNING alone → exit 0.** `Session: unknown` passes only with a matching stage waiver. |
+
+Details: [`scripts/README.md`](../scripts/README.md). Gate invariants: [../SKILL.md § Human gates](../SKILL.md#human-gates).
+
 ### Model strength policy
 
 dev-process **does not** bind concrete provider or model IDs. **Logical roles and Hermes profile *names*** (for example `dp-strong`, `dp-review`, `dp-code`, `dp-cheap`) **are** bound in [`config/model_policy.yaml`](../config/model_policy.yaml); those profiles must exist in your Hermes install (`hermes profile create …`). Actual API models and providers stay in each profile’s Hermes `config.yaml` / `.env` — not in dev-process skills.
@@ -85,22 +115,7 @@ When the **runtime** supports reasoning-effort selection (e.g. Hermes `/reasonin
 
 **`deep` is not “everything high”:** per [`model_policy.yaml`](../config/model_policy.yaml) → `reasoning_by_preset.deep`, **checkpoint reviews** (`implementation_review`, routine `review_main` work) stay at **medium** reasoning expectation; **final synthesis**, **`final_review`**, ambiguous blocker triage, and merge recommendations use **high**. Match Hermes profile `config.yaml` to that split (`dp-review` for checkpoint, `dp-strong` for final/deep synthesis).
 
-**Use high reasoning when** (aligned with **`deep`** triggers in [review/presets.md](../review/presets.md)):
-
-- active preset is `deep`, or preset was just escalated to `deep`; or  
-- public **API** / **CLI** / **user-visible behavior** changes; **architecture / boundary** changes; **migration / schema / persistence**; **security / permission / privacy**;  
-- blocker triage or rework-owner assignment is **ambiguous**; **reviewer disagreement** remains; final completion decision has **unresolved risk**.
-
-**`standard` mid-task:** Stay on **medium** for local/non-blocking work. Escalate to **`deep` + high** when: blocker ambiguity appears, architecture/API risk surfaces, review exposes high-risk triggers, or disagreement persists.
-
-**Do not use high reasoning under `light` for**:
-
-- artifact existence / numbered-file conventions;  
-- **grep**, **find**, **ls**; Markdown/YAML sanity;  
-- **`review_round.py`**, **`validate_state.py`**; trivial naming/doc lint;  
-- docs-only edits with clear deterministic validation equivalent.
-
-Spend **high** reasoning on **remaining uncertainty and high impact**, not on mechanical validation.
+**Escalation and exclusions:** Preset **selection**, high-risk triggers, `standard` mid-task escalation, and what **`light`** must not spend high reasoning on are defined only in [review/presets.md](../review/presets.md) (Selection rule, Reasoning effort summary, Canonical preset definitions). Spend **high** reasoning on **remaining uncertainty and high impact**, not on mechanical validation.
 
 ### Model usage
 
@@ -161,8 +176,8 @@ Small deterministic helpers live under [`scripts/`](../scripts/) and are documen
 
 Current helpers:
 
-- `validate_state.py` — task state/artifact/review/branch consistency checks; **human gate consistency** on `pending_human_gate` vs `reviewed.*` / `approved.*` (see [`scripts/README.md`](../scripts/README.md)); **governance preflight** (ERROR on missing `last_hermes_profile` only near final review/gate on `standard`/`deep` with `model_usage_required`—not on `current_stage: final` alone); always warns on missing `last_hermes_profile` elsewhere; warns on `current_stage` clearly past a gate wait; errors when `current_stage` is a usage-only `stage_actions` id (e.g. `spec_review`). Pass the task directory (`.hermes/tasks/<task-id>`), not the `state.yaml` file path. Use `--strict` to fail on warnings. When a human rejects a gate or requests rework, the orchestrator must clear `pending_human_gate` and reset the matching `reviewed.*` marker to `false` before routing rework.
-- `validate_model_governance.py` — primary `model_usage` session evidence + latest `review_manifest.yaml` checks; `--strict` before final on standard/deep.
+- `validate_state.py` — **state consistency** + **governance preflight** (early `last_hermes_profile` ERROR near final review/gate on `standard`/`deep` with `model_usage_required`—not on `current_stage: final` alone); human gate consistency on `pending_human_gate` vs `reviewed.*` / `approved.*`; warns elsewhere. Not the canonical session/model audit—use `validate_model_governance.py --strict` for that. Pass the task directory (`.hermes/tasks/<task-id>`), not the `state.yaml` file path. Use `--strict` to fail on warnings. On gate reject/rework, clear `pending_human_gate` and reset the matching `reviewed.*` to `false` before routing rework.
+- `validate_model_governance.py` — **canonical session/model governance validator**: `model_usage` Session, latest `review_manifest.yaml`, duplicates, profile crossing, `last_hermes_profile` under `--strict`. `--strict` before final on `standard`/`deep`; ERROR → exit 1, WARNING alone → exit 0.
 - `check_helper_env.py` — PyYAML + bundled policy + helper `--help` preflight; optional `--check-profiles`.
 - `check_hermes_profiles.py` — `agent.reasoning_effort` in `~/.hermes/profiles/*/config.yaml` vs [`config/hermes_profile_expectations.yaml`](../config/hermes_profile_expectations.yaml).
 - `dp_hermes.py` — supports `--handoff-only` (resolve JSON only, no Hermes launch) when inspecting profile handoffs.

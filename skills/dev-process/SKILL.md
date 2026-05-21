@@ -37,7 +37,7 @@ Load only what the current action needs; do **not** read every sub-skill by defa
 | Test stage | [test/SKILL.md](test/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md), [git/SKILL.md](git/SKILL.md) |
 | Implementation | [implementation/SKILL.md](implementation/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md) |
 | Review round | [review/SKILL.md](review/SKILL.md), [artifacts/SKILL.md](artifacts/SKILL.md) |
-| Boundary / governance | [validation/SKILL.md](validation/SKILL.md), [scripts/README.md](scripts/README.md) |
+| Boundary / governance | [validation/SKILL.md § Minimal rules](validation/SKILL.md#minimal-rules-canonical-summary), [scripts/README.md](scripts/README.md) |
 | Human gate | [human-gates/SKILL.md](human-gates/SKILL.md), [templates/](templates/) |
 
 ## Canonical pipeline
@@ -105,7 +105,9 @@ pending_human_gate is the authoritative signal for a human gate wait.
 Before presenting numbered gate choices in chat, the gate presenter must update pending_human_gate and gate_prompted_at.
 After any explicit human gate decision, pending_human_gate must be cleared.
 If approved, set the matching canonical gate key: approved.human_spec_gate or approved.final_human_gate.
-If not approved, keep the matching canonical gate key false and route the task to the appropriate rework stage.
+If not approved or rework is requested, keep the matching canonical gate key false,
+reset the matching reviewed.* marker to false, record the decision in the gate artifact / timeline,
+and route the task to the appropriate rework stage.
 ```
 
 **Invariants (verbatim):**

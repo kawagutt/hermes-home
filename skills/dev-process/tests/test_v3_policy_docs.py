@@ -241,6 +241,36 @@ def test_governance_waiver_scope_in_validation_and_model_usage() -> None:
     for text in (validation, model_usage):
         assert "governance waiver marker" in text
         assert "does not waive missing rows" in text
+    assert "missing last_hermes_profile" in model_usage
+
+
+def test_minimal_rules_preflight_vs_governance_canonical() -> None:
+    validation = strip_md_emphasis(read_rel("validation/SKILL.md"))
+    scripts_readme = read_rel("scripts/README.md")
+    assert "### Minimal rules (canonical summary)" in validation
+    assert "validate_state.py" in validation and "governance preflight" in validation
+    assert "validate_model_governance.py" in validation
+    assert "canonical session/model governance validator" in validation.lower()
+    assert "WARNING alone" in validation and "exit 0" in validation
+    assert "canonical session/model governance validator" in scripts_readme.lower()
+    assert "governance preflight" in scripts_readme
+    assert "not a substitute for" in scripts_readme
+
+
+def test_minimal_rules_human_gate_timeline_not_required_on_approval() -> None:
+    validation = strip_md_emphasis(read_rel("validation/SKILL.md"))
+    human_gates = read_rel("human-gates/SKILL.md")
+    assert "Human gate approval decisions" in validation
+    assert "timeline not required" in validation.lower()
+    assert "gate_prompted" in validation
+    assert "reject/rework" in validation
+    # Approval path in companion skill does not require timeline append.
+    assert "validate_state.py" in human_gates
+    assert "timeline" in human_gates.lower()
+    assert (
+        "record in timeline" in human_gates.lower()
+        or "timeline," in human_gates.lower()
+    )
 
 
 def test_review_round_session_evidence_completion_checklist() -> None:
@@ -268,6 +298,26 @@ def test_orchestrator_session_model_evidence_links() -> None:
     assert "## Session and model evidence" in skill
     assert "Primary segment boundary completion" in skill
     assert "Review round session evidence" in skill
+
+
+def test_test_skill_links_session_evidence() -> None:
+    test_skill = read_rel("test/SKILL.md")
+    assert "Review round session evidence" in test_skill
+    assert "Primary segment boundary completion" in test_skill
+    assert "--stage-id test" in test_skill
+
+
+def test_dp_hermes_strict_launch_default_documented() -> None:
+    readme = read_rel("scripts/README.md")
+    review = read_rel("review/SKILL.md")
+    goal = read_rel("goal/SKILL.md")
+    assert (
+        "exit 2 by default" in readme.lower()
+        or "exits with code 2 by default" in readme
+    )
+    assert "DEV_PROCESS_RELAX_LAUNCH" in readme
+    assert "fails by default" in review
+    assert "exits by default" in goal.lower() or "exit by default" in goal.lower()
 
 
 INVARIANT_REVIEWED_FINAL = (

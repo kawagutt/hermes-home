@@ -147,7 +147,13 @@ def main() -> None:
     parser.add_argument(
         "--strict-launch",
         action="store_true",
-        help="Fail when current_stage=implementation and neither --stage-id nor --action is set.",
+        help="Fail when current_stage=implementation and neither --stage-id nor --action is set "
+        "(default unless --relaxed-launch or DEV_PROCESS_RELAX_LAUNCH=1).",
+    )
+    parser.add_argument(
+        "--relaxed-launch",
+        action="store_true",
+        help="Warn only (do not exit) when current_stage=implementation without --stage-id/--action.",
     )
 
     args = parser.parse_args(wrapper_argv)
@@ -185,9 +191,12 @@ def main() -> None:
         )
         raise SystemExit(2)
 
-    strict_launch = args.strict_launch or os.environ.get(
-        "DEV_PROCESS_STRICT_LAUNCH", ""
-    ).strip() in ("1", "true", "yes")
+    def _env_truthy(name: str) -> bool:
+        return os.environ.get(name, "").strip().lower() in ("1", "true", "yes")
+
+    relaxed_launch = args.relaxed_launch or _env_truthy("DEV_PROCESS_RELAX_LAUNCH")
+    strict_launch = args.strict_launch or _env_truthy("DEV_PROCESS_STRICT_LAUNCH")
+    enforce_strict_launch = strict_launch or not relaxed_launch
     if not action_arg and not stage_id_arg:
         try:
             state = load_task_state(task_dir)
@@ -202,14 +211,14 @@ def main() -> None:
                     "--stage-id implementation_phase_NN; for checkpoint reviewers use "
                     "--action review_<agent> (manifest only, not model_usage)."
                 )
-                if strict_launch:
+                if enforce_strict_launch:
                     print(msg, file=sys.stderr)
                     raise SystemExit(2)
                 print(f"WARNING: {msg}", file=sys.stderr)
         except Exception as exc:
-            if strict_launch:
+            if enforce_strict_launch:
                 print(
-                    f"dp_hermes.py: strict-launch precheck failed: {exc}",
+                    f"dp_hermes.py: launch precheck failed: {exc}",
                     file=sys.stderr,
                 )
                 raise SystemExit(2) from exc
